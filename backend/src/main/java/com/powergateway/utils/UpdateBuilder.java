@@ -44,8 +44,10 @@ public class UpdateBuilder {
     }
 
     private static String opToSql(String op) {
+        // null 视为 EQ
         if (op == null) return " = ?";
         switch (op) {
+            case "EQ":   return " = ?";
             case "NE":   return " <> ?";
             case "GT":   return " > ?";
             case "LT":   return " < ?";

@@ -77,4 +77,44 @@ class UpdateBuilderTest {
                 UpdateBuilder.build("orders", fields,
                         Collections.emptyList(), Collections.emptyMap()));
     }
+
+    @Test
+    void LIKE操作符_生成正确SQL() {
+        Map<String, Object> fields = new LinkedHashMap<>();
+        fields.put("status", "active");
+
+        ConditionConfig cond = new ConditionConfig();
+        cond.setTableName("orders");
+        cond.setField("name");
+        cond.setOp("LIKE");
+        cond.setParamKey("nameKey");
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("nameKey", "%test%");
+
+        UpdateBuilder.SqlResult result = UpdateBuilder.build(
+                "orders", fields, Collections.singletonList(cond), params);
+
+        assertEquals("UPDATE orders SET status = ? WHERE name LIKE ?", result.sql);
+    }
+
+    @Test
+    void NE操作符_生成正确SQL() {
+        Map<String, Object> fields = new LinkedHashMap<>();
+        fields.put("status", "inactive");
+
+        ConditionConfig cond = new ConditionConfig();
+        cond.setTableName("orders");
+        cond.setField("type");
+        cond.setOp("NE");
+        cond.setParamKey("typeKey");
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("typeKey", "VIP");
+
+        UpdateBuilder.SqlResult result = UpdateBuilder.build(
+                "orders", fields, Collections.singletonList(cond), params);
+
+        assertEquals("UPDATE orders SET status = ? WHERE type <> ?", result.sql);
+    }
 }
