@@ -209,7 +209,7 @@ public class TableMetaService {
                 }
             }
         } catch (Exception e) {
-            log.warn("[M2-5] 获取唯一索引失败: {}", e.getMessage());
+            log.warn("[M2-2] 获取唯一索引失败: {}", e.getMessage());
         }
         return uniqueCols;
     }
