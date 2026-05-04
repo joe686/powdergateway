@@ -302,7 +302,7 @@ public class InterfaceConfigService {
             try {
                 AuditContext auditCtx = AuditContextHolder.get();
                 if (auditCtx != null) {
-                    String snapshot = captureSnapshot(jdbc, updateConfig.getConditions(), params, tableNames);
+                    String snapshot = captureSnapshot(jdbc, updateConfig.getConditions(), params, tableNames, conn.getDbType());
                     auditCtx.setBeforeSnapshot(snapshot);
                     auditCtx.setTargetTable(String.join(",", tableNames));
                     StringBuilder sqlText = new StringBuilder();
@@ -339,23 +339,38 @@ public class InterfaceConfigService {
     private String captureSnapshot(Connection jdbc,
                                     List<ConditionConfig> allConditions,
                                     Map<String, Object> params,
-                                    List<String> tableNames) {
+                                    List<String> tableNames,
+                                    String dbType) {
         List<Map<String, Object>> allRows = new ArrayList<>();
         for (String tableName : tableNames) {
             List<ConditionConfig> tableConds = filterConditions(allConditions, tableName);
             if (tableConds.isEmpty()) continue;
 
-            StringBuilder sql = new StringBuilder("SELECT * FROM ").append(tableName).append(" WHERE ");
             List<Object> bindParams = new ArrayList<>();
-            for (int i = 0; i < tableConds.size(); i++) {
-                ConditionConfig cond = tableConds.get(i);
-                if (i > 0) sql.append(" AND ");
-                sql.append(cond.getField()).append(" = ?");
-                bindParams.add(params.get(cond.getParamKey()));
+            String selectSql;
+            if ("Oracle".equalsIgnoreCase(dbType)) {
+                // Oracle 不支持 LIMIT，用子查询 + ROWNUM
+                StringBuilder inner = new StringBuilder("SELECT * FROM ").append(tableName).append(" WHERE ");
+                for (int i = 0; i < tableConds.size(); i++) {
+                    ConditionConfig cond = tableConds.get(i);
+                    if (i > 0) inner.append(" AND ");
+                    inner.append(cond.getField()).append(" = ?");
+                    bindParams.add(params.get(cond.getParamKey()));
+                }
+                selectSql = "SELECT * FROM (" + inner + ") WHERE ROWNUM <= 100";
+            } else {
+                StringBuilder sb = new StringBuilder("SELECT * FROM ").append(tableName).append(" WHERE ");
+                for (int i = 0; i < tableConds.size(); i++) {
+                    ConditionConfig cond = tableConds.get(i);
+                    if (i > 0) sb.append(" AND ");
+                    sb.append(cond.getField()).append(" = ?");
+                    bindParams.add(params.get(cond.getParamKey()));
+                }
+                sb.append(" LIMIT 100");
+                selectSql = sb.toString();
             }
-            sql.append(" LIMIT 100");
 
-            try (PreparedStatement ps = jdbc.prepareStatement(sql.toString())) {
+            try (PreparedStatement ps = jdbc.prepareStatement(selectSql)) {
                 for (int i = 0; i < bindParams.size(); i++) {
                     ps.setObject(i + 1, bindParams.get(i));
                 }
@@ -393,6 +408,10 @@ public class InterfaceConfigService {
         for (TableUpdateConfig tableConfig : config.getTables()) {
             String tableName = tableConfig.getTableName();
             List<ConditionConfig> tableConds = filterConditions(config.getConditions(), tableName);
+
+            if (tableConds.isEmpty()) {
+                throw new BusinessException(400, "表 " + tableName + " 未配置 WHERE 条件");
+            }
 
             TableMeta meta = tables.stream()
                     .filter(t -> t.getTableName().equalsIgnoreCase(tableName))
