@@ -1,29 +1,40 @@
 package com.powergateway.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.powergateway.aop.AuditContext;
+import com.powergateway.aop.AuditContextHolder;
+import com.powergateway.aop.AuditLog;
 import com.powergateway.dao.DbConnectionMapper;
 import com.powergateway.dao.InterfaceConfigMapper;
 import com.powergateway.exception.BusinessException;
 import com.powergateway.model.DbConnection;
 import com.powergateway.model.InterfaceConfig;
+import com.powergateway.model.dto.ColumnMeta;
 import com.powergateway.model.dto.InsertConfigJson;
 import com.powergateway.model.dto.InsertConfigJson.FieldInsertConfig;
 import com.powergateway.model.dto.InsertConfigJson.TableInsertConfig;
 import com.powergateway.model.dto.InterfaceSaveRequest;
 import com.powergateway.model.dto.InterfacePreviewRequest;
 import com.powergateway.model.dto.QueryConfigJson;
+import com.powergateway.model.dto.TableMeta;
+import com.powergateway.model.dto.UpdateConfigJson;
+import com.powergateway.model.dto.UpdateConfigJson.ConditionConfig;
+import com.powergateway.model.dto.UpdateConfigJson.TableUpdateConfig;
 import com.powergateway.utils.AesUtil;
 import com.powergateway.utils.ColumnValidator;
 import com.powergateway.utils.DataSourceResolver;
 import com.powergateway.utils.InsertBuilder;
 import com.powergateway.utils.QueryBuilder;
+import com.powergateway.utils.UpdateBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.sql.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 接口配置业务层（M2-3 查询接口配置，M2-4 插入接口配置）。
@@ -51,6 +62,9 @@ public class InterfaceConfigService {
     @Autowired
     private ColumnValidator columnValidator;
 
+    @Autowired
+    private TableMetaService tableMetaService;
+
     // ─── 保存 ──────────────────────────────────────────────────────────────────
 
     /**
@@ -76,6 +90,19 @@ public class InterfaceConfigService {
         entity.setConfigJson(req.getConfigJson());
         entity.setStatus("draft");
         entity.setLogEnabled(1);
+
+        // UPDATE 类型：校验条件字段必须含主键或唯一索引
+        if ("UPDATE".equals(entity.getType())) {
+            try {
+                UpdateConfigJson updateConfig = objectMapper.readValue(
+                        req.getConfigJson(), UpdateConfigJson.class);
+                validateUpdateConditions(updateConfig, req.getDbConnectionId());
+            } catch (BusinessException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new BusinessException(400, "UPDATE 配置 JSON 解析失败: " + e.getMessage());
+            }
+        }
 
         if (req.getId() != null) {
             entity.setId(req.getId());
@@ -223,6 +250,174 @@ public class InterfaceConfigService {
         }
 
         return totalAffected;
+    }
+
+    // ─── M2-5 UPDATE 执行 ──────────────────────────────────────────────────────
+
+    @AuditLog
+    public int executeUpdate(Long id, Map<String, Object> params) {
+        InterfaceConfig config = interfaceConfigMapper.selectById(id);
+        if (config == null) throw new BusinessException(404, "接口配置不存在");
+        if (!"UPDATE".equals(config.getType())) throw new BusinessException(400, "非 UPDATE 类型接口");
+
+        UpdateConfigJson updateConfig;
+        try {
+            updateConfig = objectMapper.readValue(config.getConfigJson(), UpdateConfigJson.class);
+        } catch (Exception e) {
+            throw new BusinessException(400, "配置 JSON 解析失败: " + e.getMessage());
+        }
+
+        List<TableUpdateConfig> tables = updateConfig.getTables();
+        if (tables == null || tables.isEmpty()) throw new BusinessException(400, "未配置修改表");
+        if (tables.size() > 3) throw new BusinessException(400, "最多支持3张表");
+
+        DbConnection conn = dbConnectionMapper.selectById(config.getDbConnectionId());
+        if (conn == null) throw new BusinessException(404, "数据库连接不存在");
+
+        List<UpdateBuilder.SqlResult> sqlResults = new ArrayList<>();
+        List<String> tableNames = new ArrayList<>();
+        for (TableUpdateConfig tableConfig : tables) {
+            Map<String, Object> fieldValues = new LinkedHashMap<>();
+            for (InsertConfigJson.FieldInsertConfig field : tableConfig.getFields()) {
+                Object value = dataSourceResolver.resolve(field, params);
+                fieldValues.put(field.getColumn(), value);
+            }
+            columnValidator.validate(tableConfig.getTableName(), fieldValues, config.getDbConnectionId());
+            List<ConditionConfig> tableConditions = filterConditions(
+                    updateConfig.getConditions(), tableConfig.getTableName());
+            if (tableConditions.isEmpty()) {
+                throw new BusinessException(400, "表 " + tableConfig.getTableName() + " 无对应 WHERE 条件");
+            }
+            sqlResults.add(UpdateBuilder.build(tableConfig.getTableName(), fieldValues, tableConditions, params));
+            tableNames.add(tableConfig.getTableName());
+        }
+
+        log.info("[M2-5] 执行 UPDATE，接口 id={}，共{}张表", id, sqlResults.size());
+
+        String password = aesUtil.decrypt(conn.getPassword());
+        int totalAffected = 0;
+
+        try (Connection jdbc = DriverManager.getConnection(conn.getUrl(), conn.getUsername(), password)) {
+            jdbc.setAutoCommit(false);
+            try {
+                AuditContext auditCtx = AuditContextHolder.get();
+                if (auditCtx != null) {
+                    String snapshot = captureSnapshot(jdbc, updateConfig.getConditions(), params, tableNames);
+                    auditCtx.setBeforeSnapshot(snapshot);
+                    auditCtx.setTargetTable(String.join(",", tableNames));
+                    StringBuilder sqlText = new StringBuilder();
+                    for (UpdateBuilder.SqlResult r : sqlResults) {
+                        if (sqlText.length() > 0) sqlText.append("; ");
+                        sqlText.append(r.sql);
+                    }
+                    auditCtx.setSqlText(sqlText.toString());
+                }
+
+                for (UpdateBuilder.SqlResult sql : sqlResults) {
+                    log.info("[M2-5] SQL: {}", sql.sql);
+                    try (PreparedStatement ps = jdbc.prepareStatement(sql.sql)) {
+                        for (int i = 0; i < sql.params.size(); i++) {
+                            ps.setObject(i + 1, sql.params.get(i));
+                        }
+                        totalAffected += ps.executeUpdate();
+                    }
+                }
+                jdbc.commit();
+            } catch (Exception e) {
+                jdbc.rollback();
+                throw new BusinessException(500, "修改执行失败，已回滚: " + e.getMessage());
+            }
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new BusinessException(500, "数据库连接失败: " + e.getMessage());
+        }
+
+        return totalAffected;
+    }
+
+    private String captureSnapshot(Connection jdbc,
+                                    List<ConditionConfig> allConditions,
+                                    Map<String, Object> params,
+                                    List<String> tableNames) {
+        List<Map<String, Object>> allRows = new ArrayList<>();
+        for (String tableName : tableNames) {
+            List<ConditionConfig> tableConds = filterConditions(allConditions, tableName);
+            if (tableConds.isEmpty()) continue;
+
+            StringBuilder sql = new StringBuilder("SELECT * FROM ").append(tableName).append(" WHERE ");
+            List<Object> bindParams = new ArrayList<>();
+            for (int i = 0; i < tableConds.size(); i++) {
+                ConditionConfig cond = tableConds.get(i);
+                if (i > 0) sql.append(" AND ");
+                sql.append(cond.getField()).append(" = ?");
+                bindParams.add(params.get(cond.getParamKey()));
+            }
+            sql.append(" LIMIT 100");
+
+            try (PreparedStatement ps = jdbc.prepareStatement(sql.toString())) {
+                for (int i = 0; i < bindParams.size(); i++) {
+                    ps.setObject(i + 1, bindParams.get(i));
+                }
+                try (ResultSet rs = ps.executeQuery()) {
+                    ResultSetMetaData metaData = rs.getMetaData();
+                    int colCount = metaData.getColumnCount();
+                    while (rs.next()) {
+                        Map<String, Object> row = new LinkedHashMap<>();
+                        row.put("__table__", tableName);
+                        for (int i = 1; i <= colCount; i++) {
+                            row.put(metaData.getColumnLabel(i), rs.getObject(i));
+                        }
+                        allRows.add(row);
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("[M2-5] 快照查询失败，表={}: {}", tableName, e.getMessage());
+            }
+        }
+
+        try {
+            return objectMapper.writeValueAsString(allRows);
+        } catch (JsonProcessingException e) {
+            return "[]";
+        }
+    }
+
+    private void validateUpdateConditions(UpdateConfigJson config, Long dbId) {
+        if (config.getConditions() == null || config.getConditions().isEmpty()) {
+            throw new BusinessException(400, "UPDATE 接口必须配置 WHERE 条件");
+        }
+
+        List<TableMeta> tables = tableMetaService.getTables(dbId);
+
+        for (TableUpdateConfig tableConfig : config.getTables()) {
+            String tableName = tableConfig.getTableName();
+            List<ConditionConfig> tableConds = filterConditions(config.getConditions(), tableName);
+
+            TableMeta meta = tables.stream()
+                    .filter(t -> t.getTableName().equalsIgnoreCase(tableName))
+                    .findFirst()
+                    .orElseThrow(() -> new BusinessException(400, "目标表不存在: " + tableName));
+
+            boolean hasUniqueKey = tableConds.stream().anyMatch(cond -> {
+                String field = cond.getField();
+                return meta.getColumns().stream()
+                        .filter(col -> col.getName().equalsIgnoreCase(field))
+                        .anyMatch(col -> col.isPrimary() || col.isUnique());
+            });
+
+            if (!hasUniqueKey) {
+                throw new BusinessException(400,
+                        "表 " + tableName + " 的 WHERE 条件中必须包含主键或唯一索引字段");
+            }
+        }
+    }
+
+    private List<ConditionConfig> filterConditions(List<ConditionConfig> all, String tableName) {
+        if (all == null) return Collections.emptyList();
+        return all.stream()
+                .filter(c -> tableName.equalsIgnoreCase(c.getTableName()))
+                .collect(Collectors.toList());
     }
 
     // ─── 私有方法 ──────────────────────────────────────────────────────────────
