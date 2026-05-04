@@ -1,0 +1,1 @@
+import{r as n}from"./request-byX1yfx4.js";function a(){return n.get("/channel/list")}function s(e){return n.post("/channel/save",e)}function l(e){return n.delete(`/channel/${e}`)}export{l as d,a as l,s};

@@ -1,0 +1,17 @@
+com\powergateway\model\dto\HeaderConfig.class
+com\powergateway\model\InterfaceConfig.class
+com\powergateway\model\dto\InterfaceExecuteRequest.class
+com\powergateway\model\dto\InsertConfigJson$FieldInsertConfig.class
+com\powergateway\utils\HeaderConfigMerger.class
+com\powergateway\config\MybatisPlusConfig.class
+com\powergateway\utils\ColumnValidator.class
+com\powergateway\config\RestTemplateConfig.class
+com\powergateway\dao\InterfaceConfigMapper.class
+com\powergateway\utils\DataSourceResolver.class
+com\powergateway\utils\InsertBuilder$SqlResult.class
+com\powergateway\model\dto\InsertConfigJson.class
+com\powergateway\utils\InsertBuilder.class
+com\powergateway\model\PortRoute.class
+com\powergateway\model\dto\DispatchRequest.class
+com\powergateway\utils\FormatConverter$1.class
+com\powergateway\model\dto\InsertConfigJson$TableInsertConfig.class
