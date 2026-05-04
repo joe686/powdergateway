@@ -169,6 +169,13 @@ public class TableMetaService {
                         table.getColumns().add(col);
                     }
                 }
+                // 标记唯一索引列
+                Set<String> uniqueCols = getUniqueIndexColumns(meta, catalog, table.getTableName());
+                for (ColumnMeta col : table.getColumns()) {
+                    if (uniqueCols.contains(col.getName())) {
+                        col.setUnique(true);
+                    }
+                }
             }
 
         } catch (BusinessException e) {
@@ -190,6 +197,21 @@ public class TableMetaService {
             log.warn("[M2-2] 获取主键信息失败: {}", e.getMessage());
         }
         return pks;
+    }
+
+    private Set<String> getUniqueIndexColumns(DatabaseMetaData meta, String catalog, String tableName) {
+        Set<String> uniqueCols = new HashSet<>();
+        try (ResultSet rs = meta.getIndexInfo(catalog, null, tableName, true, false)) {
+            while (rs.next()) {
+                String colName = rs.getString("COLUMN_NAME");
+                if (colName != null) {
+                    uniqueCols.add(colName);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("[M2-5] 获取唯一索引失败: {}", e.getMessage());
+        }
+        return uniqueCols;
     }
 
     private boolean isSystemSchema(String schema) {

@@ -9,6 +9,8 @@ public class ColumnMeta {
     private String type;
     @JsonProperty("isPrimary")
     private boolean isPrimary;
+    @JsonProperty("isUnique")
+    private boolean isUnique;
     private boolean nullable;
     private String remarks;
 }
