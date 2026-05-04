@@ -405,6 +405,9 @@ public class InterfaceConfigService {
 
         List<TableMeta> tables = tableMetaService.getTables(dbId);
 
+        // 至少一张表的条件字段必须是主键或唯一索引
+        boolean anyTableHasUniqueKey = false;
+
         for (TableUpdateConfig tableConfig : config.getTables()) {
             String tableName = tableConfig.getTableName();
             List<ConditionConfig> tableConds = filterConditions(config.getConditions(), tableName);
@@ -418,17 +421,20 @@ public class InterfaceConfigService {
                     .findFirst()
                     .orElseThrow(() -> new BusinessException(400, "目标表不存在: " + tableName));
 
-            boolean hasUniqueKey = tableConds.stream().anyMatch(cond -> {
+            boolean tableHasUniqueKey = tableConds.stream().anyMatch(cond -> {
                 String field = cond.getField();
                 return meta.getColumns().stream()
                         .filter(col -> col.getName().equalsIgnoreCase(field))
                         .anyMatch(col -> col.isPrimary() || col.isUnique());
             });
 
-            if (!hasUniqueKey) {
-                throw new BusinessException(400,
-                        "表 " + tableName + " 的 WHERE 条件中必须包含主键或唯一索引字段");
+            if (tableHasUniqueKey) {
+                anyTableHasUniqueKey = true;
             }
+        }
+
+        if (!anyTableHasUniqueKey) {
+            throw new BusinessException(400, "UPDATE 接口的 WHERE 条件中必须至少包含一个主键或唯一索引字段");
         }
     }
 

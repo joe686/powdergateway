@@ -1,6 +1,9 @@
 package com.powergateway.controller;
 
+import com.powergateway.aop.AuditContext;
+import com.powergateway.aop.AuditContextHolder;
 import com.powergateway.common.Result;
+import com.powergateway.exception.BusinessException;
 import com.powergateway.model.InterfaceConfig;
 import com.powergateway.model.dto.InterfaceExecuteRequest;
 import com.powergateway.model.dto.InterfacePreviewRequest;
@@ -63,10 +66,24 @@ public class InterfaceConfigController {
     }
 
     @PostMapping("/{id}/execute")
-    @Operation(summary = "执行 INSERT 接口（M2-4）")
+    @Operation(summary = "执行接口（INSERT/UPDATE，按 type 分发，M2-4/M2-5，对外开放）")
     public Result<Integer> execute(
             @PathVariable Long id,
             @RequestBody InterfaceExecuteRequest req) {
-        return Result.success(service.executeInsert(id, req.getParams()));
+        com.powergateway.model.InterfaceConfig config = service.getById(id);
+        String type = config.getType();
+
+        if ("INSERT".equals(type)) {
+            return Result.success(service.executeInsert(id, req.getParams()));
+        } else if ("UPDATE".equals(type)) {
+            AuditContextHolder.set(new AuditContext()
+                    .setInterfaceId(id)
+                    .setOpType("UPDATE")
+                    .setTargetDb(config.getDbConnectionId() != null
+                            ? config.getDbConnectionId().toString() : "unknown"));
+            return Result.success(service.executeUpdate(id, req.getParams()));
+        } else {
+            throw new BusinessException(400, "不支持的接口类型: " + type);
+        }
     }
 }
