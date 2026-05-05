@@ -33,3 +33,8 @@ export function deleteInterface(id) {
 export function executeInterface(id, params) {
   return request.post(`/interface/${id}/execute`, { params })
 }
+
+/** 预览待删数据（M2-6） */
+export function deletePreview(id, params) {
+  return request.post(`/interface/${id}/delete-preview`, { params })
+}

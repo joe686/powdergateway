@@ -47,6 +47,7 @@
         <el-menu-item index="/interface/dev">查询接口配置</el-menu-item>
         <el-menu-item index="/interface/insert">插入接口配置</el-menu-item>
         <el-menu-item index="/interface/update">修改接口配置</el-menu-item>
+        <el-menu-item index="/interface/delete">删除接口配置</el-menu-item>
         <el-menu-item index="/interface/shard">分库分表配置</el-menu-item>
         <el-menu-item index="/interface/formula">字段公式管理</el-menu-item>
         <el-menu-item index="/interface/cache">缓存查询管理</el-menu-item>

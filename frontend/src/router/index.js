@@ -94,6 +94,12 @@ const router = createRouter({
           meta: { title: '修改接口配置' }
         },
         {
+          path: 'interface/delete',
+          name: 'InterfaceDelete',
+          component: () => import('@/views/interface/DeleteConfig.vue'),
+          meta: { title: '删除接口配置' }
+        },
+        {
           path: 'interface/shard',
           name: 'ShardConfig',
           component: () => import('@/views/placeholder/PlaceholderView.vue'),
