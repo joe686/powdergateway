@@ -352,17 +352,23 @@ public class InterfaceConfigService {
         if (!"DELETE".equals(config.getType())) throw new BusinessException(400, "非 DELETE 类型接口");
 
         DeleteConfigJson deleteConfig = parseDeleteConfig(config.getConfigJson());
+        List<DeleteConfigJson.TableDeleteConfig> tables = deleteConfig.getTables();
+        if (tables == null || tables.isEmpty()) throw new BusinessException(400, "未配置删除表");
+
         DbConnection conn = dbConnectionMapper.selectById(config.getDbConnectionId());
         if (conn == null) throw new BusinessException(404, "数据库连接不存在");
 
         String password = aesUtil.decrypt(conn.getPassword());
+        boolean isOracle = "Oracle".equalsIgnoreCase(conn.getDbType());
         Map<String, List<Map<String, Object>>> result = new LinkedHashMap<>();
 
         try (Connection jdbc = DriverManager.getConnection(conn.getUrl(), conn.getUsername(), password)) {
-            for (DeleteConfigJson.TableDeleteConfig tableConfig : deleteConfig.getTables()) {
+            for (DeleteConfigJson.TableDeleteConfig tableConfig : tables) {
                 List<Object> bindParams = new ArrayList<>();
                 String where = buildDeleteWhere(tableConfig.getConditions(), params, bindParams);
-                String sql = "SELECT * FROM " + tableConfig.getTableName() + where + " LIMIT 10";
+                String sql = isOracle
+                        ? "SELECT * FROM (SELECT * FROM " + tableConfig.getTableName() + where + ") WHERE ROWNUM <= 10"
+                        : "SELECT * FROM " + tableConfig.getTableName() + where + " LIMIT 10";
 
                 List<Map<String, Object>> rows = new ArrayList<>();
                 try (PreparedStatement ps = jdbc.prepareStatement(sql)) {
@@ -398,17 +404,11 @@ public class InterfaceConfigService {
     private String buildDeleteWhere(List<DeleteConfigJson.ConditionItem> conditions,
                                      Map<String, Object> params,
                                      List<Object> bindParams) {
-        if (conditions == null || conditions.isEmpty()) {
-            throw new BusinessException(400, "删除条件不能为空");
+        try {
+            return DeleteBuilder.buildWhere(conditions, params, bindParams);
+        } catch (IllegalArgumentException e) {
+            throw new BusinessException(400, e.getMessage());
         }
-        StringBuilder where = new StringBuilder(" WHERE ");
-        for (int i = 0; i < conditions.size(); i++) {
-            DeleteConfigJson.ConditionItem cond = conditions.get(i);
-            if (i > 0) where.append(" AND ");
-            where.append(cond.getField()).append(DeleteBuilder.opToSql(cond.getOp()));
-            bindParams.add(params.get(cond.getParamKey()));
-        }
-        return where.toString();
     }
 
     private String captureSnapshot(Connection jdbc,
