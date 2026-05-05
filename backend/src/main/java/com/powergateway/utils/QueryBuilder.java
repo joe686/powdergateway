@@ -13,8 +13,10 @@ import java.util.Map;
  * <ul>
  *   <li>支持单表和多表 LEFT/INNER/RIGHT JOIN</li>
  *   <li>支持条件操作符：EQ / NE / GT / LT / LIKE</li>
- *   <li>结果最多返回 LIMIT 10 行（预览用途）</li>
- *   <li>纯工具类，无 Spring 依赖，M2-3 新增，M2-4/5/6 可复用</li>
+ *   <li>{@link #build} 结果最多返回 LIMIT 10 行（预览用途）</li>
+ *   <li>{@link #buildFull} 全量查询，用于已发布接口执行</li>
+ *   <li>{@link #buildPaginated} 分页查询，供已发布接口分页执行</li>
+ *   <li>纯工具类，无 Spring 依赖，M2-3 新增，M2-7 扩展</li>
  * </ul>
  */
 public class QueryBuilder {
@@ -41,20 +43,8 @@ public class QueryBuilder {
      * @return SQL 字符串 + 有序参数列表（对应 ? 占位符）
      */
     public static SqlResult build(QueryConfigJson config, Map<String, Object> params) {
-        if (config == null || config.getTables() == null || config.getTables().isEmpty()) {
-            throw new IllegalArgumentException("配置中至少需要一张表");
-        }
-
-        StringBuilder sql = new StringBuilder();
-        List<Object> paramValues = new ArrayList<>();
-
-        appendSelect(sql, config.getFields());
-        appendFrom(sql, config.getTables().get(0));
-        appendJoins(sql, config.getTables(), config.getJoins());
-        appendWhere(sql, config.getConditions(), params, paramValues);
-        sql.append(" LIMIT ").append(DEFAULT_LIMIT);
-
-        return new SqlResult(sql.toString(), paramValues);
+        SqlResult full = buildFull(config, params);
+        return new SqlResult(full.sql + " LIMIT " + DEFAULT_LIMIT, full.params);
     }
 
     /**
@@ -75,9 +65,18 @@ public class QueryBuilder {
 
     /**
      * 分页查询，page 从 1 开始，OFFSET = (page-1) * pageSize。
+     *
+     * @param config   配置对象
+     * @param params   运行时参数
+     * @param page     页码，从 1 开始（<1 抛 IllegalArgumentException）
+     * @param pageSize 每页行数（<1 抛 IllegalArgumentException）
+     * @return SQL 字符串 + 有序参数列表
      */
     public static SqlResult buildPaginated(QueryConfigJson config, Map<String, Object> params,
                                             int page, int pageSize) {
+        if (page < 1) throw new IllegalArgumentException("page 必须 >= 1，实际值：" + page);
+        if (pageSize < 1) throw new IllegalArgumentException("pageSize 必须 >= 1，实际值：" + pageSize);
+
         SqlResult full = buildFull(config, params);
         String pagedSql = full.sql + " LIMIT " + pageSize + " OFFSET " + ((page - 1) * pageSize);
         return new SqlResult(pagedSql, full.params);

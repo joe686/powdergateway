@@ -52,4 +52,16 @@ class M27QueryBuilderTest {
         assertTrue(r.sql.contains("LIMIT 10"), "实际 SQL: " + r.sql);
         assertTrue(r.sql.contains("OFFSET 0"), "第一页 OFFSET 应为 0，实际 SQL: " + r.sql);
     }
+
+    @Test
+    void buildPaginated_非法page_抛异常() {
+        assertThrows(IllegalArgumentException.class,
+            () -> QueryBuilder.buildPaginated(simpleConfig(), new HashMap<>(), 0, 10));
+    }
+
+    @Test
+    void buildPaginated_非法pageSize_抛异常() {
+        assertThrows(IllegalArgumentException.class,
+            () -> QueryBuilder.buildPaginated(simpleConfig(), new HashMap<>(), 1, 0));
+    }
 }
