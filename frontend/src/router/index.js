@@ -88,6 +88,12 @@ const router = createRouter({
           meta: { title: '插入接口配置' }
         },
         {
+          path: 'interface/update',
+          name: 'InterfaceUpdate',
+          component: () => import('@/views/interface/UpdateConfig.vue'),
+          meta: { title: '修改接口配置' }
+        },
+        {
           path: 'interface/shard',
           name: 'ShardConfig',
           component: () => import('@/views/placeholder/PlaceholderView.vue'),
