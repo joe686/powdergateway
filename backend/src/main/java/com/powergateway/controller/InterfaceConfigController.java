@@ -43,6 +43,14 @@ public class InterfaceConfigController {
         return Result.success(service.preview(id, req.getParams()));
     }
 
+    @PostMapping("/{id}/delete-preview")
+    @Operation(summary = "预览待删数据（执行 SELECT 前10条，M2-6）")
+    public Result<Map<String, List<Map<String, Object>>>> deletePreview(
+            @PathVariable Long id,
+            @RequestBody InterfacePreviewRequest req) {
+        return Result.success(service.deletePreview(id, req.getParams()));
+    }
+
     @GetMapping("/list")
     @Operation(summary = "查询接口配置列表")
     public Result<List<InterfaceConfig>> list(

@@ -22,4 +22,7 @@ public class InterfaceSaveRequest {
 
     /** 完整接口配置 JSON 字符串，必填 */
     private String configJson;
+
+    /** 是否允许批量删除：0=否，1=是；仅 DELETE 类型接口使用 */
+    private Integer allowBatchDelete;
 }

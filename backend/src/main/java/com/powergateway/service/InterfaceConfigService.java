@@ -19,10 +19,12 @@ import com.powergateway.model.dto.InterfaceSaveRequest;
 import com.powergateway.model.dto.InterfacePreviewRequest;
 import com.powergateway.model.dto.QueryConfigJson;
 import com.powergateway.model.dto.TableMeta;
+import com.powergateway.model.dto.DeleteConfigJson;
 import com.powergateway.model.dto.UpdateConfigJson;
 import com.powergateway.model.dto.UpdateConfigJson.ConditionConfig;
 import com.powergateway.model.dto.UpdateConfigJson.TableUpdateConfig;
 import com.powergateway.utils.AesUtil;
+import com.powergateway.utils.DeleteBuilder;
 import com.powergateway.utils.ColumnValidator;
 import com.powergateway.utils.DataSourceResolver;
 import com.powergateway.utils.InsertBuilder;
@@ -90,6 +92,12 @@ public class InterfaceConfigService {
         entity.setConfigJson(req.getConfigJson());
         entity.setStatus("draft");
         entity.setLogEnabled(1);
+
+        if (req.getId() == null) {
+            entity.setAllowBatchDelete(req.getAllowBatchDelete() != null ? req.getAllowBatchDelete() : 0);
+        } else if (req.getAllowBatchDelete() != null) {
+            entity.setAllowBatchDelete(req.getAllowBatchDelete());
+        }
 
         // UPDATE 类型：校验条件字段必须含主键或唯一索引
         if ("UPDATE".equals(entity.getType())) {
@@ -334,6 +342,73 @@ public class InterfaceConfigService {
         }
 
         return totalAffected;
+    }
+
+    // ─── M2-6 DELETE 预览 ──────────────────────────────────────────────────────
+
+    public Map<String, List<Map<String, Object>>> deletePreview(Long id, Map<String, Object> params) {
+        InterfaceConfig config = interfaceConfigMapper.selectById(id);
+        if (config == null) throw new BusinessException(404, "接口配置不存在");
+        if (!"DELETE".equals(config.getType())) throw new BusinessException(400, "非 DELETE 类型接口");
+
+        DeleteConfigJson deleteConfig = parseDeleteConfig(config.getConfigJson());
+        DbConnection conn = dbConnectionMapper.selectById(config.getDbConnectionId());
+        if (conn == null) throw new BusinessException(404, "数据库连接不存在");
+
+        String password = aesUtil.decrypt(conn.getPassword());
+        Map<String, List<Map<String, Object>>> result = new LinkedHashMap<>();
+
+        try (Connection jdbc = DriverManager.getConnection(conn.getUrl(), conn.getUsername(), password)) {
+            for (DeleteConfigJson.TableDeleteConfig tableConfig : deleteConfig.getTables()) {
+                List<Object> bindParams = new ArrayList<>();
+                String where = buildDeleteWhere(tableConfig.getConditions(), params, bindParams);
+                String sql = "SELECT * FROM " + tableConfig.getTableName() + where + " LIMIT 10";
+
+                List<Map<String, Object>> rows = new ArrayList<>();
+                try (PreparedStatement ps = jdbc.prepareStatement(sql)) {
+                    for (int i = 0; i < bindParams.size(); i++) ps.setObject(i + 1, bindParams.get(i));
+                    try (ResultSet rs = ps.executeQuery()) {
+                        ResultSetMetaData meta = rs.getMetaData();
+                        int colCount = meta.getColumnCount();
+                        while (rs.next()) {
+                            Map<String, Object> row = new LinkedHashMap<>();
+                            for (int i = 1; i <= colCount; i++) row.put(meta.getColumnLabel(i), rs.getObject(i));
+                            rows.add(row);
+                        }
+                    }
+                }
+                result.put(tableConfig.getTableName(), rows);
+            }
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new BusinessException(500, "预览查询失败: " + e.getMessage());
+        }
+        return result;
+    }
+
+    private DeleteConfigJson parseDeleteConfig(String configJson) {
+        try {
+            return objectMapper.readValue(configJson, DeleteConfigJson.class);
+        } catch (Exception e) {
+            throw new BusinessException(400, "配置 JSON 解析失败: " + e.getMessage());
+        }
+    }
+
+    private String buildDeleteWhere(List<DeleteConfigJson.ConditionItem> conditions,
+                                     Map<String, Object> params,
+                                     List<Object> bindParams) {
+        if (conditions == null || conditions.isEmpty()) {
+            throw new BusinessException(400, "删除条件不能为空");
+        }
+        StringBuilder where = new StringBuilder(" WHERE ");
+        for (int i = 0; i < conditions.size(); i++) {
+            DeleteConfigJson.ConditionItem cond = conditions.get(i);
+            if (i > 0) where.append(" AND ");
+            where.append(cond.getField()).append(DeleteBuilder.opToSql(cond.getOp()));
+            bindParams.add(params.get(cond.getParamKey()));
+        }
+        return where.toString();
     }
 
     private String captureSnapshot(Connection jdbc,
