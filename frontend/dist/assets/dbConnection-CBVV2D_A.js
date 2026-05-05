@@ -1,1 +1,0 @@
-import{r as n}from"./request-byX1yfx4.js";function o(){return n.get("/db/list")}function s(t){return n.post("/db/save",t)}function r(t){return n.delete(`/db/${t}`)}function i(t){return n.post(`/db/${t}/test`)}export{r as d,o as l,s,i as t};

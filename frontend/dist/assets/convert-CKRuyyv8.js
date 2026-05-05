@@ -1,0 +1,1 @@
+import{r as t}from"./request-Cqjv1VyR.js";function o(r){return t.post("/format-convert/convert",r)}function n(r){return t.post("/format-convert/parse",r)}function s(r){return t.post("/convert",r)}export{o as a,s as c,n as p};

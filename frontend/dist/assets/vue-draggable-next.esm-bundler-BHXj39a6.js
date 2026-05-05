@@ -1,4 +1,4 @@
-import{S as qt,U as ot,z as Kt,j as ve,p as Zt,r as Qt,V as it,W as Jt}from"./index-BD65wVq4.js";/*!
+import{S as qt,U as ot,z as Kt,j as ve,p as Zt,r as Qt,V as it,W as Jt}from"./index-CsCXHmqL.js";/*!
   * vue-draggable-next v2.3.0
   * (c) 2025 Anish George
   * @license MIT

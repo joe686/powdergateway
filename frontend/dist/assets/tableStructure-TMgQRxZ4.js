@@ -1,1 +1,0 @@
-import{r as t}from"./request-byX1yfx4.js";function a(e){return t.get(`/db/${e}/tables`)}function b(e){return t.delete(`/db/${e}/tables/cache`)}function s(e){return t.get(`/db/${e}/tables/export`,{responseType:"blob"})}export{s as e,a as g,b as r};

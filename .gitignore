@@ -1,0 +1,9 @@
+frontend/node_modules/
+backend/target/
+*.class
+*.jar
+*.war
+.idea/
+*.iml
+.vscode/
+.DS_Store

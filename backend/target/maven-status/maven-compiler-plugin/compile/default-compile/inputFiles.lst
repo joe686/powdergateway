@@ -59,6 +59,7 @@ D:\Project\powergateway\backend\src\main\java\com\powergateway\controller\Templa
 D:\Project\powergateway\backend\src\main\java\com\powergateway\model\FieldFormula.java
 D:\Project\powergateway\backend\src\main\java\com\powergateway\model\dto\LoginResponse.java
 D:\Project\powergateway\backend\src\main\java\com\powergateway\service\TableMetaService.java
+D:\Project\powergateway\backend\src\main\java\com\powergateway\model\dto\UpdateConfigJson.java
 D:\Project\powergateway\backend\src\main\java\com\powergateway\controller\HealthController.java
 D:\Project\powergateway\backend\src\main\java\com\powergateway\service\PortRouteService.java
 D:\Project\powergateway\backend\src\main\java\com\powergateway\dao\SysConfigMapper.java
@@ -73,6 +74,7 @@ D:\Project\powergateway\backend\src\main\java\com\powergateway\model\DbConnectio
 D:\Project\powergateway\backend\src\main\java\com\powergateway\config\SaTokenConfig.java
 D:\Project\powergateway\backend\src\main\java\com\powergateway\dao\InterfaceConfigMapper.java
 D:\Project\powergateway\backend\src\main\java\com\powergateway\model\dto\TemplateSaveRequest.java
+D:\Project\powergateway\backend\src\main\java\com\powergateway\utils\UpdateBuilder.java
 D:\Project\powergateway\backend\src\main\java\com\powergateway\config\DataInitializer.java
 D:\Project\powergateway\backend\src\main\java\com\powergateway\model\dto\TemplateQueryRequest.java
 D:\Project\powergateway\backend\src\main\java\com\powergateway\aop\SqlAuditAspect.java

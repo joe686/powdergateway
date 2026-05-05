@@ -75,7 +75,14 @@
       "Bash(Select-String \"InterfaceConfigService|InterfaceConfigController|InsertConfigJson|FieldInsertConfig|DataSourceResolver|ColumnValidator|InsertBuilder|SqlAuditAspect|InterfaceConfigMapper|M24InsertConfigTest|init-h2|TableMetaService\")",
       "Bash(git init *)",
       "Bash(git add *)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(git rm *)",
+      "Bash(Remove-Item \"D:/Project/powergateway/.git/index.lock\" -Force)",
+      "Bash(git reset *)",
+      "Bash(git config *)",
+      "Bash(gh auth *)",
+      "Bash(git remote *)",
+      "Bash(git push *)"
     ]
   }
 }
