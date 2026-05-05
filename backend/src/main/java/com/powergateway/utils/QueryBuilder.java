@@ -57,6 +57,32 @@ public class QueryBuilder {
         return new SqlResult(sql.toString(), paramValues);
     }
 
+    /**
+     * 全量查询（不添加 LIMIT），用于已发布接口的实际执行。
+     */
+    public static SqlResult buildFull(QueryConfigJson config, Map<String, Object> params) {
+        if (config == null || config.getTables() == null || config.getTables().isEmpty()) {
+            throw new IllegalArgumentException("配置中至少需要一张表");
+        }
+        StringBuilder sql = new StringBuilder();
+        List<Object> paramValues = new ArrayList<>();
+        appendSelect(sql, config.getFields());
+        appendFrom(sql, config.getTables().get(0));
+        appendJoins(sql, config.getTables(), config.getJoins());
+        appendWhere(sql, config.getConditions(), params, paramValues);
+        return new SqlResult(sql.toString(), paramValues);
+    }
+
+    /**
+     * 分页查询，page 从 1 开始，OFFSET = (page-1) * pageSize。
+     */
+    public static SqlResult buildPaginated(QueryConfigJson config, Map<String, Object> params,
+                                            int page, int pageSize) {
+        SqlResult full = buildFull(config, params);
+        String pagedSql = full.sql + " LIMIT " + pageSize + " OFFSET " + ((page - 1) * pageSize);
+        return new SqlResult(pagedSql, full.params);
+    }
+
     // ─── 私有方法 ─────────────────────────────────────────────────────────────
 
     private static void appendSelect(StringBuilder sql, List<FieldDef> fields) {
