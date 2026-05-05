@@ -78,7 +78,8 @@ public class QueryBuilder {
         if (pageSize < 1) throw new IllegalArgumentException("pageSize 必须 >= 1，实际值：" + pageSize);
 
         SqlResult full = buildFull(config, params);
-        String pagedSql = full.sql + " LIMIT " + pageSize + " OFFSET " + ((page - 1) * pageSize);
+        long offset = (long)(page - 1) * pageSize;
+        String pagedSql = full.sql + " LIMIT " + pageSize + " OFFSET " + offset;
         return new SqlResult(pagedSql, full.params);
     }
 
