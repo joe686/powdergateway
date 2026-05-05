@@ -90,6 +90,13 @@ public class InterfaceConfigController {
                     .setTargetDb(config.getDbConnectionId() != null
                             ? config.getDbConnectionId().toString() : "unknown"));
             return Result.success(service.executeUpdate(id, req.getParams()));
+        } else if ("DELETE".equals(type)) {
+            AuditContextHolder.set(new AuditContext()
+                    .setInterfaceId(id)
+                    .setOpType("DELETE")
+                    .setTargetDb(config.getDbConnectionId() != null
+                            ? config.getDbConnectionId().toString() : "unknown"));
+            return Result.success(service.executeDelete(id, req.getParams()));
         } else {
             throw new BusinessException(400, "不支持的接口类型: " + type);
         }

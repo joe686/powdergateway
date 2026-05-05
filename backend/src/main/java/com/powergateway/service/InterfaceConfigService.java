@@ -411,6 +411,107 @@ public class InterfaceConfigService {
         }
     }
 
+    // ─── M2-6 DELETE 执行 ──────────────────────────────────────────────────────
+
+    @AuditLog
+    public int executeDelete(Long id, Map<String, Object> params) {
+        InterfaceConfig config = interfaceConfigMapper.selectById(id);
+        if (config == null) throw new BusinessException(404, "接口配置不存在");
+        if (!"DELETE".equals(config.getType())) throw new BusinessException(400, "非 DELETE 类型接口");
+
+        DeleteConfigJson deleteConfig = parseDeleteConfig(config.getConfigJson());
+        List<DeleteConfigJson.TableDeleteConfig> tables = deleteConfig.getTables();
+        if (tables == null || tables.isEmpty()) throw new BusinessException(400, "未配置删除表");
+        if (tables.size() > 3) throw new BusinessException(400, "最多支持3张表");
+
+        DbConnection conn = dbConnectionMapper.selectById(config.getDbConnectionId());
+        if (conn == null) throw new BusinessException(404, "数据库连接不存在");
+
+        String password = aesUtil.decrypt(conn.getPassword());
+
+        try (Connection jdbc = DriverManager.getConnection(conn.getUrl(), conn.getUsername(), password)) {
+            // Step 1: COUNT 预检
+            Map<String, Integer> countMap = new LinkedHashMap<>();
+            int totalCount = 0;
+            for (DeleteConfigJson.TableDeleteConfig tableConfig : tables) {
+                int cnt = countDeleteRows(jdbc, tableConfig, params);
+                countMap.put(tableConfig.getTableName(), cnt);
+                totalCount += cnt;
+            }
+
+            // Step 2: 批量删除保护
+            int allowBatch = config.getAllowBatchDelete() != null ? config.getAllowBatchDelete() : 0;
+            if (totalCount > 1 && allowBatch == 0) {
+                StringBuilder msg = new StringBuilder("批量删除保护：待删记录共 ")
+                        .append(totalCount).append(" 条，各表：");
+                countMap.forEach((table, cnt) -> msg.append(table).append("=").append(cnt).append(" "));
+                throw new BusinessException(400, msg.toString().trim() + "，请先开启允许批量删除");
+            }
+
+            // Step 3: 构建 DELETE SQL
+            List<DeleteBuilder.SqlResult> sqlResults = new ArrayList<>();
+            for (DeleteConfigJson.TableDeleteConfig tableConfig : tables) {
+                sqlResults.add(DeleteBuilder.build(tableConfig.getTableName(),
+                        tableConfig.getConditions(), params));
+            }
+
+            // Step 4: 写审计上下文
+            AuditContext auditCtx = AuditContextHolder.get();
+            if (auditCtx != null) {
+                try { auditCtx.setBeforeSnapshot(objectMapper.writeValueAsString(countMap)); }
+                catch (Exception ignored) {}
+                auditCtx.setTargetTable(tables.stream()
+                        .map(DeleteConfigJson.TableDeleteConfig::getTableName)
+                        .collect(Collectors.joining(",")));
+                StringBuilder sqlText = new StringBuilder();
+                for (DeleteBuilder.SqlResult r : sqlResults) {
+                    if (sqlText.length() > 0) sqlText.append("; ");
+                    sqlText.append(r.sql);
+                }
+                auditCtx.setSqlText(sqlText.toString());
+            }
+
+            // Step 5: 事务执行 DELETE
+            jdbc.setAutoCommit(false);
+            int totalAffected = 0;
+            try {
+                for (DeleteBuilder.SqlResult sql : sqlResults) {
+                    log.info("[M2-6] SQL: {}", sql.sql);
+                    try (PreparedStatement ps = jdbc.prepareStatement(sql.sql)) {
+                        for (int i = 0; i < sql.params.size(); i++) ps.setObject(i + 1, sql.params.get(i));
+                        totalAffected += ps.executeUpdate();
+                    }
+                }
+                jdbc.commit();
+            } catch (Exception e) {
+                jdbc.rollback();
+                throw new BusinessException(500, "删除执行失败，已回滚: " + e.getMessage());
+            }
+            return totalAffected;
+
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new BusinessException(500, "数据库连接失败: " + e.getMessage());
+        }
+    }
+
+    private int countDeleteRows(Connection jdbc,
+                                 DeleteConfigJson.TableDeleteConfig tableConfig,
+                                 Map<String, Object> params) {
+        List<Object> bindParams = new ArrayList<>();
+        String where = buildDeleteWhere(tableConfig.getConditions(), params, bindParams);
+        String sql = "SELECT COUNT(*) FROM " + tableConfig.getTableName() + where;
+        try (PreparedStatement ps = jdbc.prepareStatement(sql)) {
+            for (int i = 0; i < bindParams.size(); i++) ps.setObject(i + 1, bindParams.get(i));
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+        } catch (Exception e) {
+            throw new BusinessException(500, "COUNT 查询失败: " + e.getMessage());
+        }
+    }
+
     private String captureSnapshot(Connection jdbc,
                                     List<ConditionConfig> allConditions,
                                     Map<String, Object> params,

@@ -159,4 +159,148 @@ class M26DeleteConfigTest {
                 .andExpect(jsonPath("$.data.m26_order", hasSize(1)))
                 .andExpect(jsonPath("$.data.m26_order_item", hasSize(2)));
     }
+
+    // ─── Execute Tests ────────────────────────────────────────────────────────
+
+    @Test @Order(3)
+    void 批量保护_多条记录_拒绝执行() throws Exception {
+        String configJson = "{\"tables\":[{\"tableName\":\"m26_order\"," +
+                "\"conditions\":[{\"field\":\"user_id\",\"op\":\"EQ\",\"paramKey\":\"userId\"}]}]}";
+        Long id = saveDeleteInterface("exec-batch-protect", configJson, 0);
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("params", new HashMap<String, Object>() {{ put("userId", 10); }});
+
+        mockMvc.perform(post("/api/interface/" + id + "/execute")
+                .header("satoken", token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body)))
+                .andExpect(jsonPath("$.code").value(not(200)));
+
+        assertEquals(2, countInH2("m26_order", "user_id = 10"));
+    }
+
+    @Test @Order(4)
+    void 开启批量删除_多条成功_返回影响行数() throws Exception {
+        String configJson = "{\"tables\":[{\"tableName\":\"m26_order\"," +
+                "\"conditions\":[{\"field\":\"user_id\",\"op\":\"EQ\",\"paramKey\":\"userId\"}]}]}";
+        Long id = saveDeleteInterface("exec-batch-ok", configJson, 1);
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("params", new HashMap<String, Object>() {{ put("userId", 10); }});
+
+        MvcResult result = mockMvc.perform(post("/api/interface/" + id + "/execute")
+                .header("satoken", token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body)))
+                .andExpect(jsonPath("$.code").value(200))
+                .andReturn();
+
+        int affected = ((Number) JsonPath.read(result.getResponse().getContentAsString(), "$.data")).intValue();
+        assertEquals(2, affected);
+        assertEquals(0, countInH2("m26_order", "user_id = 10"));
+    }
+
+    @Test @Order(5)
+    void 单条记录DELETE_成功_数据消失() throws Exception {
+        String configJson = "{\"tables\":[{\"tableName\":\"m26_order\"," +
+                "\"conditions\":[{\"field\":\"id\",\"op\":\"EQ\",\"paramKey\":\"orderId\"}]}]}";
+        Long id = saveDeleteInterface("exec-single", configJson, 0);
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("params", new HashMap<String, Object>() {{ put("orderId", 3); }});
+
+        MvcResult result = mockMvc.perform(post("/api/interface/" + id + "/execute")
+                .header("satoken", token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body)))
+                .andExpect(jsonPath("$.code").value(200))
+                .andReturn();
+
+        int affected = ((Number) JsonPath.read(result.getResponse().getContentAsString(), "$.data")).intValue();
+        assertEquals(1, affected);
+        assertEquals(0, countInH2("m26_order", "id = 3"));
+    }
+
+    @Test @Order(6)
+    void 多表DELETE_两表均成功() throws Exception {
+        String configJson = "{\"tables\":["
+                + "{\"tableName\":\"m26_order\","
+                + "\"conditions\":[{\"field\":\"id\",\"op\":\"EQ\",\"paramKey\":\"orderId\"}]},"
+                + "{\"tableName\":\"m26_order_item\","
+                + "\"conditions\":[{\"field\":\"order_id\",\"op\":\"EQ\",\"paramKey\":\"orderId\"}]}"
+                + "]}";
+        Long id = saveDeleteInterface("exec-multi", configJson, 1); // 多表总计3条，需开启批量删除
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("params", new HashMap<String, Object>() {{ put("orderId", 4); }});
+
+        MvcResult result = mockMvc.perform(post("/api/interface/" + id + "/execute")
+                .header("satoken", token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body)))
+                .andExpect(jsonPath("$.code").value(200))
+                .andReturn();
+
+        int affected = ((Number) JsonPath.read(result.getResponse().getContentAsString(), "$.data")).intValue();
+        assertEquals(3, affected); // 1(m26_order) + 2(m26_order_item)
+        assertEquals(0, countInH2("m26_order", "id = 4"));
+        assertEquals(0, countInH2("m26_order_item", "order_id = 4"));
+    }
+
+    @Test @Order(7)
+    void 多表DELETE_第二表列不存在_事务回滚() throws Exception {
+        assertEquals(1, countInH2("m26_order", "id = 5"));
+
+        String configJson = "{\"tables\":["
+                + "{\"tableName\":\"m26_order\","
+                + "\"conditions\":[{\"field\":\"id\",\"op\":\"EQ\",\"paramKey\":\"orderId\"}]},"
+                + "{\"tableName\":\"m26_order_item\","
+                + "\"conditions\":[{\"field\":\"nonexistent_col\",\"op\":\"EQ\",\"paramKey\":\"orderId\"}]}"
+                + "]}";
+        Long id = saveDeleteInterface("exec-rollback", configJson, 1);
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("params", new HashMap<String, Object>() {{ put("orderId", 5); }});
+
+        mockMvc.perform(post("/api/interface/" + id + "/execute")
+                .header("satoken", token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body)))
+                .andExpect(jsonPath("$.code").value(not(200)));
+
+        assertEquals(1, countInH2("m26_order", "id = 5"));
+    }
+
+    @Test @Order(8)
+    void 审计日志含各表COUNT信息() throws Exception {
+        String configJson = "{\"tables\":["
+                + "{\"tableName\":\"m26_order\","
+                + "\"conditions\":[{\"field\":\"id\",\"op\":\"EQ\",\"paramKey\":\"orderId\"}]}"
+                + "]}";
+        Long id = saveDeleteInterface("exec-audit", configJson, 0);
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("params", new HashMap<String, Object>() {{ put("orderId", 5); }});
+
+        mockMvc.perform(post("/api/interface/" + id + "/execute")
+                .header("satoken", token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body)))
+                .andExpect(jsonPath("$.code").value(200));
+
+        Thread.sleep(500);
+
+        try (Connection conn = DriverManager.getConnection(H2_URL, "sa", "");
+             PreparedStatement ps = conn.prepareStatement(
+                     "SELECT before_snapshot FROM sql_audit_log WHERE interface_id = ? AND op_type = 'DELETE'")) {
+            ps.setLong(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                assertTrue(rs.next(), "应有 DELETE 审计记录");
+                String snapshot = rs.getString("before_snapshot");
+                assertNotNull(snapshot);
+                assertTrue(snapshot.contains("m26_order"), "before_snapshot 应含表名");
+            }
+        }
+    }
 }
