@@ -26,9 +26,11 @@ public class DeleteBuilder {
         return new SqlResult(sql.toString(), bindParams);
     }
 
+    /** public — InterfaceConfigService（不同包）复用此方法构建 WHERE 子句 */
     public static String opToSql(String op) {
         if (op == null) return " = ?";
         switch (op) {
+            case "EQ":   return " = ?";
             case "NE":   return " <> ?";
             case "GT":   return " > ?";
             case "LT":   return " < ?";
