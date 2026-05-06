@@ -125,7 +125,8 @@ class M27ExecControllerTest {
     void 禁用接口调用exec_返回403() throws Exception {
         Long id = saveAndPublishSelect();
         mockMvc.perform(post("/api/interface/" + id + "/disable")
-                .header("satoken", token));
+                .header("satoken", token))
+                .andExpect(jsonPath("$.code").value(200));
         mockMvc.perform(post("/api/exec/" + id)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"params\":{}}"))

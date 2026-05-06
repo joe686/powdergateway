@@ -40,7 +40,8 @@ public class ExecController {
         if ("disabled".equals(config.getStatus())) {
             return Result.fail(403, "接口已禁用");
         }
-        if ("draft".equals(config.getStatus())) {
+        if (!"published".equals(config.getStatus())) {
+            // 兜底：draft、null 或未知状态均视为未发布
             return Result.fail(400, "接口未发布");
         }
 
