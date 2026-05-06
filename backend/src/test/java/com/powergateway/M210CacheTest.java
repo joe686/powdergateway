@@ -67,4 +67,58 @@ class M210CacheTest {
 
         assertThat(key).isEqualTo("query_cache:7:order:99:done");
     }
+
+    // ── executeWithCache ──────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("cache_enabled=0 时每次调 DB，不写本地缓存")
+    void executeWithCache_cacheDisabled_alwaysHitsDb() {
+        InterfaceConfig config = new InterfaceConfig();
+        config.setCacheEnabled(0);
+        config.setCacheTtlSeconds(300);
+        config.setCacheKeyTemplate("");
+
+        int[] callCount = {0};
+        Supplier<List<Map<String, Object>>> dbFn = () -> {
+            callCount[0]++;
+            Map<String, Object> row = new HashMap<>();
+            row.put("id", callCount[0]);
+            return Collections.singletonList(row);
+        };
+
+        List<Map<String, Object>> r1 = cacheManager.executeWithCache(1L, config, new HashMap<>(), dbFn);
+        List<Map<String, Object>> r2 = cacheManager.executeWithCache(1L, config, new HashMap<>(), dbFn);
+
+        assertThat(callCount[0]).isEqualTo(2);
+        assertThat(r1.get(0).get("id")).isEqualTo(1);
+        assertThat(r2.get(0).get("id")).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("cache_enabled=1 时第二次命中 Caffeine，DB 只被调一次")
+    void executeWithCache_cacheEnabled_secondCallHitsCaffeine() {
+        InterfaceConfig config = new InterfaceConfig();
+        config.setId(500L);
+        config.setCacheEnabled(1);
+        config.setCacheTtlSeconds(300);
+        config.setCacheKeyTemplate("test:{val}");
+
+        int[] callCount = {0};
+        List<Map<String, Object>> dbResult = Collections.singletonList(
+                Collections.singletonMap("name", "cached_value"));
+        Supplier<List<Map<String, Object>>> dbFn = () -> {
+            callCount[0]++;
+            return dbResult;
+        };
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("val", "abc");
+
+        List<Map<String, Object>> r1 = cacheManager.executeWithCache(500L, config, params, dbFn);
+        List<Map<String, Object>> r2 = cacheManager.executeWithCache(500L, config, params, dbFn);
+
+        assertThat(callCount[0]).isEqualTo(1);
+        assertThat(r1.get(0).get("name")).isEqualTo("cached_value");
+        assertThat(r2.get(0).get("name")).isEqualTo("cached_value");
+    }
 }

@@ -54,11 +54,68 @@ public class QueryCacheManager {
         return result;
     }
 
+    @SuppressWarnings("unchecked")
     public List<Map<String, Object>> executeWithCache(Long interfaceId, InterfaceConfig config,
                                                        Map<String, Object> params,
                                                        Supplier<List<Map<String, Object>>> dbQueryFn) {
-        // Task 4 实现
-        return dbQueryFn.get();
+        if (!Integer.valueOf(1).equals(config.getCacheEnabled())) {
+            return dbQueryFn.get();
+        }
+
+        String cacheKey = buildCacheKey(interfaceId, config.getCacheKeyTemplate(), params);
+
+        // 1. Caffeine
+        Object localVal = localCache.getIfPresent(cacheKey);
+        if (localVal != null) {
+            incrHit(interfaceId);
+            return (List<Map<String, Object>>) localVal;
+        }
+
+        // 2. Redis
+        if (redisTemplate != null) {
+            Object redisVal = redisTemplate.opsForValue().get(cacheKey);
+            if (redisVal != null) {
+                localCache.put(cacheKey, redisVal);
+                incrHit(interfaceId);
+                return (List<Map<String, Object>>) redisVal;
+            }
+        }
+
+        // 3. 分布式锁防击穿
+        String lockKey = LOCK_PREFIX + cacheKey;
+        boolean locked = false;
+        if (redisTemplate != null) {
+            locked = Boolean.TRUE.equals(
+                    redisTemplate.opsForValue().setIfAbsent(lockKey, "1", Duration.ofMillis(3000)));
+        }
+
+        List<Map<String, Object>> result;
+        try {
+            if (!locked && redisTemplate != null) {
+                try { Thread.sleep(50); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
+                Object retryVal = redisTemplate.opsForValue().get(cacheKey);
+                if (retryVal != null) {
+                    incrHit(interfaceId);
+                    return (List<Map<String, Object>>) retryVal;
+                }
+            }
+
+            result = dbQueryFn.get();
+
+            int ttl = config.getCacheTtlSeconds() != null ? config.getCacheTtlSeconds() : 300;
+            if (redisTemplate != null && ttl > 0) {
+                redisTemplate.opsForValue().set(cacheKey, result, Duration.ofSeconds(ttl));
+            }
+            localCache.put(cacheKey, result);
+
+        } finally {
+            if (locked && redisTemplate != null) {
+                redisTemplate.delete(lockKey);
+            }
+        }
+
+        incrMiss(interfaceId);
+        return result;
     }
 
     public void evict(Long interfaceId) {
