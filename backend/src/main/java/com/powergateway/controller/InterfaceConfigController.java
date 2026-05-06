@@ -73,6 +73,20 @@ public class InterfaceConfigController {
         return Result.success();
     }
 
+    @PostMapping("/{id}/publish")
+    @Operation(summary = "发布接口（status → published）")
+    public Result<Void> publish(@PathVariable Long id) {
+        service.publish(id);
+        return Result.success();
+    }
+
+    @PostMapping("/{id}/disable")
+    @Operation(summary = "禁用接口（status → disabled）")
+    public Result<Void> disable(@PathVariable Long id) {
+        service.disable(id);
+        return Result.success();
+    }
+
     @PostMapping("/{id}/execute")
     @Operation(summary = "执行接口（INSERT/UPDATE，按 type 分发，M2-4/M2-5，对外开放）")
     public Result<Integer> execute(
