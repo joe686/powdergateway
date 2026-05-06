@@ -100,6 +100,12 @@ const router = createRouter({
           meta: { title: '删除接口配置' }
         },
         {
+          path: 'interface/list',
+          name: 'InterfaceList',
+          component: () => import('@/views/interface/InterfaceList.vue'),
+          meta: { title: '接口管理' }
+        },
+        {
           path: 'interface/shard',
           name: 'ShardConfig',
           component: () => import('@/views/placeholder/PlaceholderView.vue'),

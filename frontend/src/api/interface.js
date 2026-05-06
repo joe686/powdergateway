@@ -38,3 +38,13 @@ export function executeInterface(id, params) {
 export function deletePreview(id, params) {
   return request.post(`/interface/${id}/delete-preview`, { params })
 }
+
+/** 发布接口（M2-7） */
+export function publishInterface(id) {
+  return request.post(`/interface/${id}/publish`)
+}
+
+/** 禁用接口（M2-7） */
+export function disableInterface(id) {
+  return request.post(`/interface/${id}/disable`)
+}
