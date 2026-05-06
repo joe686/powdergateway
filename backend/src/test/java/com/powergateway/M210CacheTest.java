@@ -121,4 +121,61 @@ class M210CacheTest {
         assertThat(r1.get(0).get("name")).isEqualTo("cached_value");
         assertThat(r2.get(0).get("name")).isEqualTo("cached_value");
     }
+
+    // ── evict / evictAll / getStats ───────────────────────────────────────
+
+    @Test
+    @DisplayName("evict 清除指定接口 Caffeine 缓存，下次查询重新走 DB")
+    void evict_clearsCaffeineAndDbIsCalledAgain() {
+        InterfaceConfig config = new InterfaceConfig();
+        config.setId(700L);
+        config.setCacheEnabled(1);
+        config.setCacheTtlSeconds(300);
+        config.setCacheKeyTemplate("");
+
+        int[] callCount = {0};
+        Supplier<List<Map<String, Object>>> dbFn = () -> {
+            callCount[0]++;
+            return Collections.singletonList(Collections.singletonMap("call", callCount[0]));
+        };
+
+        cacheManager.executeWithCache(700L, config, new HashMap<>(), dbFn);
+        assertThat(callCount[0]).isEqualTo(1);
+
+        cacheManager.evict(700L);
+        cacheManager.executeWithCache(700L, config, new HashMap<>(), dbFn);
+        assertThat(callCount[0]).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("evictAll 清空所有本地缓存条目，下次查询重新走 DB")
+    void evictAll_clearsAllLocalCacheEntries() {
+        InterfaceConfig config = new InterfaceConfig();
+        config.setId(800L);
+        config.setCacheEnabled(1);
+        config.setCacheTtlSeconds(300);
+        config.setCacheKeyTemplate("");
+
+        int[] callCount = {0};
+        Supplier<List<Map<String, Object>>> dbFn = () -> {
+            callCount[0]++;
+            return Collections.singletonList(Collections.singletonMap("n", callCount[0]));
+        };
+
+        cacheManager.executeWithCache(800L, config, new HashMap<>(), dbFn);
+        assertThat(callCount[0]).isEqualTo(1);
+
+        cacheManager.evictAll();
+        cacheManager.executeWithCache(800L, config, new HashMap<>(), dbFn);
+        assertThat(callCount[0]).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("getStats 在测试环境（Redis=null）返回 hitCount=0、missCount=0")
+    void getStats_redisNull_returnsZeroCounts() {
+        CacheStatDTO stats = cacheManager.getStats(123L);
+        assertThat(stats.getInterfaceId()).isEqualTo(123L);
+        assertThat(stats.getHitCount()).isEqualTo(0L);
+        assertThat(stats.getMissCount()).isEqualTo(0L);
+    }
 }

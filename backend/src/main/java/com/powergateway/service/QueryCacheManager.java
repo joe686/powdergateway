@@ -119,16 +119,37 @@ public class QueryCacheManager {
     }
 
     public void evict(Long interfaceId) {
-        // Task 5 实现
+        String prefix = KEY_PREFIX + interfaceId + ":";
+        localCache.asMap().keySet().removeIf(k -> k.startsWith(prefix));
+        if (redisTemplate != null) {
+            Set<String> keys = redisTemplate.keys(prefix + "*");
+            if (keys != null && !keys.isEmpty()) {
+                redisTemplate.delete(keys);
+            }
+        }
+        log.info("[M2-10] evict interfaceId={}", interfaceId);
     }
 
     public void evictAll() {
-        // Task 5 实现
+        localCache.invalidateAll();
+        if (redisTemplate != null) {
+            Set<String> keys = redisTemplate.keys(KEY_PREFIX + "*");
+            if (keys != null && !keys.isEmpty()) {
+                redisTemplate.delete(keys);
+            }
+        }
+        log.info("[M2-10] evictAll executed");
     }
 
     public CacheStatDTO getStats(Long interfaceId) {
-        // Task 5 实现
-        return new CacheStatDTO(interfaceId, null, null, null, null, 0L, 0L);
+        long hit = 0, miss = 0;
+        if (redisTemplate != null) {
+            Object h = redisTemplate.opsForValue().get(HIT_PREFIX + interfaceId);
+            Object m = redisTemplate.opsForValue().get(MISS_PREFIX + interfaceId);
+            hit  = h != null ? Long.parseLong(h.toString()) : 0;
+            miss = m != null ? Long.parseLong(m.toString()) : 0;
+        }
+        return new CacheStatDTO(interfaceId, null, null, null, null, hit, miss);
     }
 
     void incrHit(Long interfaceId) {
