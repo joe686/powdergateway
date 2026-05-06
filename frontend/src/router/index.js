@@ -120,7 +120,7 @@ const router = createRouter({
         {
           path: 'interface/cache',
           name: 'CacheQuery',
-          component: () => import('@/views/placeholder/PlaceholderView.vue'),
+          component: () => import('@/views/cache/CacheList.vue'),
           meta: { title: '缓存查询管理' }
         },
         // 系统管理

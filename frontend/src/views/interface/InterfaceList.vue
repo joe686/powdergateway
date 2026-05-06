@@ -44,6 +44,11 @@
             size="small"
             @click="handleDisable(row)"
           >禁用</el-button>
+          <el-button
+            v-if="row.type === 'SELECT'"
+            size="small"
+            @click="$router.push('/interface/cache')"
+          >缓存</el-button>
           <el-button type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
           <el-popconfirm
             :title="row.status === 'published' ? '已发布接口请先禁用再删除' : '确认删除该接口？'"
