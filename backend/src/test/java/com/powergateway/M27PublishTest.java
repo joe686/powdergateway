@@ -89,4 +89,23 @@ class M27PublishTest {
         service.delete(id);
         assertThrows(BusinessException.class, () -> service.getById(id));
     }
+
+    @Test
+    void executeQuery_草稿状态_抛BusinessException() {
+        Long id = createInterface("SELECT", SELECT_CONFIG);
+        // draft 状态，未发布
+        BusinessException ex = assertThrows(BusinessException.class,
+            () -> service.executeQuery(id, new java.util.HashMap<>(), null, null));
+        assertEquals(403, ex.getCode());
+    }
+
+    @Test
+    void executeQuery_禁用状态_抛BusinessException() {
+        Long id = createInterface("SELECT", SELECT_CONFIG);
+        service.publish(id);
+        service.disable(id);
+        BusinessException ex = assertThrows(BusinessException.class,
+            () -> service.executeQuery(id, new java.util.HashMap<>(), null, null));
+        assertEquals(403, ex.getCode());
+    }
 }

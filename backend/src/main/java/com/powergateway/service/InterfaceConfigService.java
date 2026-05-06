@@ -192,6 +192,7 @@ public class InterfaceConfigService {
         update.setStatus("published");
         update.setPath("/api/exec/" + id);
         interfaceConfigMapper.updateById(update);
+        log.info("[M2-7] 接口 id={} 发布成功，path={}", id, update.getPath());
     }
 
     /** 禁用接口：status → disabled（draft/published 均可） */
@@ -202,6 +203,7 @@ public class InterfaceConfigService {
         update.setId(id);
         update.setStatus("disabled");
         interfaceConfigMapper.updateById(update);
+        log.info("[M2-7] 接口 id={} 已禁用", id);
     }
 
     /** 删除接口配置（已发布状态不允许删除，需先禁用） */
@@ -225,6 +227,9 @@ public class InterfaceConfigService {
         InterfaceConfig config = interfaceConfigMapper.selectById(id);
         if (config == null) throw new BusinessException(404, "接口配置不存在");
         if (!"SELECT".equals(config.getType())) throw new BusinessException(400, "非 SELECT 类型接口");
+        if (!"published".equals(config.getStatus())) {
+            throw new BusinessException(403, "接口未发布或已禁用，无法执行");
+        }
 
         QueryConfigJson queryConfig;
         try {
