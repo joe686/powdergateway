@@ -38,6 +38,6 @@ public class SaTokenConfig implements WebMvcConfigurer {
             }
         })
         .addPathPatterns("/api/**")
-        .excludePathPatterns("/api/auth/login", "/api/auth/logout", "/api/health");
+        .excludePathPatterns("/api/auth/login", "/api/auth/logout", "/api/health", "/api/exec/**");
     }
 }
