@@ -161,11 +161,13 @@ class M15TemplateControllerTest {
 | M2-9 | SQL 审计日志：`SqlAuditLog` 实体 + `@DS("audit")` 审计数据源 + `@AuditLog` 注解 + `SqlAuditAspect` AOP + `AuditLogService`（LinkedBlockingQueue 守护线程异步写入）+ `AuditLogCleanupJob`（每天凌晨2点按 sys_config 留存天数清理） |
 | M2-3 | 查询接口配置：`QueryBuilder`（单表/多表 LEFT JOIN）、4步向导（选表→选字段→条件→预览） |
 | M2-4 | 插入接口配置：`InsertBuilder`、`DataSourceResolver`（REQUEST/CONST/CALC）、`ColumnValidator`（基于表结构元数据校验）、多表 JDBC 手动事务（任意失败全部回滚），前端 `InsertConfig.vue` |
+| M2-5 | 修改接口配置：`UpdateBuilder`，强制唯一条件校验（主键/唯一索引），修改前快照，复用 `DataSourceResolver`、`ColumnValidator` |
+| M2-6 | 删除接口配置：`DeleteBuilder`，待删数据预览，批量删除保护开关，`allow_batch_delete` 字段 |
+| M2-7 | 接口发布：状态流转 draft→published→disabled，统一执行入口 `/api/exec/{id}`，`OpenApiDynamicCustomizer` Swagger 动态注册 |
+| M2-10 | 双层缓存：`CacheConfig`（Caffeine Bean + cacheRedisTemplate）、`QueryCacheManager`（Caffeine→Redis→DB，分布式锁防击穿，命中统计）、`CacheController`（list/config/evict/refresh/stats/evictAll），`interface_config` 新增 `cache_enabled`/`cache_ttl_seconds`/`cache_key_template`，前端 `CacheList.vue` |
 
-## 下一阶段：M2-5 起
+## 下一阶段：M2-8
 
 | 单元 | 内容 |
 |------|------|
-| M2-5 | 修改接口配置：复用 `DataSourceResolver`、`ColumnValidator` |
-| M2-6 | 删除接口配置：待删预览、批量保护开关 |
-| M2-7 | 接口发布：状态流转 draft→published→disabled，统一执行入口 `/api/exec/{id}` |
+| M2-8 | 分库分表配置：`shard_rule` JSON，路由预览，执行时 ShardRouter 解析 |
