@@ -42,6 +42,10 @@ public class InterfaceConfig {
     /** 是否记录 SQL 日志：1=是，0=否 */
     private Integer logEnabled;
 
+    private Integer cacheEnabled;
+    private Integer cacheTtlSeconds;
+    private String  cacheKeyTemplate;
+
     @TableLogic
     private Integer deleted;
 

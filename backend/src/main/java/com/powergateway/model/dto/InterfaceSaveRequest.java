@@ -25,4 +25,11 @@ public class InterfaceSaveRequest {
 
     /** 是否允许批量删除：0=否，1=是；仅 DELETE 类型接口使用 */
     private Integer allowBatchDelete;
+
+    /** 是否开启缓存：0=否，1=是；仅 SELECT 类型接口生效 */
+    private Integer cacheEnabled;
+    /** 缓存 TTL（秒），0=永不过期 */
+    private Integer cacheTtlSeconds;
+    /** key 模板，支持 {参数名} 占位符；为空则按参数排序自动生成 */
+    private String cacheKeyTemplate;
 }
