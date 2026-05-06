@@ -214,4 +214,46 @@ class M210CacheTest {
         List<com.powergateway.model.InterfaceConfig> list = interfaceConfigService.listSelectInterfaces();
         assertThat(list).allSatisfy(c -> assertThat(c.getType()).isEqualTo("SELECT"));
     }
+
+    // ── Controller API ────────────────────────────────────────────────────
+
+    private String getAdminToken() throws Exception {
+        String loginBody = "{\"username\":\"admin\",\"password\":\"Admin@123\"}";
+        MvcResult lr = mockMvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON).content(loginBody))
+                .andExpect(status().isOk()).andReturn();
+        return JsonPath.read(lr.getResponse().getContentAsString(), "$.data.token");
+    }
+
+    @Test
+    @DisplayName("GET /api/cache/list 返回所有 SELECT 接口含统计字段")
+    void cacheList_api_returnsSelectInterfaces() throws Exception {
+        String token = getAdminToken();
+
+        com.powergateway.model.dto.InterfaceSaveRequest req = new com.powergateway.model.dto.InterfaceSaveRequest();
+        req.setName("API列表测试接口");
+        req.setDbConnectionId(1L);
+        req.setType("SELECT");
+        req.setConfigJson("{\"tables\":[{\"name\":\"t\",\"alias\":\"t\"}],\"joins\":[],\"fields\":[],\"conditions\":[],\"processRules\":[]}");
+        req.setCacheEnabled(1);
+        interfaceConfigService.save(req);
+
+        mockMvc.perform(get("/api/cache/list").header("satoken", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.data[0].interfaceName").exists())
+                .andExpect(jsonPath("$.data[0].hitCount").exists())
+                .andExpect(jsonPath("$.data[0].missCount").exists());
+    }
+
+    @Test
+    @DisplayName("DELETE /api/cache/all 返回 200")
+    void clearAll_api_returns200() throws Exception {
+        String token = getAdminToken();
+
+        mockMvc.perform(delete("/api/cache/all").header("satoken", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200));
+    }
 }
