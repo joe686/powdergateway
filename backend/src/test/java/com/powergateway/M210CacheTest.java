@@ -178,4 +178,40 @@ class M210CacheTest {
         assertThat(stats.getHitCount()).isEqualTo(0L);
         assertThat(stats.getMissCount()).isEqualTo(0L);
     }
+
+    // ── Service 集成 ──────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("保存接口时缓存字段被持久化到 interface_config")
+    void saveRequest_cacheFields_persistedToDb() {
+        com.powergateway.model.dto.InterfaceSaveRequest req = new com.powergateway.model.dto.InterfaceSaveRequest();
+        req.setName("缓存字段持久化测试");
+        req.setDbConnectionId(1L);
+        req.setType("SELECT");
+        req.setConfigJson("{\"tables\":[{\"name\":\"t\",\"alias\":\"t\"}],\"joins\":[],\"fields\":[],\"conditions\":[],\"processRules\":[]}");
+        req.setCacheEnabled(1);
+        req.setCacheTtlSeconds(600);
+        req.setCacheKeyTemplate("q:{userId}");
+
+        Long id = interfaceConfigService.save(req);
+        com.powergateway.model.InterfaceConfig saved = interfaceConfigService.getById(id);
+
+        assertThat(saved.getCacheEnabled()).isEqualTo(1);
+        assertThat(saved.getCacheTtlSeconds()).isEqualTo(600);
+        assertThat(saved.getCacheKeyTemplate()).isEqualTo("q:{userId}");
+    }
+
+    @Test
+    @DisplayName("listSelectInterfaces 只返回 SELECT 类型接口")
+    void listSelectInterfaces_returnsOnlySelectType() {
+        com.powergateway.model.dto.InterfaceSaveRequest insertReq = new com.powergateway.model.dto.InterfaceSaveRequest();
+        insertReq.setName("非SELECT接口");
+        insertReq.setDbConnectionId(1L);
+        insertReq.setType("INSERT");
+        insertReq.setConfigJson("{\"tables\":[]}");
+        interfaceConfigService.save(insertReq);
+
+        List<com.powergateway.model.InterfaceConfig> list = interfaceConfigService.listSelectInterfaces();
+        assertThat(list).allSatisfy(c -> assertThat(c.getType()).isEqualTo("SELECT"));
+    }
 }

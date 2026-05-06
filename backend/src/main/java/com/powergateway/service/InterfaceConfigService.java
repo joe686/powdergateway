@@ -30,6 +30,7 @@ import com.powergateway.utils.DataSourceResolver;
 import com.powergateway.utils.InsertBuilder;
 import com.powergateway.utils.QueryBuilder;
 import com.powergateway.utils.UpdateBuilder;
+import com.powergateway.service.QueryCacheManager;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -67,6 +68,9 @@ public class InterfaceConfigService {
     @Autowired
     private TableMetaService tableMetaService;
 
+    @Autowired
+    private QueryCacheManager cacheManager;
+
     // ─── 保存 ──────────────────────────────────────────────────────────────────
 
     /**
@@ -92,6 +96,9 @@ public class InterfaceConfigService {
         entity.setConfigJson(req.getConfigJson());
         entity.setStatus("draft");
         entity.setLogEnabled(1);
+        if (req.getCacheEnabled() != null)    entity.setCacheEnabled(req.getCacheEnabled());
+        if (req.getCacheTtlSeconds() != null) entity.setCacheTtlSeconds(req.getCacheTtlSeconds());
+        if (req.getCacheKeyTemplate() != null) entity.setCacheKeyTemplate(req.getCacheKeyTemplate());
 
         if (req.getId() == null) {
             entity.setAllowBatchDelete(req.getAllowBatchDelete() != null ? req.getAllowBatchDelete() : 0);
@@ -115,6 +122,7 @@ public class InterfaceConfigService {
         if (req.getId() != null) {
             entity.setId(req.getId());
             interfaceConfigMapper.updateById(entity);
+            cacheManager.evict(req.getId());
             return req.getId();
         } else {
             interfaceConfigMapper.insert(entity);
@@ -172,6 +180,14 @@ public class InterfaceConfigService {
         return interfaceConfigMapper.selectList(wrapper);
     }
 
+    /** 查询所有 SELECT 类型接口（M2-10 缓存管理列表用） */
+    public List<InterfaceConfig> listSelectInterfaces() {
+        LambdaQueryWrapper<InterfaceConfig> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(InterfaceConfig::getType, "SELECT");
+        wrapper.orderByDesc(InterfaceConfig::getCreateTime);
+        return interfaceConfigMapper.selectList(wrapper);
+    }
+
     /** 查询接口配置详情 */
     public InterfaceConfig getById(Long id) {
         InterfaceConfig config = interfaceConfigMapper.selectById(id);
@@ -221,6 +237,7 @@ public class InterfaceConfigService {
     /**
      * 执行已发布 SELECT 接口。
      * page/pageSize 均不为 null 时分页（page 从 1 开始），否则全量返回。
+     * M2-10：全量查询且 cache_enabled=1 时走双层缓存。
      */
     public List<Map<String, Object>> executeQuery(Long id, Map<String, Object> params,
                                                    Integer page, Integer pageSize) {
@@ -231,6 +248,16 @@ public class InterfaceConfigService {
             throw new BusinessException(403, "接口未发布或已禁用，无法执行");
         }
 
+        if (Integer.valueOf(1).equals(config.getCacheEnabled()) && page == null) {
+            return cacheManager.executeWithCache(id, config, params,
+                    () -> doExecuteQuery(config, params, null, null));
+        }
+        return doExecuteQuery(config, params, page, pageSize);
+    }
+
+    private List<Map<String, Object>> doExecuteQuery(InterfaceConfig config,
+                                                      Map<String, Object> params,
+                                                      Integer page, Integer pageSize) {
         QueryConfigJson queryConfig;
         try {
             queryConfig = objectMapper.readValue(config.getConfigJson(), QueryConfigJson.class);
