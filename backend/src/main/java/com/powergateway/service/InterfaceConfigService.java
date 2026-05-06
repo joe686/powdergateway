@@ -181,12 +181,74 @@ public class InterfaceConfigService {
         return config;
     }
 
-    /** 删除接口配置（MyBatis-Plus 软删除） */
+    // ─── M2-7 状态管理 ────────────────────────────────────────────────────────────
+
+    /** 发布接口：status → published，path 写入 /api/exec/{id} */
+    public void publish(Long id) {
+        InterfaceConfig config = interfaceConfigMapper.selectById(id);
+        if (config == null) throw new BusinessException(404, "接口配置不存在");
+        InterfaceConfig update = new InterfaceConfig();
+        update.setId(id);
+        update.setStatus("published");
+        update.setPath("/api/exec/" + id);
+        interfaceConfigMapper.updateById(update);
+    }
+
+    /** 禁用接口：status → disabled（draft/published 均可） */
+    public void disable(Long id) {
+        InterfaceConfig config = interfaceConfigMapper.selectById(id);
+        if (config == null) throw new BusinessException(404, "接口配置不存在");
+        InterfaceConfig update = new InterfaceConfig();
+        update.setId(id);
+        update.setStatus("disabled");
+        interfaceConfigMapper.updateById(update);
+    }
+
+    /** 删除接口配置（已发布状态不允许删除，需先禁用） */
     public void delete(Long id) {
-        if (interfaceConfigMapper.selectById(id) == null) {
-            throw new BusinessException(404, "接口配置不存在");
+        InterfaceConfig config = interfaceConfigMapper.selectById(id);
+        if (config == null) throw new BusinessException(404, "接口配置不存在");
+        if ("published".equals(config.getStatus())) {
+            throw new BusinessException(400, "接口已发布，请先禁用后再删除");
         }
         interfaceConfigMapper.deleteById(id);
+    }
+
+    // ─── M2-7 SELECT 执行（全量/分页）──────────────────────────────────────────────
+
+    /**
+     * 执行已发布 SELECT 接口。
+     * page/pageSize 均不为 null 时分页（page 从 1 开始），否则全量返回。
+     */
+    public List<Map<String, Object>> executeQuery(Long id, Map<String, Object> params,
+                                                   Integer page, Integer pageSize) {
+        InterfaceConfig config = interfaceConfigMapper.selectById(id);
+        if (config == null) throw new BusinessException(404, "接口配置不存在");
+        if (!"SELECT".equals(config.getType())) throw new BusinessException(400, "非 SELECT 类型接口");
+
+        QueryConfigJson queryConfig;
+        try {
+            queryConfig = objectMapper.readValue(config.getConfigJson(), QueryConfigJson.class);
+        } catch (Exception e) {
+            throw new BusinessException(400, "配置 JSON 解析失败: " + e.getMessage());
+        }
+
+        QueryBuilder.SqlResult sqlResult;
+        try {
+            if (page != null && pageSize != null) {
+                sqlResult = QueryBuilder.buildPaginated(queryConfig, params, page, pageSize);
+            } else {
+                sqlResult = QueryBuilder.buildFull(queryConfig, params);
+            }
+        } catch (Exception e) {
+            throw new BusinessException(400, "SQL 构建失败: " + e.getMessage());
+        }
+
+        log.info("[M2-7] 执行 SELECT SQL: {}", sqlResult.sql);
+
+        DbConnection conn = dbConnectionMapper.selectById(config.getDbConnectionId());
+        if (conn == null) throw new BusinessException(404, "数据库连接不存在");
+        return executeQuery(conn, sqlResult);
     }
 
     // ─── M2-4 INSERT 执行 ──────────────────────────────────────────────────────
