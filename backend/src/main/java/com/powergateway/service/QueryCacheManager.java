@@ -31,8 +31,27 @@ public class QueryCacheManager {
     private RedisTemplate<String, Object> redisTemplate;
 
     public String buildCacheKey(Long interfaceId, String keyTemplate, Map<String, Object> params) {
-        // Task 3 实现
-        return null;
+        String paramStr;
+        if (keyTemplate != null && !keyTemplate.isEmpty()) {
+            paramStr = replacePlaceholders(keyTemplate, params);
+        } else {
+            paramStr = params == null ? "" : params.entrySet().stream()
+                    .sorted(Map.Entry.comparingByKey())
+                    .map(e -> e.getKey() + "=" + e.getValue())
+                    .collect(Collectors.joining("&"));
+        }
+        return KEY_PREFIX + interfaceId + ":" + paramStr;
+    }
+
+    private String replacePlaceholders(String template, Map<String, Object> params) {
+        String result = template;
+        if (params != null) {
+            for (Map.Entry<String, Object> entry : params.entrySet()) {
+                result = result.replace("{" + entry.getKey() + "}",
+                        entry.getValue() == null ? "" : entry.getValue().toString());
+            }
+        }
+        return result;
     }
 
     public List<Map<String, Object>> executeWithCache(Long interfaceId, InterfaceConfig config,
