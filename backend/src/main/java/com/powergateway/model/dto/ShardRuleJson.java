@@ -3,6 +3,11 @@ package com.powergateway.model.dto;
 import lombok.Data;
 import java.util.List;
 
+/**
+ * shard_rule 列的 JSON 对象表示（M2-8）。
+ * 支持两种路由算法：MODULO（取模）和 RANGE（范围）。
+ * fieldLookup 为可选补查配置，用于路由字段不在请求参数中的场景。
+ */
 @Data
 public class ShardRuleJson {
 
@@ -35,8 +40,8 @@ public class ShardRuleJson {
     public static class DbSegment {
         private Long dbConnectionId;
         private String tablePrefix;
-        private int indexStart;
-        private int indexEnd;
+        private Integer indexStart;
+        private Integer indexEnd;
         /** 0=不补零；2=两位补零（orders_03）；以此类推 */
         private Integer indexPadding;
     }
