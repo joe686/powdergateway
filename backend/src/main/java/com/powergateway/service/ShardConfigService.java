@@ -86,6 +86,9 @@ public class ShardConfigService {
 
         if (rule.getFieldLookup() != null) {
             String lookedUp = doFieldLookup(rule.getFieldLookup(), params);
+            if (lookedUp == null) {
+                throw new BusinessException(404, "补查字段 '" + rule.getRoutingField() + "' 在数据库中为 NULL，无法路由");
+            }
             params.put(rule.getRoutingField(), lookedUp);
         }
 
@@ -111,6 +114,7 @@ public class ShardConfigService {
         if (conn == null) throw new BusinessException(404, "补查数据源不存在");
 
         String password = aesUtil.decrypt(conn.getPassword());
+        // table/column names come from admin-configured shard_rule — cannot be parameterized in JDBC
         String sql = "SELECT " + lookup.getTargetColumn() +
                      " FROM "  + lookup.getTable() +
                      " WHERE " + lookup.getConditionColumn() + " = ?";
