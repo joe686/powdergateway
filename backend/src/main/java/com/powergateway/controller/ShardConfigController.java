@@ -53,7 +53,7 @@ public class ShardConfigController {
         @SuppressWarnings("unchecked")
         Map<String, Object> params = body.get("params") instanceof Map
                 ? new HashMap<>((Map<String, Object>) body.get("params"))
-                : Collections.emptyMap();
+                : new HashMap<>();
         return Result.success(shardConfigService.preview(id, params));
     }
 }
