@@ -216,7 +216,17 @@ private ShardRouteResult resolveSharding(InterfaceConfig config, Map<String, Obj
 
 逻辑：若 `config.shardConfigId == null` 返回 null；否则调用 `ShardConfigService.preview(shardConfigId, params)`。
 
-在 `doExecuteQuery`、`executeInsert`、`executeUpdate`、`executeDelete` 四个方法中，在取 `DbConnection` 之前：
+**生效范围**：分片路由对以下执行路径生效：
+
+| 执行路径 | 是否走分片路由 | 说明 |
+|---------|-------------|------|
+| SELECT（`cache_enabled=0`，`doExecuteQuery`） | ✅ | 直接执行路径，路由后再查库 |
+| SELECT（`cache_enabled=1`，走 `cacheManager.executeWithCache`） | ❌ | 缓存优先，命中时无需路由；本期不支持缓存+分片组合 |
+| INSERT（`executeInsert`） | ✅ | |
+| UPDATE（`executeUpdate`） | ✅ | |
+| DELETE（`executeDelete`） | ✅ | |
+
+实现位置：在 `doExecuteQuery`、`executeInsert`、`executeUpdate`、`executeDelete` 四个方法内部，在取 `DbConnection` 之前执行分片路由：
 
 ```java
 ShardRouteResult shard = resolveSharding(config, params);
@@ -225,6 +235,8 @@ Long dbConnId = shard != null ? shard.getDbConnectionId() : config.getDbConnecti
 ```
 
 > 表名替换只覆盖 config_json 里的**第一张主表**，JOIN 副表表名不变（分库分表场景通常只有主表分片）。
+>
+> cache_enabled=1 的 SELECT 接口若同时配置了 `shard_config_id`，执行时记录 WARN 日志并忽略分片路由，以缓存结果为准。
 
 ---
 
