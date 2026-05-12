@@ -32,4 +32,7 @@ public class InterfaceSaveRequest {
     private Integer cacheTtlSeconds;
     /** key 模板，支持 {参数名} 占位符；为空则按参数排序自动生成 */
     private String cacheKeyTemplate;
+
+    /** 关联分库分表配置 id（可选，null 表示不启用分片路由）*/
+    private Long shardConfigId;
 }

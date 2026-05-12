@@ -115,4 +115,15 @@ public class InterfaceConfigController {
             throw new BusinessException(400, "不支持的接口类型: " + type);
         }
     }
+
+    @PatchMapping("/{id}/shard-config")
+    @Operation(summary = "绑定/解绑分库分表配置（M2-8），shardConfigId=null 表示解绑")
+    public Result<Void> bindShardConfig(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> body) {
+        Object raw = body.get("shardConfigId");
+        Long shardConfigId = raw != null ? Long.parseLong(raw.toString()) : null;
+        service.bindShardConfig(id, shardConfigId);
+        return Result.success();
+    }
 }
