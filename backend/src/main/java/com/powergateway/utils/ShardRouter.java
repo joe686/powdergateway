@@ -14,6 +14,9 @@ public class ShardRouter {
         if (rule == null || rule.getAlgorithm() == null) {
             throw new BusinessException(400, "分片规则配置不完整");
         }
+        if (fieldValue == null) {
+            throw new BusinessException(400, "路由字段值为空");
+        }
         long val;
         try {
             val = Long.parseLong(fieldValue.trim());

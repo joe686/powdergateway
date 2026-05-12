@@ -119,6 +119,14 @@ class M28ShardRouterTest {
     }
 
     @Test
+    @DisplayName("路由字段值为null_抛BusinessException")
+    void route_nullFieldValue_throws() {
+        assertThatThrownBy(() -> ShardRouter.route(buildModuloRule(0), null))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("路由字段值为空");
+    }
+
+    @Test
     @DisplayName("取模路由_空分段列表_抛BusinessException")
     void modulo_emptySegments_throws() {
         ShardRuleJson rule = buildModuloRule(0);
