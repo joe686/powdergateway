@@ -20,6 +20,7 @@ import com.powergateway.model.dto.InterfacePreviewRequest;
 import com.powergateway.model.dto.QueryConfigJson;
 import com.powergateway.model.dto.TableMeta;
 import com.powergateway.model.dto.DeleteConfigJson;
+import com.powergateway.model.dto.ShardRouteResult;
 import com.powergateway.model.dto.UpdateConfigJson;
 import com.powergateway.model.dto.UpdateConfigJson.ConditionConfig;
 import com.powergateway.model.dto.UpdateConfigJson.TableUpdateConfig;
@@ -31,6 +32,7 @@ import com.powergateway.utils.InsertBuilder;
 import com.powergateway.utils.QueryBuilder;
 import com.powergateway.utils.UpdateBuilder;
 import com.powergateway.service.QueryCacheManager;
+import com.powergateway.service.ShardConfigService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -70,6 +72,9 @@ public class InterfaceConfigService {
 
     @Autowired
     private QueryCacheManager cacheManager;
+
+    @Autowired
+    private ShardConfigService shardConfigService;
 
     // ─── 保存 ──────────────────────────────────────────────────────────────────
 
@@ -167,6 +172,17 @@ public class InterfaceConfigService {
         }
 
         return executeQuery(conn, sqlResult);
+    }
+
+    // ─── 分片路由解析 ─────────────────────────────────────────────────────────────
+
+    private ShardRouteResult resolveSharding(InterfaceConfig config, Map<String, Object> params) {
+        if (config.getShardConfigId() == null) return null;
+        if (Integer.valueOf(1).equals(config.getCacheEnabled())) {
+            log.warn("[M2-8] 接口 id={} 同时配置了缓存和分片路由，分片路由已跳过（缓存优先）", config.getId());
+            return null;
+        }
+        return shardConfigService.preview(config.getShardConfigId(), params);
     }
 
     // ─── 基础 CRUD ─────────────────────────────────────────────────────────────
@@ -277,6 +293,12 @@ public class InterfaceConfigService {
             throw new BusinessException(400, "配置 JSON 解析失败: " + e.getMessage());
         }
 
+        ShardRouteResult shard = resolveSharding(config, params);
+        if (shard != null && queryConfig.getTables() != null && !queryConfig.getTables().isEmpty()) {
+            queryConfig.getTables().get(0).setName(shard.getTableName());
+        }
+        Long queryDbConnId = shard != null ? shard.getDbConnectionId() : config.getDbConnectionId();
+
         QueryBuilder.SqlResult sqlResult;
         try {
             if (page != null && pageSize != null) {
@@ -290,7 +312,7 @@ public class InterfaceConfigService {
 
         log.info("[M2-7] 执行 SELECT SQL: {}", sqlResult.sql);
 
-        DbConnection conn = dbConnectionMapper.selectById(config.getDbConnectionId());
+        DbConnection conn = dbConnectionMapper.selectById(queryDbConnId);
         if (conn == null) throw new BusinessException(404, "数据库连接不存在");
         return executeQuery(conn, sqlResult);
     }
@@ -316,11 +338,17 @@ public class InterfaceConfigService {
             throw new BusinessException(400, "配置 JSON 解析失败: " + e.getMessage());
         }
 
+        ShardRouteResult insertShard = resolveSharding(config, params);
+        if (insertShard != null && insertConfig.getTables() != null && !insertConfig.getTables().isEmpty()) {
+            insertConfig.getTables().get(0).setTableName(insertShard.getTableName());
+        }
+        Long insertDbConnId = insertShard != null ? insertShard.getDbConnectionId() : config.getDbConnectionId();
+
         List<TableInsertConfig> tables = insertConfig.getTables();
         if (tables == null || tables.isEmpty()) throw new BusinessException(400, "未配置插入表");
         if (tables.size() > 3) throw new BusinessException(400, "最多支持3张表");
 
-        DbConnection conn = dbConnectionMapper.selectById(config.getDbConnectionId());
+        DbConnection conn = dbConnectionMapper.selectById(insertDbConnId);
         if (conn == null) throw new BusinessException(404, "数据库连接不存在");
 
         // 解析字段值 + 校验
@@ -381,11 +409,23 @@ public class InterfaceConfigService {
             throw new BusinessException(400, "配置 JSON 解析失败: " + e.getMessage());
         }
 
+        ShardRouteResult updateShard = resolveSharding(config, params);
+        if (updateShard != null && updateConfig.getTables() != null && !updateConfig.getTables().isEmpty()) {
+            String origName = updateConfig.getTables().get(0).getTableName();
+            updateConfig.getTables().get(0).setTableName(updateShard.getTableName());
+            if (updateConfig.getConditions() != null) {
+                updateConfig.getConditions().stream()
+                        .filter(c -> origName.equalsIgnoreCase(c.getTableName()))
+                        .forEach(c -> c.setTableName(updateShard.getTableName()));
+            }
+        }
+        Long updateDbConnId = updateShard != null ? updateShard.getDbConnectionId() : config.getDbConnectionId();
+
         List<TableUpdateConfig> tables = updateConfig.getTables();
         if (tables == null || tables.isEmpty()) throw new BusinessException(400, "未配置修改表");
         if (tables.size() > 3) throw new BusinessException(400, "最多支持3张表");
 
-        DbConnection conn = dbConnectionMapper.selectById(config.getDbConnectionId());
+        DbConnection conn = dbConnectionMapper.selectById(updateDbConnId);
         if (conn == null) throw new BusinessException(404, "数据库连接不存在");
 
         List<UpdateBuilder.SqlResult> sqlResults = new ArrayList<>();
@@ -526,11 +566,17 @@ public class InterfaceConfigService {
         if (!"DELETE".equals(config.getType())) throw new BusinessException(400, "非 DELETE 类型接口");
 
         DeleteConfigJson deleteConfig = parseDeleteConfig(config.getConfigJson());
+        ShardRouteResult deleteShard = resolveSharding(config, params);
+        if (deleteShard != null && deleteConfig.getTables() != null && !deleteConfig.getTables().isEmpty()) {
+            deleteConfig.getTables().get(0).setTableName(deleteShard.getTableName());
+        }
+        Long deleteDbConnId = deleteShard != null ? deleteShard.getDbConnectionId() : config.getDbConnectionId();
+
         List<DeleteConfigJson.TableDeleteConfig> tables = deleteConfig.getTables();
         if (tables == null || tables.isEmpty()) throw new BusinessException(400, "未配置删除表");
         if (tables.size() > 3) throw new BusinessException(400, "最多支持3张表");
 
-        DbConnection conn = dbConnectionMapper.selectById(config.getDbConnectionId());
+        DbConnection conn = dbConnectionMapper.selectById(deleteDbConnId);
         if (conn == null) throw new BusinessException(404, "数据库连接不存在");
 
         String password = aesUtil.decrypt(conn.getPassword());

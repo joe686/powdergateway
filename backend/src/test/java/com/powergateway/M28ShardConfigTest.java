@@ -236,4 +236,64 @@ class M28ShardConfigTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(401));
     }
+
+    // ─── Exec 集成测试：分片路由替换主表名 ────────────────────────────────────────
+
+    @Test @Order(20)
+    @DisplayName("executeQuery_配置分片路由_替换主表名后成功查询")
+    void execQuery_withSharding_replacesTableNameAndSucceeds() throws Exception {
+        // Shard rule: RANGE 0~MAX → sys_user (a table that exists in H2)
+        ShardSaveRequest shardReq = new ShardSaveRequest();
+        shardReq.setName("ExecShardTest_" + System.currentTimeMillis());
+        shardReq.setShardRule("{" +
+            "\"routingField\":\"userId\"," +
+            "\"algorithm\":{\"type\":\"RANGE\"}," +
+            "\"shards\":[{\"rangeStart\":0,\"rangeEnd\":9999999999,\"dbConnectionId\":" + testDbId +
+            ",\"tableName\":\"sys_user\"}]}");
+        Long shardId = shardConfigService.save(shardReq);
+
+        // Interface config: SELECT from "nonexistent_table" — sharding will replace with sys_user
+        String configJson = "{" +
+            "\"tables\":[{\"name\":\"nonexistent_table\",\"alias\":\"u\"}]," +
+            "\"joins\":[]," +
+            "\"fields\":[{\"table\":\"u\",\"column\":\"id\",\"alias\":\"uid\"}]," +
+            "\"conditions\":[]," +
+            "\"processRules\":[]}";
+
+        java.util.Map<String, Object> saveBody = new java.util.LinkedHashMap<>();
+        saveBody.put("name", "ShardExec_" + System.currentTimeMillis());
+        saveBody.put("dbConnectionId", testDbId);
+        saveBody.put("type", "SELECT");
+        saveBody.put("configJson", configJson);
+        saveBody.put("shardConfigId", shardId);
+
+        MvcResult saveRes = mockMvc.perform(post("/api/interface/save")
+                        .header("satoken", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(saveBody)))
+                .andExpect(jsonPath("$.code").value(200))
+                .andReturn();
+        Long interfaceId = ((Number) JsonPath.read(saveRes.getResponse().getContentAsString(), "$.data")).longValue();
+
+        try {
+            // Publish
+            mockMvc.perform(post("/api/interface/" + interfaceId + "/publish")
+                            .header("satoken", token))
+                    .andExpect(jsonPath("$.code").value(200));
+
+            // Execute: userId=5 → RANGE matches → tableName=sys_user → query returns data
+            mockMvc.perform(post("/api/exec/" + interfaceId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"params\":{\"userId\":\"5\"}}"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.code").value(200))
+                    .andExpect(jsonPath("$.data").isArray());
+        } finally {
+            shardConfigMapper.deleteById(shardId);
+            mockMvc.perform(post("/api/interface/" + interfaceId + "/disable")
+                    .header("satoken", token));
+            mockMvc.perform(delete("/api/interface/" + interfaceId)
+                    .header("satoken", token));
+        }
+    }
 }
