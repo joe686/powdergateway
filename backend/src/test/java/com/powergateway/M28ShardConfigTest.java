@@ -165,4 +165,75 @@ class M28ShardConfigTest {
             shardConfigMapper.deleteById(id);
         }
     }
+
+    // ─── Controller 测试 ─────────────────────────────────────────────────────────
+
+    @Test @Order(10)
+    @DisplayName("POST /api/shard/save → 200 返回 id")
+    void api_save_returns200() throws Exception {
+        Map<String, Object> reqMap = new HashMap<>();
+        reqMap.put("name", "API_" + System.currentTimeMillis());
+        reqMap.put("shardRule", moduloRule(testDbId));
+        String body = objectMapper.writeValueAsString(reqMap);
+        MvcResult r = mockMvc.perform(post("/api/shard/save")
+                        .header("satoken", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data").isNumber())
+                .andReturn();
+        Long id = ((Number) JsonPath.read(r.getResponse().getContentAsString(), "$.data")).longValue();
+        shardConfigMapper.deleteById(id);
+    }
+
+    @Test @Order(11)
+    @DisplayName("GET /api/shard/list → 200 返回数组")
+    void api_list_returns200() throws Exception {
+        mockMvc.perform(get("/api/shard/list").header("satoken", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data").isArray());
+    }
+
+    @Test @Order(12)
+    @DisplayName("DELETE /api/shard/{id} → 200")
+    void api_delete_returns200() throws Exception {
+        ShardSaveRequest req = new ShardSaveRequest();
+        req.setName("待删_" + System.currentTimeMillis());
+        req.setShardRule(moduloRule(testDbId));
+        Long id = shardConfigService.save(req);
+        mockMvc.perform(delete("/api/shard/" + id).header("satoken", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200));
+    }
+
+    @Test @Order(13)
+    @DisplayName("POST /api/shard/{id}/preview → 200 返回路由结果")
+    void api_preview_returns200WithTableName() throws Exception {
+        ShardSaveRequest req = new ShardSaveRequest();
+        req.setName("预览API_" + System.currentTimeMillis());
+        req.setShardRule(moduloRule(testDbId));
+        Long id = shardConfigService.save(req);
+        try {
+            mockMvc.perform(post("/api/shard/" + id + "/preview")
+                            .header("satoken", token)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"params\":{\"userId\":\"3\"}}"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.code").value(200))
+                    .andExpect(jsonPath("$.data.tableName").value("orders_3"))
+                    .andExpect(jsonPath("$.data.dbConnectionId").isNumber());
+        } finally {
+            shardConfigMapper.deleteById(id);
+        }
+    }
+
+    @Test @Order(14)
+    @DisplayName("未登录访问 /api/shard/list → 401")
+    void api_noToken_401() throws Exception {
+        mockMvc.perform(get("/api/shard/list"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(401));
+    }
 }
