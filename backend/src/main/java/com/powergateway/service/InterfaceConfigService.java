@@ -99,7 +99,7 @@ public class InterfaceConfigService {
         if (req.getCacheEnabled() != null)    entity.setCacheEnabled(req.getCacheEnabled());
         if (req.getCacheTtlSeconds() != null) entity.setCacheTtlSeconds(req.getCacheTtlSeconds());
         if (req.getCacheKeyTemplate() != null) entity.setCacheKeyTemplate(req.getCacheKeyTemplate());
-        entity.setShardConfigId(req.getShardConfigId());
+        if (req.getShardConfigId() != null) entity.setShardConfigId(req.getShardConfigId());
 
         if (req.getId() == null) {
             entity.setAllowBatchDelete(req.getAllowBatchDelete() != null ? req.getAllowBatchDelete() : 0);
@@ -235,12 +235,13 @@ public class InterfaceConfigService {
 
     /** 单独绑定/解绑分库分表配置（M2-8），shardConfigId=null 表示解绑 */
     public void bindShardConfig(Long id, Long shardConfigId) {
-        InterfaceConfig config = interfaceConfigMapper.selectById(id);
-        if (config == null) throw new BusinessException(404, "接口配置不存在");
-        InterfaceConfig update = new InterfaceConfig();
-        update.setId(id);
-        update.setShardConfigId(shardConfigId);
-        interfaceConfigMapper.updateById(update);
+        if (interfaceConfigMapper.selectById(id) == null) {
+            throw new BusinessException(404, "接口配置不存在");
+        }
+        interfaceConfigMapper.update(null,
+                new com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<InterfaceConfig>()
+                        .eq(InterfaceConfig::getId, id)
+                        .set(InterfaceConfig::getShardConfigId, shardConfigId));
     }
 
     // ─── M2-7 SELECT 执行（全量/分页）──────────────────────────────────────────────

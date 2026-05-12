@@ -122,7 +122,14 @@ public class InterfaceConfigController {
             @PathVariable Long id,
             @RequestBody Map<String, Object> body) {
         Object raw = body.get("shardConfigId");
-        Long shardConfigId = raw != null ? Long.parseLong(raw.toString()) : null;
+        Long shardConfigId = null;
+        if (raw != null) {
+            try {
+                shardConfigId = Long.parseLong(raw.toString());
+            } catch (NumberFormatException e) {
+                throw new com.powergateway.exception.BusinessException(400, "shardConfigId 必须为数字");
+            }
+        }
         service.bindShardConfig(id, shardConfigId);
         return Result.success();
     }
