@@ -142,7 +142,7 @@ INSERT INTO sys_config (config_key, config_value, description) VALUES
   ('audit.log.retention.days', '365', '审计日志保留天数'),
   ('sql.log.retention.days', '90', 'SQL 日志保留天数'),
   ('log_menu_enabled', 'true', '日志管理菜单显示开关'),
-  ('sys.log.retention.days', '30', '操作日志归档天数');
+  ('sys.log.retention.days', '30', '操作日志归档天数（超过此天数的记录从 sys_log 归档到 sys_log_history）');
 
 -- 审计日志表（M2-9）：独立审计库，H2 测试中使用 TEXT 代替 JSON
 CREATE TABLE sql_audit_log (
