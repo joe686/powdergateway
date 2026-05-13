@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.List;
 
 /**
  * 认证接口：登录、登出
@@ -40,5 +41,11 @@ public class AuthController {
     @GetMapping("/info")
     public Result<LoginResponse.UserInfo> info() {
         return Result.success(authService.getCurrentUserInfo());
+    }
+
+    @Operation(summary = "获取当前用户可见菜单列表（SYS-3）")
+    @GetMapping("/menu")
+    public Result<List<String>> menu() {
+        return Result.success(authService.getMenuForCurrentUser());
     }
 }
