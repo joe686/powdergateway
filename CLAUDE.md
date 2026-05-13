@@ -13,7 +13,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 PowerGateway 是一个低代码/零代码可视化接口开发平台，核心价值：减少接口开发工时 50% 以上，单个接口转换配置 ~10 分钟内完成。
 
-**当前状态：阶段一全部完成（P0-1 ～ P0-4），阶段二全部完成（M1-1 ～ M1-7），阶段三全部完成（M2-1、M2-2、M2-9、M2-3、M2-4、M2-5、M2-6、M2-7），阶段四 M2-10 完成，共 241 个测试全绿。下一阶段：阶段四剩余（M2-8、SYS-1 ～ SYS-4）。**
+**当前状态：阶段一全部完成（P0-1 ～ P0-4），阶段二全部完成（M1-1 ～ M1-7），阶段三全部完成（M2-1、M2-2、M2-9、M2-3、M2-4、M2-5、M2-6、M2-7），阶段四 M2-10、M2-8 完成，共 268 个测试全绿。下一阶段：阶段四剩余（SYS-1 ～ SYS-4）。**
 
 > `backend/CLAUDE.md` 包含后端实现细节（测试配置、Schema 约定、依赖版本）；`frontend/CLAUDE.md` 包含前端路由约定、请求链路和新增页面步骤。
 
@@ -74,10 +74,18 @@ npm run build                      # 生产打包
 
 ## 关键架构决策
 
-- **三库分离**：配置库（MySQL，存模板/接口配置）、业务库（动态连接）、审计库（独立 MySQL，保留1年）
-- **双层缓存**：Caffeine → Redis → DB；查询目标 ≤ 300ms，增删改 ≤ 500ms
-- **配置驱动 SQL**：接口配置以 JSON 持久化，运行时动态构造 SQL，不存硬编码 SQL
-- **异步审计**：LinkedBlockingQueue + @Async，不阻塞主业务链路
+- **三库分离**：配置库（MySQL，存模板/接口配置）、业务库（`dynamic-datasource-spring-boot-starter` 按 dbId 动态切换）、审计库（独立 MySQL，保留1年）
+- **双层缓存**：Caffeine → Redis → DB；分布式锁（SET NX PX 3000）防缓存击穿；查询目标 ≤ 300ms，增删改 ≤ 500ms
+- **配置驱动 SQL**：接口配置以 JSON 持久化（`interface_config.config_json`），运行时 QueryBuilder/InsertBuilder/UpdateBuilder/DeleteBuilder 动态构造，不存硬编码 SQL
+- **统一执行入口**：所有已发布接口通过 `POST /api/exec/{interfaceId}` 调用，状态流转 `draft → published → disabled`
+- **异步审计**：AOP @Around 拦截 Executor → LinkedBlockingQueue + @Async 写审计库，不阻塞主业务链路
+
+### 密码安全规约
+
+| 场景 | 算法 | 位置 |
+|------|------|------|
+| 用户登录密码 | BCrypt | `sys_user.password` |
+| 数据源连接密码 | AES-128 | `db_connection.password` |
 
 详细模块说明、目录结构、菜单树、数据库表设计见 [`README/架构说明.md`](README/架构说明.md)。
 
