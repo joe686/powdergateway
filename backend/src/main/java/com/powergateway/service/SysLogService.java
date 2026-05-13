@@ -70,7 +70,9 @@ public class SysLogService {
     }
 
     /**
-     * 仅供测试使用：同步消费队列剩余项目，确保断言前数据已落库
+     * 仅供测试使用，严禁在生产代码中调用。
+     * 同步消费队列剩余项目，使测试可以立即验证 DB 写入结果。
+     * 生产环境的异步消费由守护线程自动处理。
      */
     public void flushForTest() {
         List<SysLog> pending = new ArrayList<>();
