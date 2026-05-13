@@ -73,6 +73,9 @@ public class AuthService {
     public List<String> getMenuForCurrentUser() {
         long userId = StpUtil.getLoginIdAsLong();
         SysUser user = sysUserMapper.selectById(userId);
+        if (user == null) {
+            throw new BusinessException(401, "用户不存在，请重新登录");
+        }
 
         List<String> menus;
         switch (user.getRole()) {

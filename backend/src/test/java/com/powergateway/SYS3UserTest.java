@@ -134,9 +134,9 @@ class SYS3UserTest {
     @Test @Order(4)
     @DisplayName("getMenu_log菜单关闭_system/log不在任何角色列表")
     void getMenu_logMenuDisabled_systemLogHidden() throws Exception {
-        SysConfig existing = sysConfigMapper.selectById("log_menu_enabled");
+        SysConfig existing = sysConfigMapper.selectById(com.powergateway.config.MenuPermission.LOG_MENU_CONFIG_KEY);
         SysConfig cfg = new SysConfig();
-        cfg.setConfigKey("log_menu_enabled");
+        cfg.setConfigKey(com.powergateway.config.MenuPermission.LOG_MENU_CONFIG_KEY);
         cfg.setConfigValue("false");
         cfg.setDescription("日志菜单开关");
         if (existing != null) {
