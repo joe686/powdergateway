@@ -206,7 +206,7 @@ const previewVisible = ref(false)
 const previewing = ref(false)
 const previewResult = ref(null)
 const previewParams = ref([{ key: '', val: '' }])
-let previewId = null
+const previewId = ref(null)
 
 function emptyForm() {
   return {
@@ -224,7 +224,7 @@ function emptyForm() {
 function algoTag(row) {
   try {
     const rule = JSON.parse(row.shardRule || '{}')
-    return rule.algorithm && rule.algorithm.type === 'RANGE' ? 'warning' : ''
+    return rule.algorithm && rule.algorithm.type === 'RANGE' ? 'warning' : 'info'
   } catch (e) { return 'info' }
 }
 
@@ -296,7 +296,7 @@ async function handleSave() {
       return Object.assign({}, s, { rangeStart: Number(s.rangeStart), rangeEnd: Number(s.rangeEnd) })
     })
   }
-  var lookup = form.value.lookup
+  const lookup = form.value.lookup
   if (lookup.dbConnectionId) rule.fieldLookup = Object.assign({}, lookup)
 
   saving.value = true
@@ -311,13 +311,15 @@ async function handleSave() {
 }
 
 async function handleDelete(row) {
-  await deleteShardConfig(row.id)
-  ElMessage.success('删除成功')
-  await loadList()
+  try {
+    await deleteShardConfig(row.id)
+    ElMessage.success('删除成功')
+    await loadList()
+  } catch (e) {}
 }
 
 function openPreview(id) {
-  previewId = id
+  previewId.value = id
   previewResult.value = null
   previewParams.value = [{ key: '', val: '' }]
   previewVisible.value = true
@@ -328,7 +330,8 @@ async function doPreview() {
   previewParams.value.forEach(function(item) { if (item.key) params[item.key] = item.val })
   previewing.value = true
   try {
-    previewResult.value = await previewShardRoute(previewId, params)
+    const id = previewId.value
+    previewResult.value = await previewShardRoute(id, params)
   } finally {
     previewing.value = false
   }
