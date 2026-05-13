@@ -108,7 +108,7 @@ const router = createRouter({
         {
           path: 'interface/shard',
           name: 'ShardConfig',
-          component: () => import('@/views/placeholder/PlaceholderView.vue'),
+          component: () => import('@/views/interface/ShardConfig.vue'),
           meta: { title: '分库分表配置' }
         },
         {

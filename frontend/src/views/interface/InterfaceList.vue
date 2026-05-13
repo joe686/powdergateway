@@ -49,6 +49,7 @@
             size="small"
             @click="$router.push('/interface/cache')"
           >缓存</el-button>
+          <el-button size="small" @click="openShardDialog(row)">分片</el-button>
           <el-button type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
           <el-popconfirm
             :title="row.status === 'published' ? '已发布接口请先禁用再删除' : '确认删除该接口？'"
@@ -72,6 +73,22 @@
       @current-change="loadList"
     />
   </div>
+
+  <!-- 绑定分片配置弹窗 -->
+  <el-dialog v-model="shardDialogVisible" title="绑定分库分表配置" width="420px">
+    <el-form label-width="100px">
+      <el-form-item label="分片配置">
+        <el-select v-model="shardForm.shardConfigId" clearable placeholder="不启用分片路由"
+          style="width:100%" @visible-change="onShardSelectOpen">
+          <el-option v-for="s in shardList" :key="s.id" :label="s.name" :value="s.id" />
+        </el-select>
+      </el-form-item>
+    </el-form>
+    <template #footer>
+      <el-button @click="shardDialogVisible = false">取消</el-button>
+      <el-button type="primary" :loading="shardSaving" @click="handleBindShard">保存</el-button>
+    </template>
+  </el-dialog>
 </template>
 
 <script setup>
@@ -82,8 +99,10 @@ import {
   listInterfaces,
   deleteInterface,
   publishInterface,
-  disableInterface
+  disableInterface,
+  bindShardConfig
 } from '@/api/interface'
+import { listShardConfigs } from '@/api/shardConfig'
 
 const router = useRouter()
 const list = ref([])
@@ -92,6 +111,10 @@ const searchName = ref('')
 const page = ref(1)
 const pageSize = ref(20)
 const total = ref(0)
+const shardDialogVisible = ref(false)
+const shardSaving = ref(false)
+const shardList = ref([])
+const shardForm = ref({ interfaceId: null, shardConfigId: null })
 
 const TYPE_ROUTE = {
   SELECT: '/interface/dev',
@@ -148,6 +171,32 @@ async function handleDelete(row) {
   await deleteInterface(row.id)
   ElMessage.success('删除成功')
   await loadList()
+}
+
+function openShardDialog(row) {
+  shardForm.value = { interfaceId: row.id, shardConfigId: row.shardConfigId || null }
+  shardDialogVisible.value = true
+}
+
+async function onShardSelectOpen(visible) {
+  if (visible && shardList.value.length === 0) {
+    try {
+      shardList.value = await listShardConfigs() || []
+    } catch (e) {}
+  }
+}
+
+async function handleBindShard() {
+  shardSaving.value = true
+  try {
+    await bindShardConfig(shardForm.value.interfaceId, shardForm.value.shardConfigId)
+    ElMessage.success('绑定成功')
+    shardDialogVisible.value = false
+    await loadList()
+  } catch (e) {
+  } finally {
+    shardSaving.value = false
+  }
 }
 
 onMounted(loadList)

@@ -48,3 +48,8 @@ export function publishInterface(id) {
 export function disableInterface(id) {
   return request.post(`/interface/${id}/disable`)
 }
+
+/** 绑定/解绑分库分表配置（M2-8），shardConfigId=null 表示解绑 */
+export function bindShardConfig(id, shardConfigId) {
+  return request.patch(`/interface/${id}/shard-config`, { shardConfigId })
+}
