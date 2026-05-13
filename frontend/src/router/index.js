@@ -139,7 +139,7 @@ const router = createRouter({
         {
           path: 'system/user',
           name: 'UserManage',
-          component: () => import('@/views/placeholder/PlaceholderView.vue'),
+          component: () => import('@/views/system/UserList.vue'),
           meta: { title: '用户权限管理' }
         },
         {
