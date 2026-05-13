@@ -4,6 +4,7 @@ import com.powergateway.common.Result;
 import com.powergateway.model.ShardConfig;
 import com.powergateway.model.dto.ShardRouteResult;
 import com.powergateway.model.dto.ShardSaveRequest;
+import com.powergateway.aop.SysLogRecord;
 import com.powergateway.service.ShardConfigService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -32,12 +33,14 @@ public class ShardConfigController {
         return Result.success(shardConfigService.list(name, page, size));
     }
 
+    @SysLogRecord(module = "分库分表", action = "保存分片配置")
     @PostMapping("/save")
     @Operation(summary = "新增/更新分片配置（id 为空=新增）")
     public Result<Long> save(@RequestBody ShardSaveRequest req) {
         return Result.success(shardConfigService.save(req));
     }
 
+    @SysLogRecord(module = "分库分表", action = "删除分片配置")
     @DeleteMapping("/{id}")
     @Operation(summary = "删除分片配置（逻辑删除）")
     public Result<Void> delete(@PathVariable Long id) {

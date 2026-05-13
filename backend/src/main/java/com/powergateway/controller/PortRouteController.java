@@ -5,6 +5,7 @@ import com.powergateway.common.Result;
 import com.powergateway.model.PortRoute;
 import com.powergateway.model.dto.DispatchRequest;
 import com.powergateway.model.dto.PortRouteSaveRequest;
+import com.powergateway.aop.SysLogRecord;
 import com.powergateway.service.PortRouteService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -44,12 +45,14 @@ public class PortRouteController {
     }
 
     @Operation(summary = "新增/更新端口路由", description = "id 为空时新增，id 不为空时更新；返回路由 id")
+    @SysLogRecord(module = "端口路由", action = "保存路由")
     @PostMapping("/api/port-route/save")
     public Result<Long> save(@RequestBody PortRouteSaveRequest req) {
         return Result.success(portRouteService.saveRoute(req));
     }
 
     @Operation(summary = "删除端口路由", description = "逻辑删除")
+    @SysLogRecord(module = "端口路由", action = "删除路由")
     @DeleteMapping("/api/port-route/{id}")
     public Result<Void> delete(@PathVariable Long id) {
         portRouteService.deleteRoute(id);

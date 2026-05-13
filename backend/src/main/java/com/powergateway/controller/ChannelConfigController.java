@@ -3,6 +3,7 @@ package com.powergateway.controller;
 import com.powergateway.common.Result;
 import com.powergateway.model.ChannelConfig;
 import com.powergateway.model.dto.ChannelSaveRequest;
+import com.powergateway.aop.SysLogRecord;
 import com.powergateway.service.ChannelConfigService;
 import com.powergateway.utils.FormatType;
 import io.swagger.v3.oas.annotations.Operation;
@@ -38,12 +39,14 @@ public class ChannelConfigController {
 
     @Operation(summary = "新增或更新渠道配置",
                description = "id 为空时新增；id 有值时更新。保存后刷新 Redis 缓存。")
+    @SysLogRecord(module = "渠道配置", action = "保存渠道")
     @PostMapping("/save")
     public Result<Long> save(@RequestBody ChannelSaveRequest req) {
         return Result.success(channelConfigService.saveChannel(req));
     }
 
     @Operation(summary = "删除渠道配置（逻辑删除）")
+    @SysLogRecord(module = "渠道配置", action = "删除渠道")
     @DeleteMapping("/{id}")
     public Result<Void> delete(@PathVariable Long id) {
         channelConfigService.deleteChannel(id);

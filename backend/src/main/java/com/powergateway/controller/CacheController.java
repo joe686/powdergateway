@@ -6,6 +6,7 @@ import com.powergateway.exception.BusinessException;
 import com.powergateway.model.InterfaceConfig;
 import com.powergateway.model.dto.CacheConfigRequest;
 import com.powergateway.model.dto.CacheStatDTO;
+import com.powergateway.aop.SysLogRecord;
 import com.powergateway.service.InterfaceConfigService;
 import com.powergateway.service.QueryCacheManager;
 import io.swagger.v3.oas.annotations.Operation;
@@ -61,6 +62,7 @@ public class CacheController {
         return Result.success();
     }
 
+    @SysLogRecord(module = "缓存管理", action = "清除缓存")
     @DeleteMapping("/{interfaceId}")
     @Operation(summary = "清除指定接口的 Caffeine + Redis 缓存")
     public Result<?> evict(@PathVariable Long interfaceId) {
@@ -84,6 +86,7 @@ public class CacheController {
         return Result.success();
     }
 
+    @SysLogRecord(module = "缓存管理", action = "清除全部缓存")
     @DeleteMapping("/all")
     @Operation(summary = "一键清除所有接口缓存")
     public Result<?> evictAll() {

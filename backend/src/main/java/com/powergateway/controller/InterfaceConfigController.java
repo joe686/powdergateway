@@ -8,6 +8,7 @@ import com.powergateway.model.InterfaceConfig;
 import com.powergateway.model.dto.InterfaceExecuteRequest;
 import com.powergateway.model.dto.InterfacePreviewRequest;
 import com.powergateway.model.dto.InterfaceSaveRequest;
+import com.powergateway.aop.SysLogRecord;
 import com.powergateway.service.InterfaceConfigService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -29,6 +30,7 @@ public class InterfaceConfigController {
     @Autowired
     private InterfaceConfigService service;
 
+    @SysLogRecord(module = "接口配置", action = "保存接口")
     @PostMapping("/save")
     @Operation(summary = "保存接口配置（新建或更新）")
     public Result<Long> save(@RequestBody InterfaceSaveRequest req) {
@@ -66,6 +68,7 @@ public class InterfaceConfigController {
         return Result.success(service.getById(id));
     }
 
+    @SysLogRecord(module = "接口配置", action = "删除接口")
     @DeleteMapping("/{id}")
     @Operation(summary = "删除接口配置")
     public Result<Void> delete(@PathVariable Long id) {
@@ -73,6 +76,7 @@ public class InterfaceConfigController {
         return Result.success();
     }
 
+    @SysLogRecord(module = "接口配置", action = "发布接口")
     @PostMapping("/{id}/publish")
     @Operation(summary = "发布接口（status → published）")
     public Result<Void> publish(@PathVariable Long id) {
@@ -80,6 +84,7 @@ public class InterfaceConfigController {
         return Result.success();
     }
 
+    @SysLogRecord(module = "接口配置", action = "禁用接口")
     @PostMapping("/{id}/disable")
     @Operation(summary = "禁用接口（status → disabled）")
     public Result<Void> disable(@PathVariable Long id) {

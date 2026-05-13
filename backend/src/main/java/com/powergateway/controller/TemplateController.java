@@ -6,6 +6,7 @@ import com.powergateway.model.ConvertTemplate;
 import com.powergateway.model.dto.PreviewRequest;
 import com.powergateway.model.dto.TemplateSaveRequest;
 import com.powergateway.model.dto.TemplateQueryRequest;
+import com.powergateway.aop.SysLogRecord;
 import com.powergateway.service.TemplateService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -27,6 +28,7 @@ public class TemplateController {
 
     @Operation(summary = "保存/更新转换模板（含映射规则）",
                description = "id 为空时新增；id 有值时旧版本 is_latest 置 0，插入新版本（M1-2/M1-5）")
+    @SysLogRecord(module = "模板管理", action = "保存模板")
     @PostMapping("/save")
     public Result<Long> save(@RequestBody TemplateSaveRequest req) {
         Long id = templateService.saveTemplate(req);
@@ -48,6 +50,7 @@ public class TemplateController {
 
     @Operation(summary = "删除模板（逻辑删除，M1-5）",
                description = "软删除当前版本及同名历史版本")
+    @SysLogRecord(module = "模板管理", action = "删除模板")
     @DeleteMapping("/{id}")
     public Result<Void> delete(@PathVariable Long id) {
         templateService.deleteTemplate(id);
@@ -56,6 +59,7 @@ public class TemplateController {
 
     @Operation(summary = "复制模板（M1-5）",
                description = "name 加 _copy 后缀，version 重置为 1")
+    @SysLogRecord(module = "模板管理", action = "复制模板")
     @PostMapping("/{id}/copy")
     public Result<Long> copy(@PathVariable Long id) {
         return Result.success(templateService.copyTemplate(id));
