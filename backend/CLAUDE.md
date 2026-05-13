@@ -165,9 +165,13 @@ class M15TemplateControllerTest {
 | M2-6 | 删除接口配置：`DeleteBuilder`，待删数据预览，批量删除保护开关，`allow_batch_delete` 字段 |
 | M2-7 | 接口发布：状态流转 draft→published→disabled，统一执行入口 `/api/exec/{id}`，`OpenApiDynamicCustomizer` Swagger 动态注册 |
 | M2-10 | 双层缓存：`CacheConfig`（Caffeine Bean + cacheRedisTemplate）、`QueryCacheManager`（Caffeine→Redis→DB，分布式锁防击穿，命中统计）、`CacheController`（list/config/evict/refresh/stats/evictAll），`interface_config` 新增 `cache_enabled`/`cache_ttl_seconds`/`cache_key_template`，前端 `CacheList.vue` |
+| M2-8 | 分库分表配置：`ShardRuleJson`（MODULO/RANGE 路由规则 DTO）、`ShardRouter`（纯静态路由工具，支持取模/范围/补查/补零）、`ShardConfigService/Controller`（CRUD + 路由预览）；`InterfaceConfigService.resolveSharding()` 在4种 exec 方法中替换主表名和 dbConnectionId；前端 `ShardConfig.vue` + `api/shardConfig.js` |
+| SYS-3 | 用户权限管理：`MenuPermission`（三角色菜单白名单常量 + `sys_config` 日志开关）、`GET /api/auth/menu`（登录后拉取可见路由列表）、`UserService/Controller`（用户 CRUD，BCrypt 密码，自删/末位 admin 保护）；前端 `useUserStore.allowedMenus`、`SideMenu.vue` 动态 `v-if`、路由守卫越权拦截、`UserList.vue` |
 
-## 下一阶段：M2-8
+## 下一阶段：SYS-1、SYS-2、SYS-4
 
 | 单元 | 内容 |
 |------|------|
-| M2-8 | 分库分表配置：`shard_rule` JSON，路由预览，执行时 ShardRouter 解析 |
+| SYS-1 | 日志管理：分页查询+条件过滤+Excel 导出，菜单开关（sys_config KV） |
+| SYS-2 | 性能统计：AOP 统计耗时，ECharts 折线图+柱状图，定时告警检查 |
+| SYS-4 | 系统配置：全局 KV 编辑，`ApplicationEvent` 通知各服务刷新 |

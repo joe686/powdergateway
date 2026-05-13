@@ -29,14 +29,20 @@ const res = await request.post('/auth/login', { username, password })
 ### 认证与状态
 
 - token 存 `localStorage.token`，同步到 `src/store/user.js`（Pinia）
-- `useUserStore` 提供：`token`、`userInfo`、`isLoggedIn`、`username`、`role`、`setToken()`、`setUserInfo()`、`logout()`
-- 路由守卫（`src/router/index.js`）：未携带 token 访问任何需鉴权路由时自动跳 `/login`；已登录访问 `/login` 时跳首页
+- `useUserStore` 提供：`token`、`userInfo`、`allowedMenus`、`isLoggedIn`、`username`、`role`、`setToken()`、`setUserInfo()`、`setAllowedMenus()`、`logout()`
+- 登录成功后需立即调用 `GET /api/auth/menu`，将返回的路由列表写入 `userStore.setAllowedMenus(menus)`；`allowedMenus` 持久化到 `localStorage.allowedMenus`，刷新不丢失
+- 路由守卫（`src/router/index.js`）：
+  1. 未携带 token → 跳 `/login`
+  2. 已登录访问 `/login` → 跳首页
+  3. 已登录且 `allowedMenus` 已加载时，访问不在列表中的路由 → 跳 `/dashboard`（越权拦截）
 
 ### 布局结构
 
 ```
 MainLayout.vue          # 整体骨架，管理侧边栏折叠状态
 ├── SideMenu.vue        # 深色侧边菜单，el-menu router 模式，active 与当前路由联动
+│                       # 每个 el-menu-item 用 v-if="can(path)" 控制显隐（SYS-3）
+│                       # el-sub-menu 用 v-if="hasXxx" computed 控制整组显隐
 └── TopBar.vue          # 顶栏：折叠按钮、面包屑（读 route.meta.title）、用户下拉
 ```
 

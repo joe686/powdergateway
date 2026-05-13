@@ -99,8 +99,10 @@ npm run build                      # 生产打包
 | `DataSourceResolver`（请求字段/固定值/计算值解析） | M2-4 | M2-5 |
 | `ColumnValidator`（基于表结构元数据的字段校验） | M2-4 | M2-5 |
 | `DatabaseMetaData` 表结构查询（Redis缓存） | M2-2 | M2-3/4/5/6 |
-| `sys_config` KV 配置读取 | SYS-4 | M2-9、M2-10、SYS-1 |
+| `sys_config` KV 配置读取 | SYS-4 | M2-9、M2-10、SYS-1、SYS-3（日志菜单开关） |
 | 条件配置前端组件 `ConditionBuilder.vue` | M2-3 | M2-5、M2-6 |
+| `ShardRouter`（分片路由，取模/范围/补查） | M2-8 | M2-8 exec 集成 |
+| `MenuPermission`（角色菜单白名单） | SYS-3 | `AuthService.getMenuForCurrentUser()` |
 
 ## TDD 规范（强制）
 
