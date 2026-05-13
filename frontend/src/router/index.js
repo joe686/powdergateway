@@ -178,7 +178,15 @@ router.beforeEach((to, from, next) => {
   } else if (to.path === '/login' && userStore.isLoggedIn) {
     next('/')
   } else {
-    next()
+    var menus = userStore.allowedMenus
+    if (menus.length > 0
+        && to.meta.requiresAuth !== false
+        && to.path !== '/dashboard'
+        && !menus.includes(to.path)) {
+      next('/dashboard')
+    } else {
+      next()
+    }
   }
 })
 
