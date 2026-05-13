@@ -24,6 +24,7 @@ public class UserService {
     private static final BCryptPasswordEncoder PASSWORD_ENCODER = new BCryptPasswordEncoder();
     private static final List<String> VALID_ROLES = Arrays.asList("admin", "user", "readonly");
 
+    /** page/size 参数预留给将来分页，当前返回全量（与项目其他 list 接口一致）。 */
     public List<UserVO> list(String username, int page, int size) {
         LambdaQueryWrapper<SysUser> wrapper = new LambdaQueryWrapper<>();
         if (username != null && !username.trim().isEmpty()) {
@@ -78,8 +79,8 @@ public class UserService {
     }
 
     public void delete(Long id) {
-        long currentUserId = StpUtil.getLoginIdAsLong();
-        if (currentUserId == id) {
+        Long currentUserId = StpUtil.getLoginIdAsLong();
+        if (currentUserId.equals(id)) {
             throw new BusinessException(400, "不能删除当前登录账号");
         }
         SysUser user = sysUserMapper.selectById(id);
