@@ -30,6 +30,12 @@ class SYS1SysLogAopTest {
     @Autowired private SysLogService sysLogService;
     @Autowired private SysLogMapper sysLogMapper;
 
+    @AfterAll
+    void cleanup() {
+        sysLogMapper.delete(new LambdaQueryWrapper<SysLog>()
+                .eq(SysLog::getModule, "认证"));
+    }
+
     @Test
     @Order(1)
     void 登录成功_切面写入INFO日志() throws Exception {
