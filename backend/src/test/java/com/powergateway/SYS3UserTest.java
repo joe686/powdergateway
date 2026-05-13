@@ -158,4 +158,113 @@ class SYS3UserTest {
             }
         }
     }
+
+    // ─── User CRUD ──────────────────────────────────────────────────────────────
+
+    @Test @Order(10)
+    @DisplayName("saveUser_新增_密码BCrypt存储且无明文")
+    void saveUser_new_passwordBCryptEncrypted() throws Exception {
+        String username = "newuser_" + System.currentTimeMillis();
+        String body = "{\"username\":\"" + username + "\",\"password\":\"Abc123\",\"role\":\"user\",\"status\":1}";
+        MvcResult r = mockMvc.perform(post("/api/user/save")
+                        .header("satoken", adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andReturn();
+        Long id = ((Number) JsonPath.read(r.getResponse().getContentAsString(), "$.data")).longValue();
+        SysUser saved = sysUserMapper.selectById(id);
+        assertThat(saved.getPassword()).isNotEqualTo("Abc123");
+        assertThat(encoder.matches("Abc123", saved.getPassword())).isTrue();
+        sysUserMapper.deleteById(id);
+    }
+
+    @Test @Order(11)
+    @DisplayName("saveUser_用户名重复_400")
+    void saveUser_duplicateUsername_400() throws Exception {
+        String body = "{\"username\":\"admin\",\"password\":\"Abc123\",\"role\":\"user\",\"status\":1}";
+        mockMvc.perform(post("/api/user/save")
+                        .header("satoken", adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(jsonPath("$.code").value(400));
+    }
+
+    @Test @Order(12)
+    @DisplayName("saveUser_密码少于6位_400")
+    void saveUser_shortPassword_400() throws Exception {
+        String body = "{\"username\":\"shortpwd_user\",\"password\":\"123\",\"role\":\"user\",\"status\":1}";
+        mockMvc.perform(post("/api/user/save")
+                        .header("satoken", adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(jsonPath("$.code").value(400));
+    }
+
+    @Test @Order(13)
+    @DisplayName("deleteUser_删除自己_400")
+    void deleteUser_selfDelete_400() throws Exception {
+        SysUser admin = sysUserMapper.selectOne(
+                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<SysUser>()
+                        .eq(SysUser::getUsername, "admin"));
+        mockMvc.perform(delete("/api/user/" + admin.getId())
+                        .header("satoken", adminToken))
+                .andExpect(jsonPath("$.code").value(400));
+    }
+
+    @Test @Order(14)
+    @DisplayName("deleteUser_删除最后一个admin_400")
+    void deleteUser_lastAdmin_400() throws Exception {
+        SysUser testUser = sysUserMapper.selectById(testUserRoleId);
+        MvcResult loginRes = mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\":\"" + testUser.getUsername() + "\",\"password\":\"" + TEST_PASSWORD + "\"}"))
+                .andReturn();
+        String userToken = JsonPath.read(loginRes.getResponse().getContentAsString(), "$.data.token");
+
+        SysUser admin = sysUserMapper.selectOne(
+                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<SysUser>()
+                        .eq(SysUser::getUsername, "admin"));
+        mockMvc.perform(delete("/api/user/" + admin.getId())
+                        .header("satoken", userToken))
+                .andExpect(jsonPath("$.code").value(400));
+    }
+
+    @Test @Order(15)
+    @DisplayName("listUser_返回UserVO无password字段")
+    void listUser_responseHasNoPassword() throws Exception {
+        MvcResult r = mockMvc.perform(get("/api/user/list").header("satoken", adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data").isArray())
+                .andReturn();
+        assertThat(r.getResponse().getContentAsString()).doesNotContain("\"password\"");
+    }
+
+    @Test @Order(16)
+    @DisplayName("updateUser_密码留空_不覆盖原密码")
+    void updateUser_emptyPassword_passwordUnchanged() throws Exception {
+        SysUser u = new SysUser();
+        u.setUsername("updtest_" + System.currentTimeMillis());
+        u.setPassword(encoder.encode("Orig@456"));
+        u.setRole("user");
+        u.setStatus(1);
+        sysUserMapper.insert(u);
+
+        try {
+            String body = "{\"id\":" + u.getId() + ",\"role\":\"readonly\",\"status\":1,\"password\":\"\"}";
+            mockMvc.perform(post("/api/user/save")
+                            .header("satoken", adminToken)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(body))
+                    .andExpect(jsonPath("$.code").value(200));
+
+            SysUser updated = sysUserMapper.selectById(u.getId());
+            assertThat(updated.getRole()).isEqualTo("readonly");
+            assertThat(encoder.matches("Orig@456", updated.getPassword())).isTrue();
+        } finally {
+            sysUserMapper.deleteById(u.getId());
+        }
+    }
 }
