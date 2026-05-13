@@ -7,3 +7,7 @@ export function login(username, password) {
 export function logout() {
   return request.post('/auth/logout')
 }
+
+export function getMenuPermissions() {
+  return request.get('/auth/menu')
+}

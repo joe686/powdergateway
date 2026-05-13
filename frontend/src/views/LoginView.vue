@@ -60,7 +60,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { User, Lock } from '@element-plus/icons-vue'
 import { useUserStore } from '@/store/user'
-import { login } from '@/api/auth'
+import { login, getMenuPermissions } from '@/api/auth'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -85,6 +85,12 @@ async function handleLogin() {
     const res = await login(form.username, form.password)
     userStore.setToken(res.token)
     userStore.setUserInfo(res.userInfo)
+    try {
+      const menus = await getMenuPermissions()
+      userStore.setAllowedMenus(menus)
+    } catch (e) {
+      userStore.setAllowedMenus([])
+    }
     ElMessage.success('登录成功')
     router.push('/')
   } catch (e) {
