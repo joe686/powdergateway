@@ -1,6 +1,7 @@
 package com.powergateway.controller;
 
 import cn.dev33.satoken.stp.StpUtil;
+import com.powergateway.aop.SysLogRecord;
 import com.powergateway.common.Result;
 import com.powergateway.model.dto.LoginRequest;
 import com.powergateway.model.dto.LoginResponse;
@@ -24,12 +25,14 @@ public class AuthController {
     @Autowired
     private AuthService authService;
 
+    @SysLogRecord(module = "认证", action = "用户登录")
     @Operation(summary = "用户登录")
     @PostMapping("/login")
     public Result<LoginResponse> login(@RequestBody @Valid LoginRequest req) {
         return Result.success(authService.login(req));
     }
 
+    @SysLogRecord(module = "认证", action = "用户登出")
     @Operation(summary = "用户登出")
     @PostMapping("/logout")
     public Result<Void> logout() {
