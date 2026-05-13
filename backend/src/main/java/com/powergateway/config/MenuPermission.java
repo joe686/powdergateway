@@ -9,6 +9,8 @@ import java.util.List;
  */
 public class MenuPermission {
 
+    private MenuPermission() {}
+
     public static final List<String> ADMIN_MENUS = Arrays.asList(
         "/dashboard",
         "/convert/format", "/convert/field-mapping", "/convert/field-process",
