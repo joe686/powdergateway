@@ -174,7 +174,7 @@ async function handleDelete(row) {
 }
 
 function openShardDialog(row) {
-  shardForm.value = { interfaceId: row.id, shardConfigId: row.shardConfigId || null }
+  shardForm.value = { interfaceId: row.id, shardConfigId: row.shardConfigId ?? null }
   shardDialogVisible.value = true
 }
 
@@ -194,6 +194,7 @@ async function handleBindShard() {
     shardDialogVisible.value = false
     await loadList()
   } catch (e) {
+    // 错误已由 request.js 拦截器统一提示，此处无需重复处理
   } finally {
     shardSaving.value = false
   }
