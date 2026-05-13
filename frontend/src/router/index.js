@@ -127,7 +127,7 @@ const router = createRouter({
         {
           path: 'system/log',
           name: 'LogManage',
-          component: () => import('@/views/placeholder/PlaceholderView.vue'),
+          component: () => import('@/views/system/LogList.vue'),
           meta: { title: '日志管理' }
         },
         {
