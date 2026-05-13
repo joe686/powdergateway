@@ -1,5 +1,7 @@
 -- PowerGateway H2 测试初始化脚本（与 init.sql 等价，JSON 列用 TEXT 代替）
 
+DROP TABLE IF EXISTS sys_log_history;
+DROP TABLE IF EXISTS sys_log;
 DROP TABLE IF EXISTS sql_audit_log;
 DROP TABLE IF EXISTS sys_user;
 DROP TABLE IF EXISTS convert_template;
@@ -138,7 +140,9 @@ INSERT INTO sys_config (config_key, config_value, description) VALUES
   ('cache.query.ttl', '300', '查询缓存 TTL（秒）'),
   ('cache.template.ttl', '600', '转换模板缓存 TTL（秒）'),
   ('audit.log.retention.days', '365', '审计日志保留天数'),
-  ('sql.log.retention.days', '90', 'SQL 日志保留天数');
+  ('sql.log.retention.days', '90', 'SQL 日志保留天数'),
+  ('log_menu_enabled', 'true', '日志管理菜单显示开关'),
+  ('sys.log.retention.days', '30', '操作日志归档天数');
 
 -- 审计日志表（M2-9）：独立审计库，H2 测试中使用 TEXT 代替 JSON
 CREATE TABLE sql_audit_log (
@@ -154,4 +158,31 @@ CREATE TABLE sql_audit_log (
   result          VARCHAR(32),
   error_msg       TEXT,
   before_snapshot TEXT
+);
+
+-- SYS-1 操作日志表（H2）
+CREATE TABLE sys_log (
+  id        BIGINT PRIMARY KEY AUTO_INCREMENT,
+  module    VARCHAR(64),
+  action    VARCHAR(128),
+  operator  VARCHAR(64),
+  op_ip     VARCHAR(64),
+  op_time   DATETIME DEFAULT CURRENT_TIMESTAMP,
+  level     VARCHAR(16),
+  error_msg TEXT,
+  cost_ms   INT
+);
+
+-- SYS-1 操作日志历史归档表（H2，CHG-006）
+CREATE TABLE sys_log_history (
+  id            BIGINT PRIMARY KEY AUTO_INCREMENT,
+  module        VARCHAR(64),
+  action        VARCHAR(128),
+  operator      VARCHAR(64),
+  op_ip         VARCHAR(64),
+  op_time       DATETIME,
+  level         VARCHAR(16),
+  error_msg     TEXT,
+  cost_ms       INT,
+  archived_time DATETIME DEFAULT CURRENT_TIMESTAMP
 );

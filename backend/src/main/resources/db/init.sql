@@ -129,7 +129,9 @@ INSERT IGNORE INTO sys_config (config_key, config_value, description) VALUES
 ('cache.query.ttl', '300', '查询缓存 TTL（秒）'),
 ('cache.template.ttl', '600', '转换模板缓存 TTL（秒）'),
 ('audit.log.retention.days', '365', '审计日志保留天数'),
-('sql.log.retention.days', '90', 'SQL 日志保留天数');
+('sql.log.retention.days', '90', 'SQL 日志保留天数'),
+('log_menu_enabled', 'true', '日志管理菜单显示开关（true/false）'),
+('sys.log.retention.days', '30', '操作日志归档天数（超过此天数的记录从 sys_log 归档到 sys_log_history）');
 
 -- ========== 审计库表（M2-9）：在独立 powergateway_audit 库中建表 ==========
 -- 生产环境需单独在审计库执行以下 DDL
@@ -148,4 +150,31 @@ CREATE TABLE IF NOT EXISTS sql_audit_log (
   result          VARCHAR(32)  COMMENT 'SUCCESS/FAIL',
   error_msg       TEXT,
   before_snapshot JSON         COMMENT '修改前数据快照'
+);
+
+-- SYS-1 操作日志表（配置库）
+CREATE TABLE IF NOT EXISTS sys_log (
+  id        BIGINT PRIMARY KEY AUTO_INCREMENT,
+  module    VARCHAR(64)  COMMENT '操作模块（如"模板管理"）',
+  action    VARCHAR(128) COMMENT '操作动作（如"保存模板"）',
+  operator  VARCHAR(64)  COMMENT '操作人（Sa-Token loginId，未登录时为 system）',
+  op_ip     VARCHAR(64),
+  op_time   DATETIME     DEFAULT CURRENT_TIMESTAMP,
+  level     VARCHAR(16)  COMMENT 'INFO / ERROR',
+  error_msg TEXT         COMMENT '失败时的错误信息',
+  cost_ms   INT          COMMENT '执行耗时（ms）'
+);
+
+-- SYS-1 操作日志历史归档表（CHG-006）
+CREATE TABLE IF NOT EXISTS sys_log_history (
+  id            BIGINT PRIMARY KEY AUTO_INCREMENT,
+  module        VARCHAR(64),
+  action        VARCHAR(128),
+  operator      VARCHAR(64),
+  op_ip         VARCHAR(64),
+  op_time       DATETIME,
+  level         VARCHAR(16),
+  error_msg     TEXT,
+  cost_ms       INT,
+  archived_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '归档时间'
 );
