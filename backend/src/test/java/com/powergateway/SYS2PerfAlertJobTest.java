@@ -45,6 +45,7 @@ class SYS2PerfAlertJobTest {
         r.setCostMs(costMs);
         r.setSuccess(success);
         r.setStatTime(LocalDateTime.now());
+        // 插入时间早于 checkAndAlert() 内的 to=now，保证 stat_time < to 查询条件成立
         perfStatMapper.insert(r);
     }
 

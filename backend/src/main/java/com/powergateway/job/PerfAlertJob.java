@@ -14,6 +14,14 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.Map;
 
+/**
+ * 接口执行性能告警定时任务（SYS-2）
+ *
+ * 每分钟检查最近1分钟的 perf_stat 数据：
+ *   - 失败率超过 alert_fail_rate（sys_config，默认5%）时写 FAIL_RATE 告警记录
+ *   - 平均响应时间超过 alert_response_ms（sys_config，默认1000ms）时写 AVG_RESPONSE 告警记录
+ *   - checkAndAlert() 为公开方法，供测试直接触发，不依赖定时器
+ */
 @Component
 public class PerfAlertJob {
 
@@ -37,6 +45,7 @@ public class PerfAlertJob {
         LocalDateTime from = to.minusMinutes(1);
 
         Map<String, Object> stat = perfStatService.statBetween(from, to);
+        // statBetween 始终返回单行 COUNT(*) 结果，理论上不为 null；此处作为 PerfStatService 接口变更时的安全兜底
         if (stat == null) return;
 
         Object totalObj = getVal(stat, "total");
