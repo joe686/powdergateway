@@ -131,7 +131,9 @@ INSERT IGNORE INTO sys_config (config_key, config_value, description) VALUES
 ('audit.log.retention.days', '365', '审计日志保留天数'),
 ('sql.log.retention.days', '90', 'SQL 日志保留天数'),
 ('log_menu_enabled', 'true', '日志管理菜单显示开关（true/false）'),
-('sys.log.retention.days', '30', '操作日志归档天数（超过此天数的记录从 sys_log 归档到 sys_log_history）');
+('sys.log.retention.days', '30', '操作日志归档天数（超过此天数的记录从 sys_log 归档到 sys_log_history）'),
+('alert_fail_rate', '5', '告警失败率阈值（百分比，超过此值触发告警）'),
+('alert_response_ms', '1000', '告警响应时间阈值（毫秒，超过此值触发告警）');
 
 -- ========== 审计库表（M2-9）：在独立 powergateway_audit 库中建表 ==========
 -- 生产环境需单独在审计库执行以下 DDL
@@ -177,4 +179,27 @@ CREATE TABLE IF NOT EXISTS sys_log_history (
   error_msg     TEXT,
   cost_ms       INT,
   archived_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '归档时间'
+);
+
+-- SYS-2 性能统计明细表
+CREATE TABLE IF NOT EXISTS perf_stat (
+  id           BIGINT       PRIMARY KEY AUTO_INCREMENT,
+  interface_id BIGINT       COMMENT '接口ID，关联 interface_config.id',
+  op_type      VARCHAR(32)  COMMENT 'SELECT/INSERT/UPDATE/DELETE',
+  cost_ms      INT          COMMENT '耗时（毫秒）',
+  success      TINYINT      COMMENT '1=成功 0=失败',
+  stat_time    DATETIME     DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_perf_stat_time (stat_time),
+  INDEX idx_perf_interface (interface_id)
+);
+
+-- SYS-2 告警记录表
+CREATE TABLE IF NOT EXISTS perf_alert (
+  id          BIGINT        PRIMARY KEY AUTO_INCREMENT,
+  alert_type  VARCHAR(64)   COMMENT 'FAIL_RATE / AVG_RESPONSE',
+  alert_value DECIMAL(10,2) COMMENT '实际值（失败率%或毫秒）',
+  threshold   DECIMAL(10,2) COMMENT '触发时的阈值',
+  message     VARCHAR(512),
+  check_time  DATETIME      DEFAULT CURRENT_TIMESTAMP,
+  resolved    TINYINT       DEFAULT 0
 );

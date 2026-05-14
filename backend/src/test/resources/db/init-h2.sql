@@ -1,5 +1,7 @@
 -- PowerGateway H2 测试初始化脚本（与 init.sql 等价，JSON 列用 TEXT 代替）
 
+DROP TABLE IF EXISTS perf_alert;
+DROP TABLE IF EXISTS perf_stat;
 DROP TABLE IF EXISTS sys_log_history;
 DROP TABLE IF EXISTS sys_log;
 DROP TABLE IF EXISTS sql_audit_log;
@@ -142,7 +144,9 @@ INSERT INTO sys_config (config_key, config_value, description) VALUES
   ('audit.log.retention.days', '365', '审计日志保留天数'),
   ('sql.log.retention.days', '90', 'SQL 日志保留天数'),
   ('log_menu_enabled', 'true', '日志管理菜单显示开关'),
-  ('sys.log.retention.days', '30', '操作日志归档天数（超过此天数的记录从 sys_log 归档到 sys_log_history）');
+  ('sys.log.retention.days', '30', '操作日志归档天数（超过此天数的记录从 sys_log 归档到 sys_log_history）'),
+  ('alert_fail_rate', '5', '告警失败率阈值（百分比）'),
+  ('alert_response_ms', '1000', '告警响应时间阈值（毫秒）');
 
 -- 审计日志表（M2-9）：独立审计库，H2 测试中使用 TEXT 代替 JSON
 CREATE TABLE sql_audit_log (
@@ -185,4 +189,25 @@ CREATE TABLE sys_log_history (
   error_msg     TEXT,
   cost_ms       INT,
   archived_time DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- SYS-2 性能统计明细表（H2）
+CREATE TABLE perf_stat (
+  id           BIGINT        PRIMARY KEY AUTO_INCREMENT,
+  interface_id BIGINT,
+  op_type      VARCHAR(32),
+  cost_ms      INT,
+  success      TINYINT,
+  stat_time    DATETIME      DEFAULT CURRENT_TIMESTAMP
+);
+
+-- SYS-2 告警记录表（H2）
+CREATE TABLE perf_alert (
+  id          BIGINT        PRIMARY KEY AUTO_INCREMENT,
+  alert_type  VARCHAR(64),
+  alert_value DECIMAL(10,2),
+  threshold   DECIMAL(10,2),
+  message     VARCHAR(512),
+  check_time  DATETIME      DEFAULT CURRENT_TIMESTAMP,
+  resolved    TINYINT       DEFAULT 0
 );
