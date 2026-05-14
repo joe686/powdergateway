@@ -133,7 +133,7 @@ const router = createRouter({
         {
           path: 'system/stats',
           name: 'PerfStats',
-          component: () => import('@/views/placeholder/PlaceholderView.vue'),
+          component: () => import('@/views/system/Stats.vue'),
           meta: { title: '性能统计' }
         },
         {
