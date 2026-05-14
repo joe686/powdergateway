@@ -137,19 +137,21 @@ CREATE TABLE sys_config (
   config_key VARCHAR(128) PRIMARY KEY,
   config_value VARCHAR(1024),
   description VARCHAR(512),
+  value_type   VARCHAR(32)  DEFAULT 'string',
+  group_name   VARCHAR(64)  DEFAULT '其他',
   update_time DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 初始化系统配置默认值
-INSERT INTO sys_config (config_key, config_value, description) VALUES
-  ('cache.query.ttl', '300', '查询缓存 TTL（秒）'),
-  ('cache.template.ttl', '600', '转换模板缓存 TTL（秒）'),
-  ('audit.log.retention.days', '365', '审计日志保留天数'),
-  ('sql.log.retention.days', '90', 'SQL 日志保留天数'),
-  ('log_menu_enabled', 'true', '日志管理菜单显示开关'),
-  ('sys.log.retention.days', '30', '操作日志归档天数（超过此天数的记录从 sys_log 归档到 sys_log_history）'),
-  ('alert_fail_rate', '5', '告警失败率阈值（百分比）'),
-  ('alert_response_ms', '1000', '告警响应时间阈值（毫秒）');
+INSERT INTO sys_config (config_key, config_value, description, value_type, group_name) VALUES
+  ('cache.query.ttl',         '300',  '查询缓存 TTL（秒）',          'number',  '缓存配置'),
+  ('cache.template.ttl',      '600',  '模板缓存 TTL（秒）',          'number',  '缓存配置'),
+  ('sys.log.retention.days',  '30',   '操作日志归档天数',             'number',  '日志配置'),
+  ('audit.log.retention.days','365',  '审计日志保留天数',             'number',  '日志配置'),
+  ('sql.log.retention.days',  '90',   'SQL 日志保留天数',             'number',  '日志配置'),
+  ('log_menu_enabled',        'true', '日志管理菜单显示开关',         'boolean', '日志配置'),
+  ('alert_fail_rate',         '5',    '告警失败率阈值（%）',          'number',  '告警配置'),
+  ('alert_response_ms',       '1000', '告警响应时间阈值（ms）',       'number',  '告警配置');
 
 -- 审计日志表（M2-9）：独立审计库，H2 测试中使用 TEXT 代替 JSON
 CREATE TABLE sql_audit_log (

@@ -23,6 +23,12 @@ public class SysConfig {
     /** 配置说明 */
     private String description;
 
+    @TableField("value_type")
+    private String valueType;
+
+    @TableField("group_name")
+    private String groupName;
+
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime;
 }
