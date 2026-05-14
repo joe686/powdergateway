@@ -145,7 +145,7 @@ const router = createRouter({
         {
           path: 'system/config',
           name: 'SysConfig',
-          component: () => import('@/views/placeholder/PlaceholderView.vue'),
+          component: () => import('@/views/system/SystemConfig.vue'),
           meta: { title: '系统配置' }
         },
         // 辅助工具
