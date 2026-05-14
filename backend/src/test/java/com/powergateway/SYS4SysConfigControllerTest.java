@@ -29,7 +29,7 @@ class SYS4SysConfigControllerTest {
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper objectMapper;
 
-    private String token;
+    private String adminToken;
 
     @BeforeAll
     void login() throws Exception {
@@ -37,14 +37,14 @@ class SYS4SysConfigControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"username\":\"admin\",\"password\":\"Admin@123\"}"))
                 .andReturn();
-        token = JsonPath.read(r.getResponse().getContentAsString(), "$.data.token");
+        adminToken = JsonPath.read(r.getResponse().getContentAsString(), "$.data.token");
     }
 
     @Test
     @Order(1)
     void getAll_返回200和配置列表() throws Exception {
         mockMvc.perform(get("/api/config/all")
-                        .header("satoken", token))
+                        .header("satoken", adminToken))
                .andExpect(status().isOk())
                .andExpect(jsonPath("$.code").value(200))
                .andExpect(jsonPath("$.data").isArray())
@@ -55,9 +55,9 @@ class SYS4SysConfigControllerTest {
 
     @Test
     @Order(2)
-    void update_调用batchUpdate并返回200() throws Exception {
+    void update_admin角色可以更新配置() throws Exception {
         mockMvc.perform(put("/api/config")
-                        .header("satoken", token)
+                        .header("satoken", adminToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
                                 Collections.singletonMap("alert_fail_rate", "10"))))
