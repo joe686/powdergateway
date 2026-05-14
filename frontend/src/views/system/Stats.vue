@@ -118,7 +118,7 @@ const lineOption = computed(() => ({
 }))
 
 const barOption = computed(() => ({
-  tooltip: { trigger: 'axis', formatter: (p) => `${p[0].name}<br/>平均耗时：${p[0].value} ms` },
+  tooltip: { trigger: 'axis', formatter: (p) => p && p[0] ? `${p[0].name}<br/>平均耗时：${p[0].value} ms` : '' },
   xAxis: { type: 'category', data: summary.value.timeline },
   yAxis: { type: 'value', name: '耗时 (ms)' },
   series: [
@@ -131,6 +131,8 @@ async function loadSummary() {
   summaryLoading.value = true
   try {
     summary.value = await getStatsSummary(dimension.value)
+  } catch {
+    ElMessage.error('加载统计数据失败')
   } finally {
     summaryLoading.value = false
   }
@@ -140,8 +142,10 @@ async function loadAlerts() {
   alertLoading.value = true
   try {
     const page = await getAlerts(alertPage.value, alertPageSize.value)
-    alertList.value  = page.records
-    alertTotal.value = page.total
+    alertList.value  = page.records || []
+    alertTotal.value = page.total   || 0
+  } catch {
+    ElMessage.error('加载告警记录失败')
   } finally {
     alertLoading.value = false
   }
