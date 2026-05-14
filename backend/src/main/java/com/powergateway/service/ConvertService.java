@@ -46,10 +46,9 @@ public class ConvertService {
     private final ObjectMapper objectMapper;
     /** 惰性注入，测试环境 Redis 不可用时 getIfAvailable() 返回 null */
     private final ObjectProvider<StringRedisTemplate> redisProvider;
+    private final SysConfigService sysConfigService;
 
     private static final String TEMPLATE_CACHE_PREFIX = "template:";
-    /** 模板缓存 TTL = 10 分钟 */
-    private static final long TEMPLATE_CACHE_TTL_SECONDS = 600;
 
     /**
      * 执行报文转换全流程。
@@ -131,8 +130,8 @@ public class ConvertService {
         if (redis != null) {
             try {
                 redis.opsForValue().set(cacheKey, objectMapper.writeValueAsString(template),
-                        TEMPLATE_CACHE_TTL_SECONDS, TimeUnit.SECONDS);
-                log.debug("模板已写入缓存，key={}, ttl={}s", cacheKey, TEMPLATE_CACHE_TTL_SECONDS);
+                        sysConfigService.getInt("cache.template.ttl", 600), TimeUnit.SECONDS);
+                log.debug("模板已写入缓存，key={}, ttl={}s", cacheKey, sysConfigService.getInt("cache.template.ttl", 600));
             } catch (Exception e) {
                 log.warn("模板缓存写入失败: {}", e.getMessage());
             }

@@ -53,6 +53,18 @@ public class SysConfigService {
         return sysConfigMapper.selectList(null);
     }
 
+    /**
+     * 重新从数据库加载指定 key 的缓存（供测试或外部直接操作 DB 后刷新用）。
+     */
+    public void reload(String key) {
+        SysConfig cfg = sysConfigMapper.selectById(key);
+        if (cfg != null && cfg.getConfigValue() != null) {
+            cache.put(cfg.getConfigKey(), cfg.getConfigValue());
+        } else {
+            cache.remove(key);
+        }
+    }
+
     public void batchUpdate(Map<String, String> updates) {
         if (updates.isEmpty()) return;
         updates.forEach((key, value) -> {

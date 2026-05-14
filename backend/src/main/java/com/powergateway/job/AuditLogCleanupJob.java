@@ -2,9 +2,8 @@ package com.powergateway.job;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.powergateway.dao.SqlAuditLogMapper;
-import com.powergateway.dao.SysConfigMapper;
 import com.powergateway.model.SqlAuditLog;
-import com.powergateway.model.SysConfig;
+import com.powergateway.service.SysConfigService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -27,20 +26,11 @@ public class AuditLogCleanupJob {
     private SqlAuditLogMapper auditLogMapper;
 
     @Autowired
-    private SysConfigMapper sysConfigMapper;
+    private SysConfigService sysConfigService;
 
     @Scheduled(cron = "0 0 2 * * ?")
     public void cleanup() {
-        int retentionDays = DEFAULT_RETENTION_DAYS;
-
-        SysConfig config = sysConfigMapper.selectById(CONFIG_KEY);
-        if (config != null && config.getConfigValue() != null) {
-            try {
-                retentionDays = Integer.parseInt(config.getConfigValue().trim());
-            } catch (NumberFormatException ignored) {
-                // 配置值非法时使用默认值
-            }
-        }
+        int retentionDays = sysConfigService.getInt(CONFIG_KEY, DEFAULT_RETENTION_DAYS);
 
         LocalDateTime threshold = LocalDateTime.now().minusDays(retentionDays);
         auditLogMapper.delete(new QueryWrapper<SqlAuditLog>().lt("op_time", threshold));

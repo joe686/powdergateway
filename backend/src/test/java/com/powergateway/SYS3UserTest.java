@@ -6,6 +6,7 @@ import com.powergateway.dao.SysConfigMapper;
 import com.powergateway.dao.SysUserMapper;
 import com.powergateway.model.SysConfig;
 import com.powergateway.model.SysUser;
+import com.powergateway.service.SysConfigService;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -33,6 +34,7 @@ class SYS3UserTest {
     @Autowired private MockMvc mockMvc;
     @Autowired private SysUserMapper sysUserMapper;
     @Autowired private SysConfigMapper sysConfigMapper;
+    @Autowired private SysConfigService sysConfigService;
     @Autowired private ObjectMapper objectMapper;
 
     private String adminToken;
@@ -144,6 +146,7 @@ class SYS3UserTest {
         } else {
             sysConfigMapper.insert(cfg);
         }
+        sysConfigService.reload(com.powergateway.config.MenuPermission.LOG_MENU_CONFIG_KEY);
         try {
             MvcResult r = mockMvc.perform(get("/api/auth/menu").header("satoken", adminToken))
                     .andExpect(jsonPath("$.code").value(200))
@@ -156,6 +159,7 @@ class SYS3UserTest {
             } else {
                 sysConfigMapper.deleteById("log_menu_enabled");
             }
+            sysConfigService.reload(com.powergateway.config.MenuPermission.LOG_MENU_CONFIG_KEY);
         }
     }
 

@@ -9,6 +9,7 @@ import com.powergateway.model.PerfAlert;
 import com.powergateway.model.PerfStatRecord;
 import com.powergateway.model.SysConfig;
 import com.powergateway.service.PerfStatService;
+import com.powergateway.service.SysConfigService;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -31,6 +32,7 @@ class SYS2PerfAlertJobTest {
     @Autowired private PerfAlertMapper perfAlertMapper;
     @Autowired private SysConfigMapper sysConfigMapper;
     @Autowired private PerfStatService perfStatService;
+    @Autowired private SysConfigService sysConfigService;
 
     @BeforeEach
     void clearTestData() {
@@ -60,6 +62,7 @@ class SYS2PerfAlertJobTest {
         SysConfig cfg = sysConfigMapper.selectById("alert_fail_rate");
         cfg.setConfigValue("5");
         sysConfigMapper.updateById(cfg);
+        sysConfigService.reload("alert_fail_rate");
 
         // 插入 10 条记录，4条失败（40%，超过5%阈值）
         for (int i = 0; i < 6; i++) insertStat(1, 50);
@@ -80,6 +83,7 @@ class SYS2PerfAlertJobTest {
         SysConfig cfg = sysConfigMapper.selectById("alert_response_ms");
         cfg.setConfigValue("100");
         sysConfigMapper.updateById(cfg);
+        sysConfigService.reload("alert_response_ms");
 
         // 插入5条，平均 500ms，超过100ms阈值
         for (int i = 0; i < 5; i++) insertStat(1, 500);

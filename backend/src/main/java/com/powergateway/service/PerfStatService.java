@@ -5,10 +5,8 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.powergateway.dao.PerfAlertMapper;
 import com.powergateway.dao.PerfStatMapper;
-import com.powergateway.dao.SysConfigMapper;
 import com.powergateway.model.PerfAlert;
 import com.powergateway.model.PerfStatRecord;
-import com.powergateway.model.SysConfig;
 import com.powergateway.model.dto.AlertConfigRequest;
 import com.powergateway.model.dto.StatsSummaryDTO;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,7 +43,7 @@ public class PerfStatService {
 
     @Autowired private PerfStatMapper perfStatMapper;
     @Autowired private PerfAlertMapper perfAlertMapper;
-    @Autowired private SysConfigMapper sysConfigMapper;
+    @Autowired private SysConfigService sysConfigService;
 
     @PostConstruct
     public void startConsumer() {
@@ -145,24 +143,15 @@ public class PerfStatService {
     }
 
     public void updateAlertConfig(AlertConfigRequest req) {
+        java.util.Map<String, String> updates = new java.util.LinkedHashMap<>();
         if (req.getFailRate() != null) {
-            upsertConfig("alert_fail_rate", String.format("%.1f", req.getFailRate()));
+            updates.put("alert_fail_rate", String.format("%.1f", req.getFailRate()));
         }
         if (req.getResponseMs() != null) {
-            upsertConfig("alert_response_ms", String.valueOf(req.getResponseMs()));
+            updates.put("alert_response_ms", String.valueOf(req.getResponseMs()));
         }
-    }
-
-    private void upsertConfig(String key, String value) {
-        SysConfig cfg = sysConfigMapper.selectById(key);
-        if (cfg == null) {
-            cfg = new SysConfig();
-            cfg.setConfigKey(key);
-            cfg.setConfigValue(value);
-            sysConfigMapper.insert(cfg);
-        } else {
-            cfg.setConfigValue(value);
-            sysConfigMapper.updateById(cfg);
+        if (!updates.isEmpty()) {
+            sysConfigService.batchUpdate(updates);
         }
     }
 

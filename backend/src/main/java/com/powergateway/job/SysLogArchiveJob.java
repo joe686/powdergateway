@@ -1,10 +1,9 @@
 package com.powergateway.job;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.powergateway.dao.SysConfigMapper;
 import com.powergateway.dao.SysLogMapper;
-import com.powergateway.model.SysConfig;
 import com.powergateway.model.SysLog;
+import com.powergateway.service.SysConfigService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -26,19 +25,12 @@ public class SysLogArchiveJob {
     private static final int DEFAULT_RETENTION_DAYS = 30;
 
     @Autowired private SysLogMapper sysLogMapper;
-    @Autowired private SysConfigMapper sysConfigMapper;
+    @Autowired private SysConfigService sysConfigService;
 
     @Scheduled(cron = "0 0 3 * * ?")
     @Transactional
     public void archive() {
-        int retentionDays = DEFAULT_RETENTION_DAYS;
-        SysConfig config = sysConfigMapper.selectById(CONFIG_KEY);
-        if (config != null && config.getConfigValue() != null) {
-            try {
-                retentionDays = Integer.parseInt(config.getConfigValue().trim());
-            } catch (NumberFormatException ignored) {
-            }
-        }
+        int retentionDays = sysConfigService.getInt(CONFIG_KEY, DEFAULT_RETENTION_DAYS);
 
         LocalDateTime threshold = LocalDateTime.now().minusDays(retentionDays);
 

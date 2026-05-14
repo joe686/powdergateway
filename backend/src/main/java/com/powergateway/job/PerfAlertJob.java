@@ -1,10 +1,9 @@
 package com.powergateway.job;
 
 import com.powergateway.dao.PerfAlertMapper;
-import com.powergateway.dao.SysConfigMapper;
 import com.powergateway.model.PerfAlert;
-import com.powergateway.model.SysConfig;
 import com.powergateway.service.PerfStatService;
+import com.powergateway.service.SysConfigService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -32,7 +31,7 @@ public class PerfAlertJob {
 
     @Autowired private PerfStatService perfStatService;
     @Autowired private PerfAlertMapper perfAlertMapper;
-    @Autowired private SysConfigMapper sysConfigMapper;
+    @Autowired private SysConfigService sysConfigService;
 
     @Scheduled(cron = "0 * * * * ?")
     public void scheduled() {
@@ -53,8 +52,8 @@ public class PerfAlertJob {
         long total = ((Number) totalObj).longValue();
         if (total == 0) return;
 
-        double failRate    = readDouble(KEY_FAIL_RATE, DEFAULT_FAIL_RATE);
-        int    responseMs  = readInt(KEY_RESPONSE_MS, DEFAULT_RESPONSE_MS);
+        double failRate   = sysConfigService.getInt(KEY_FAIL_RATE, (int) DEFAULT_FAIL_RATE);
+        int    responseMs = sysConfigService.getInt(KEY_RESPONSE_MS, DEFAULT_RESPONSE_MS);
 
         Object failObj = getVal(stat, "failCount");
         Object avgObj  = getVal(stat, "avgMs");
@@ -86,20 +85,6 @@ public class PerfAlertJob {
         alert.setCheckTime(LocalDateTime.now());
         alert.setResolved(0);
         perfAlertMapper.insert(alert);
-    }
-
-    private double readDouble(String key, double defaultVal) {
-        SysConfig cfg = sysConfigMapper.selectById(key);
-        if (cfg == null || cfg.getConfigValue() == null) return defaultVal;
-        try { return Double.parseDouble(cfg.getConfigValue().trim()); }
-        catch (NumberFormatException e) { return defaultVal; }
-    }
-
-    private int readInt(String key, int defaultVal) {
-        SysConfig cfg = sysConfigMapper.selectById(key);
-        if (cfg == null || cfg.getConfigValue() == null) return defaultVal;
-        try { return Integer.parseInt(cfg.getConfigValue().trim()); }
-        catch (NumberFormatException e) { return defaultVal; }
     }
 
     private Object getVal(Map<String, Object> map, String alias) {

@@ -3,10 +3,8 @@ package com.powergateway.service;
 import cn.dev33.satoken.stp.StpUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.powergateway.config.MenuPermission;
-import com.powergateway.dao.SysConfigMapper;
 import com.powergateway.dao.SysUserMapper;
 import com.powergateway.exception.BusinessException;
-import com.powergateway.model.SysConfig;
 import com.powergateway.model.SysUser;
 import com.powergateway.model.dto.LoginRequest;
 import com.powergateway.model.dto.LoginResponse;
@@ -27,7 +25,7 @@ public class AuthService {
     private SysUserMapper sysUserMapper;
 
     @Autowired
-    private SysConfigMapper sysConfigMapper;
+    private SysConfigService sysConfigService;
 
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
@@ -85,8 +83,7 @@ public class AuthService {
             default:         menus = new ArrayList<>(MenuPermission.READONLY_MENUS); break;
         }
 
-        SysConfig logConfig = sysConfigMapper.selectById(MenuPermission.LOG_MENU_CONFIG_KEY);
-        if (logConfig != null && "false".equalsIgnoreCase(logConfig.getConfigValue())) {
+        if (!sysConfigService.getBoolean(MenuPermission.LOG_MENU_CONFIG_KEY, true)) {
             menus.remove(MenuPermission.LOG_MENU_PATH);
         }
 
