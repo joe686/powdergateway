@@ -2,6 +2,7 @@ package com.powergateway.controller;
 
 import com.powergateway.aop.AuditContext;
 import com.powergateway.aop.AuditContextHolder;
+import com.powergateway.aop.PerfStat;
 import com.powergateway.common.Result;
 import com.powergateway.exception.BusinessException;
 import com.powergateway.model.InterfaceConfig;
@@ -28,6 +29,7 @@ public class ExecController {
     @Autowired
     private InterfaceConfigService service;
 
+    @PerfStat
     @PostMapping("/{interfaceId}")
     @Operation(summary = "执行已发布接口（SELECT/INSERT/UPDATE/DELETE）")
     public Result<?> execute(@PathVariable Long interfaceId,
