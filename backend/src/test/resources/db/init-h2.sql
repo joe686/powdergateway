@@ -1,5 +1,8 @@
 -- PowerGateway H2 测试初始化脚本（与 init.sql 等价，JSON 列用 TEXT 代替）
 
+-- H2 兼容：模拟 MySQL DATE_FORMAT 函数（仅支持 %H:00 和 %Y-%m-%d 格式）
+CREATE ALIAS IF NOT EXISTS DATE_FORMAT FOR "com.powergateway.utils.H2DateFormatAlias.format";
+
 DROP TABLE IF EXISTS perf_alert;
 DROP TABLE IF EXISTS perf_stat;
 DROP TABLE IF EXISTS sys_log_history;
