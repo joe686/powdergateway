@@ -1,10 +1,9 @@
 package com.powergateway.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.powergateway.aop.SysLogRecord;
 import com.powergateway.common.Result;
-import com.powergateway.dao.SysConfigMapper;
 import com.powergateway.model.PerfAlert;
-import com.powergateway.model.SysConfig;
 import com.powergateway.model.dto.AlertConfigRequest;
 import com.powergateway.model.dto.StatsSummaryDTO;
 import com.powergateway.service.PerfStatService;
@@ -19,7 +18,6 @@ import org.springframework.web.bind.annotation.*;
 public class StatsController {
 
     @Autowired private PerfStatService perfStatService;
-    @Autowired private SysConfigMapper sysConfigMapper;
 
     @GetMapping("/summary")
     @Operation(summary = "获取图表聚合数据（today/week/month）")
@@ -36,28 +34,11 @@ public class StatsController {
         return Result.success(perfStatService.listAlerts(page, pageSize));
     }
 
+    @SysLogRecord(module = "性能统计", action = "更新告警阈值")
     @PutMapping("/alert-config")
     @Operation(summary = "更新告警阈值配置")
     public Result<Void> updateAlertConfig(@RequestBody AlertConfigRequest req) {
-        if (req.getFailRate() != null) {
-            upsertConfig("alert_fail_rate", String.valueOf(req.getFailRate()));
-        }
-        if (req.getResponseMs() != null) {
-            upsertConfig("alert_response_ms", String.valueOf(req.getResponseMs()));
-        }
+        perfStatService.updateAlertConfig(req);
         return Result.success();
-    }
-
-    private void upsertConfig(String key, String value) {
-        SysConfig cfg = sysConfigMapper.selectById(key);
-        if (cfg == null) {
-            cfg = new SysConfig();
-            cfg.setConfigKey(key);
-            cfg.setConfigValue(value);
-            sysConfigMapper.insert(cfg);
-        } else {
-            cfg.setConfigValue(value);
-            sysConfigMapper.updateById(cfg);
-        }
     }
 }
