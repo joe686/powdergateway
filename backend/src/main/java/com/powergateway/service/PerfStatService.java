@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 接口执行性能统计异步写入与查询服务（SYS-2）
@@ -36,6 +37,11 @@ public class PerfStatService {
 
     private static final int QUEUE_CAPACITY = 10000;
     private final LinkedBlockingQueue<PerfStatRecord> queue = new LinkedBlockingQueue<>(QUEUE_CAPACITY);
+    /**
+     * 尚未持久化完毕的记录总数（入队 +1，写入完成 -1）。
+     * 用于 flushForTest() 精确等待：当计数归零时，说明所有记录（含守护线程正在写的那条）都已落库。
+     */
+    private final AtomicInteger pendingCount = new AtomicInteger(0);
 
     @Autowired private PerfStatMapper perfStatMapper;
     @Autowired private PerfAlertMapper perfAlertMapper;
@@ -46,7 +52,12 @@ public class PerfStatService {
         Thread t = new Thread(() -> {
             while (!Thread.currentThread().isInterrupted()) {
                 try {
-                    writeSafely(queue.take());
+                    PerfStatRecord record = queue.take();
+                    try {
+                        writeSafely(record);
+                    } finally {
+                        pendingCount.decrementAndGet();
+                    }
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
@@ -57,14 +68,28 @@ public class PerfStatService {
     }
 
     public void enqueue(PerfStatRecord record) {
-        queue.offer(record);
+        pendingCount.incrementAndGet();
+        if (!queue.offer(record)) {
+            // 队列满时丢弃，同步撤销计数
+            pendingCount.decrementAndGet();
+        }
     }
 
     /** 仅供测试使用，严禁在生产代码中调用 */
     public void flushForTest() {
+        // 等待 pendingCount 归零：当计数为 0 时，队列为空且守护线程已完成当前写入
+        int waitMs = 0;
+        while (pendingCount.get() > 0 && waitMs < 2000) {
+            try { Thread.sleep(10); } catch (InterruptedException ignored) { Thread.currentThread().interrupt(); }
+            waitMs += 10;
+        }
+        // 补充：直接排干队列中残余（理论上此时应为空，作为兜底）
         List<PerfStatRecord> pending = new ArrayList<>();
         queue.drainTo(pending);
-        pending.forEach(this::writeSafely);
+        pending.forEach(r -> {
+            pendingCount.decrementAndGet();
+            writeSafely(r);
+        });
     }
 
     public StatsSummaryDTO summary(String dimension) {

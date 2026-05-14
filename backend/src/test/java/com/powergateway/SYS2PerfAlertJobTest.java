@@ -8,6 +8,7 @@ import com.powergateway.job.PerfAlertJob;
 import com.powergateway.model.PerfAlert;
 import com.powergateway.model.PerfStatRecord;
 import com.powergateway.model.SysConfig;
+import com.powergateway.service.PerfStatService;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -29,9 +30,11 @@ class SYS2PerfAlertJobTest {
     @Autowired private PerfStatMapper perfStatMapper;
     @Autowired private PerfAlertMapper perfAlertMapper;
     @Autowired private SysConfigMapper sysConfigMapper;
+    @Autowired private PerfStatService perfStatService;
 
     @BeforeEach
     void clearTestData() {
+        perfStatService.flushForTest(); // 先排干队列，防止其他测试触发的异步写入污染本测试
         perfStatMapper.delete(new LambdaQueryWrapper<PerfStatRecord>()
                 .isNotNull(PerfStatRecord::getId));
         perfAlertMapper.delete(new LambdaQueryWrapper<PerfAlert>()
@@ -44,8 +47,9 @@ class SYS2PerfAlertJobTest {
         r.setOpType("SELECT");
         r.setCostMs(costMs);
         r.setSuccess(success);
-        r.setStatTime(LocalDateTime.now());
-        // 插入时间早于 checkAndAlert() 内的 to=now，保证 stat_time < to 查询条件成立
+        // 设置为30秒前，确保 stat_time < to（checkAndAlert 用 now 作为 to），
+        // 同时在 from = now-1min 的查询窗口内，彻底消除时钟精度导致的边界竞态
+        r.setStatTime(LocalDateTime.now().minusSeconds(30));
         perfStatMapper.insert(r);
     }
 
