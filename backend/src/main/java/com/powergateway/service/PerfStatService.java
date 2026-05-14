@@ -19,6 +19,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 
+/**
+ * 接口执行性能统计异步写入与查询服务（SYS-2）
+ *
+ * 实现机制：
+ *   - LinkedBlockingQueue 作为缓冲区（容量 10000），防止统计写入阻塞业务主线程
+ *   - 单个后台守护线程持续消费队列，逐条写入 perf_stat 表
+ *   - 队列满时直接丢弃（offer 非阻塞），保证业务不受影响
+ *   - flushForTest() 仅供测试使用，同步消费队列剩余项目以便断言
+ */
 @Service
 public class PerfStatService {
 
@@ -110,6 +119,7 @@ public class PerfStatService {
         try {
             perfStatMapper.insert(record);
         } catch (Exception ignored) {
+            // 统计写入失败静默处理，不影响业务主链路
         }
     }
 
