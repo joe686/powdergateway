@@ -42,6 +42,7 @@
           <el-icon><Monitor /></el-icon>
           <span>可视化接口开发</span>
         </template>
+        <el-menu-item v-if="can('/interface/wizard')" index="/interface/wizard">接口配置向导</el-menu-item>
         <el-menu-item v-if="can('/interface/db')" index="/interface/db">数据库连接管理</el-menu-item>
         <el-menu-item v-if="can('/interface/table')" index="/interface/table">表结构管理</el-menu-item>
         <el-menu-item v-if="can('/interface/dev')" index="/interface/dev">查询接口配置</el-menu-item>
@@ -101,7 +102,7 @@ function can(path) {
 
 var CONVERT_PATHS  = ['/convert/format', '/convert/field-mapping', '/convert/field-process',
                       '/convert/channel', '/convert/port-route', '/convert/template']
-var INTERFACE_PATHS = ['/interface/db', '/interface/table', '/interface/dev',
+var INTERFACE_PATHS = ['/interface/wizard', '/interface/db', '/interface/table', '/interface/dev',
                        '/interface/insert', '/interface/update', '/interface/delete',
                        '/interface/list', '/interface/shard', '/interface/formula', '/interface/cache']
 var SYSTEM_PATHS   = ['/system/log', '/system/stats', '/system/user', '/system/config']
