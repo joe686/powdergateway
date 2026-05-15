@@ -452,12 +452,62 @@ function prevStep() {
 
 function nextStep() {
   const key = currentStepDef.value.key
-  if (key === 'cond') {
-    if ((wizard.interfaceType === 'UPDATE' || wizard.interfaceType === 'DELETE') && wizard.conditions.length === 0) {
-      ElMessage.warning('UPDATE/DELETE 必须配置至少一个条件')
+
+  if (key === 'type') {
+    if (!wizard.interfaceType) {
+      ElMessage.warning('请选择接口类型')
       return
     }
+  } else if (key === 'db') {
+    if (!wizard.interfaceName.trim()) {
+      ElMessage.warning('请填写接口名称')
+      return
+    }
+    if (!wizard.dbConnectionId) {
+      ElMessage.warning('请选择数据库连接')
+      return
+    }
+  } else if (key === 'tables') {
+    if (wizard.interfaceType === 'SELECT') {
+      if (!wizard.mainTable.name) {
+        ElMessage.warning('请选择主表')
+        return
+      }
+    } else {
+      if (!wizard.tables[0]?.tableName) {
+        ElMessage.warning('请选择目标表')
+        return
+      }
+    }
+  } else if (key === 'fields') {
+    if (wizard.interfaceType === 'SELECT') {
+      if (!wizard.selectedColumns.some(c => c.selected)) {
+        ElMessage.warning('请至少勾选一个返回字段')
+        return
+      }
+    } else {
+      for (const tbl of wizard.fieldTables) {
+        if (tbl.fields.length === 0) {
+          ElMessage.warning(`表 ${tbl.tableName} 尚未配置任何字段`)
+          return
+        }
+        for (const f of tbl.fields) {
+          if (!f.column) {
+            ElMessage.warning(`表 ${tbl.tableName} 有字段名为空`)
+            return
+          }
+        }
+      }
+    }
+  } else if (key === 'cond') {
+    if (wizard.interfaceType === 'UPDATE' || wizard.interfaceType === 'DELETE') {
+      if (wizard.conditions.length === 0) {
+        ElMessage.warning('UPDATE/DELETE 必须配置至少一个条件')
+        return
+      }
+    }
   }
+
   if (wizard.currentStep < visibleSteps.value.length - 1) {
     wizard.currentStep++
   }
