@@ -53,3 +53,8 @@ export function disableInterface(id) {
 export function bindShardConfig(id, shardConfigId) {
   return request.patch(`/interface/${id}/shard-config`, { shardConfigId })
 }
+
+/** 执行已发布接口（M2-7 统一执行入口） */
+export function execInterface(id, body) {
+  return request.post(`/exec/${id}`, body)
+}
