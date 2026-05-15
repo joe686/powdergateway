@@ -30,12 +30,69 @@
         </div>
       </template>
 
-      <!-- 占位：各步骤内容将在后续 Task 中填充 -->
-      <div v-for="s in visibleSteps" :key="s.key">
-        <div v-show="isActive(s.key)">
-          <p style="color:#909399">步骤 {{ s.label }} 内容开发中</p>
-        </div>
+      <!-- ① 接口类型 -->
+      <div v-show="isActive('type')">
+        <el-radio-group
+          v-model="wizard.interfaceType"
+          size="large"
+          style="display:flex;gap:20px;flex-wrap:wrap"
+          @change="onTypeChange"
+        >
+          <el-radio-button value="SELECT">
+            <div style="text-align:center;padding:8px 16px">
+              <div style="font-size:16px;font-weight:600">SELECT</div>
+              <div style="font-size:12px;color:#909399">查询接口</div>
+            </div>
+          </el-radio-button>
+          <el-radio-button value="INSERT">
+            <div style="text-align:center;padding:8px 16px">
+              <div style="font-size:16px;font-weight:600">INSERT</div>
+              <div style="font-size:12px;color:#909399">插入接口</div>
+            </div>
+          </el-radio-button>
+          <el-radio-button value="UPDATE">
+            <div style="text-align:center;padding:8px 16px">
+              <div style="font-size:16px;font-weight:600">UPDATE</div>
+              <div style="font-size:12px;color:#909399">修改接口</div>
+            </div>
+          </el-radio-button>
+          <el-radio-button value="DELETE">
+            <div style="text-align:center;padding:8px 16px">
+              <div style="font-size:16px;font-weight:600">DELETE</div>
+              <div style="font-size:12px;color:#909399">删除接口</div>
+            </div>
+          </el-radio-button>
+        </el-radio-group>
       </div>
+
+      <!-- ② 数据库连接 -->
+      <div v-show="isActive('db')">
+        <el-form label-width="120px" style="max-width:600px">
+          <el-form-item label="接口名称" required>
+            <el-input v-model="wizard.interfaceName" placeholder="请输入接口名称" />
+          </el-form-item>
+          <el-form-item label="数据库连接" required>
+            <el-select
+              v-model="wizard.dbConnectionId"
+              placeholder="请选择数据库连接"
+              style="width:100%"
+              @change="onDbChange"
+            >
+              <el-option v-for="db in dbList" :key="db.id" :label="db.name" :value="db.id" />
+            </el-select>
+          </el-form-item>
+        </el-form>
+      </div>
+
+      <!-- ③~⑩ 占位 -->
+      <div v-show="isActive('tables')"><p style="color:#909399">步骤③内容开发中</p></div>
+      <div v-show="isActive('fields')"><p style="color:#909399">步骤④内容开发中</p></div>
+      <div v-show="isActive('shard')"><p style="color:#909399">步骤⑤内容开发中</p></div>
+      <div v-show="isActive('process')"><p style="color:#909399">步骤⑥内容开发中</p></div>
+      <div v-show="isActive('cond')"><p style="color:#909399">步骤⑦内容开发中</p></div>
+      <div v-show="isActive('log')"><p style="color:#909399">步骤⑧内容开发中</p></div>
+      <div v-show="isActive('preview')"><p style="color:#909399">步骤⑨内容开发中</p></div>
+      <div v-show="isActive('publish')"><p style="color:#909399">步骤⑩内容开发中</p></div>
     </el-card>
 
     <!-- 底部导航 -->
@@ -63,12 +120,15 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessageBox } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { useWizardStore } from '@/store/wizard'
+import { listConnections } from '@/api/dbConnection'
+import { getTableStructure } from '@/api/tableStructure'
 
 const router = useRouter()
 const wizard = useWizardStore()
 const draftSaved = ref(false)
+const dbList = ref([])
 
 // ─── 步骤定义 ──────────────────────────────────────────────────────────────
 const STEP_DEFS = [
@@ -110,7 +170,7 @@ watch(
   { deep: true }
 )
 
-// ─── 初始化：恢复草稿 ─────────────────────────────────────────────────────
+// ─── 初始化：恢复草稿 + 加载数据库连接 ──────────────────────────────────
 onMounted(async () => {
   if (wizard.hasDraft() && wizard.interfaceType === '') {
     try {
@@ -123,6 +183,11 @@ onMounted(async () => {
     } catch {
       wizard.reset()
     }
+  }
+  try {
+    dbList.value = await listConnections() || []
+  } catch {
+    ElMessage.error('加载数据库连接失败')
   }
 })
 
@@ -139,6 +204,47 @@ function nextStep() {
 
 function goList() {
   router.push('/interface/list')
+}
+
+function onTypeChange(type) {
+  wizard.currentStep = 0
+  wizard.mainTable = { name: '', alias: '' }
+  wizard.joinConfigs = []
+  wizard.tables = []
+  wizard.selectedColumns = []
+  wizard.fieldTables = []
+  wizard.conditions = []
+  wizard.shardConfigId = null
+  wizard.processRules = []
+  if (type === 'DELETE') {
+    wizard.tables = [{ tableName: '' }]
+  }
+  if (type === 'INSERT' || type === 'UPDATE') {
+    wizard.tables = [{ tableName: '' }]
+    wizard.fieldTables = [{ tableName: '', fields: [] }]
+  }
+}
+
+async function onDbChange(dbId) {
+  wizard.tableColumns = {}
+  wizard.mainTable = { name: '', alias: '' }
+  wizard.joinConfigs = []
+  if (wizard.interfaceType === 'SELECT') {
+    wizard.tables = []
+  } else {
+    wizard.tables = [{ tableName: '' }]
+  }
+  wizard.selectedColumns = []
+  wizard.fieldTables = []
+  if (!dbId) return
+  try {
+    const list = await getTableStructure(dbId) || []
+    const map = {}
+    for (const t of list) map[t.tableName] = t.columns || []
+    wizard.tableColumns = map
+  } catch {
+    ElMessage.error('加载表结构失败')
+  }
 }
 </script>
 
@@ -199,5 +305,12 @@ function goList() {
 .step-counter {
   font-size: 13px;
   color: #909399;
+}
+.join-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 </style>
