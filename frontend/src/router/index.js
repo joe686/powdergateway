@@ -76,6 +76,12 @@ const router = createRouter({
           meta: { title: '表结构管理' }
         },
         {
+          path: 'interface/wizard',
+          name: 'InterfaceWizard',
+          component: () => import('@/views/interface/InterfaceWizard.vue'),
+          meta: { title: '接口配置向导' }
+        },
+        {
           path: 'interface/dev',
           name: 'InterfaceDev',
           component: () => import('@/views/interface/QueryConfig.vue'),

@@ -10,6 +10,7 @@
         @clear="loadList"
       />
       <el-button type="primary" @click="loadList">查询</el-button>
+      <el-button type="success" @click="goWizard">向导新建</el-button>
     </div>
 
     <el-table :data="list" stripe border v-loading="loading" style="margin-top: 16px">
@@ -103,8 +104,10 @@ import {
   bindShardConfig
 } from '@/api/interface'
 import { listShardConfigs } from '@/api/shardConfig'
+import { useWizardStore } from '@/store/wizard'
 
 const router = useRouter()
+const wizardStore = useWizardStore()
 const list = ref([])
 const loading = ref(false)
 const searchName = ref('')
@@ -144,6 +147,11 @@ async function loadList() {
   } finally {
     loading.value = false
   }
+}
+
+function goWizard() {
+  wizardStore.reset()
+  router.push('/interface/wizard')
 }
 
 async function handlePublish(row) {
