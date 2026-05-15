@@ -263,10 +263,70 @@
         </el-form>
       </div>
 
-      <!-- ⑨ 占位 -->
-      <div v-show="isActive('preview')"><p style="color:#909399">步骤⑨内容开发中</p></div>
-      <!-- ⑩ 占位 -->
-      <div v-show="isActive('publish')"><p style="color:#909399">步骤⑩内容开发中</p></div>
+      <!-- ⑨ 预览测试 -->
+      <div v-show="isActive('preview')">
+        <el-alert
+          v-if="wizard.interfaceType === 'DELETE'"
+          title="以下将预览待删除数据，执行预览不会真正删除"
+          type="warning"
+          :closable="false"
+          style="margin-bottom:16px"
+        />
+        <div v-if="wizard.conditions.length > 0" style="margin-bottom:16px">
+          <p style="font-weight:500;margin-bottom:8px">输入预览参数</p>
+          <el-form label-width="120px" size="small">
+            <el-form-item
+              v-for="cond in wizard.conditions"
+              :key="cond.paramKey"
+              :label="cond.paramKey || '参数'"
+            >
+              <el-input
+                v-model="wizard.previewParams[cond.paramKey]"
+                :placeholder="`${cond.field} ${cond.op}`"
+                style="width:260px"
+              />
+            </el-form-item>
+          </el-form>
+        </div>
+        <el-button type="primary" :loading="previewing" @click="doPreview">
+          执行预览（前10条）
+        </el-button>
+        <div v-if="wizard.previewResult.length > 0" style="margin-top:16px">
+          <p style="font-weight:500">预览结果（{{ wizard.previewResult.length }} 条）</p>
+          <el-table :data="wizard.previewResult" border size="small" max-height="300">
+            <el-table-column
+              v-for="col in previewColumns"
+              :key="col"
+              :prop="col"
+              :label="col"
+              show-overflow-tooltip
+            />
+          </el-table>
+        </div>
+        <el-empty v-else-if="previewDone" description="无数据" :image-size="60" />
+      </div>
+
+      <!-- ⑩ 保存发布 -->
+      <div v-show="isActive('publish')">
+        <el-form label-width="120px" style="max-width:600px">
+          <el-form-item label="接口名称" required>
+            <el-input v-model="wizard.interfaceName" placeholder="请输入接口名称" style="width:300px" />
+          </el-form-item>
+          <el-form-item label="接口类型">
+            <el-tag>{{ wizard.interfaceType }}</el-tag>
+          </el-form-item>
+          <el-form-item label="数据库">
+            <span>{{ dbList.find(d => d.id === wizard.dbConnectionId)?.name || '—' }}</span>
+          </el-form-item>
+          <el-form-item label="日志开关">
+            <span>{{ wizard.logEnabled ? '已开启' : '已关闭' }}</span>
+          </el-form-item>
+        </el-form>
+        <div style="display:flex;gap:12px;margin-top:24px">
+          <el-button :loading="saving" @click="doSave">仅保存（草稿）</el-button>
+          <el-button type="primary" :loading="publishing" @click="doPublish">保存并发布</el-button>
+        </div>
+      </div>
     </el-card>
 
     <!-- 底部导航 -->
@@ -299,6 +359,7 @@ import { useWizardStore } from '@/store/wizard'
 import { listConnections } from '@/api/dbConnection'
 import { getTableStructure } from '@/api/tableStructure'
 import { listShardConfigs } from '@/api/shardConfig'
+import { saveInterface, previewInterface, deletePreview, publishInterface } from '@/api/interface'
 import ConditionBuilder from '@/components/ConditionBuilder.vue'
 
 const router = useRouter()
@@ -306,6 +367,14 @@ const wizard = useWizardStore()
 const draftSaved = ref(false)
 const dbList = ref([])
 const shardList = ref([])
+const previewing = ref(false)
+const previewDone = ref(false)
+const saving = ref(false)
+const publishing = ref(false)
+
+const previewColumns = computed(() =>
+  wizard.previewResult.length ? Object.keys(wizard.previewResult[0]) : []
+)
 
 // ─── 步骤定义 ──────────────────────────────────────────────────────────────
 const STEP_DEFS = [
@@ -560,6 +629,124 @@ const conditionFieldOptions = computed(() => {
   }
   return opts
 })
+
+// ─── 步骤⑨⑩ 预览 / 保存 / 发布 ─────────────────────────────────────────
+
+function buildPayload() {
+  const base = {
+    id: wizard.savedId || undefined,
+    name: wizard.interfaceName,
+    dbConnectionId: wizard.dbConnectionId,
+    type: wizard.interfaceType,
+    logEnabled: wizard.logEnabled,
+    shardConfigId: wizard.shardConfigId || undefined,
+  }
+
+  if (wizard.interfaceType === 'SELECT') {
+    const tables = [{ name: wizard.mainTable.name, alias: wizard.mainTable.alias }]
+    for (const j of wizard.joinConfigs) {
+      if (j.rightTableName) tables.push({ name: j.rightTableName, alias: j.rightAlias })
+    }
+    const joins = wizard.joinConfigs
+      .filter(j => j.rightTableName && j.leftCol && j.rightCol)
+      .map(j => ({
+        leftTable: wizard.mainTable.alias, leftCol: j.leftCol,
+        rightTable: j.rightAlias, rightCol: j.rightCol, type: j.type
+      }))
+    const fields = wizard.selectedColumns
+      .filter(c => c.selected)
+      .map(c => ({ table: c.tableAlias, column: c.name, alias: c.alias || c.name }))
+    base.configJson = JSON.stringify({ tables, joins, fields, conditions: wizard.conditions, processRules: wizard.processRules })
+
+  } else if (wizard.interfaceType === 'INSERT') {
+    const tables = wizard.fieldTables.map(t => ({
+      name: t.tableName,
+      fields: t.fields.map(f => ({
+        column: f.column, columnType: f.columnType,
+        sourceType: f.sourceType, paramKey: f.paramKey,
+        constValue: f.constValue, expression: f.expression
+      }))
+    }))
+    base.configJson = JSON.stringify({ tables, processRules: wizard.processRules })
+
+  } else if (wizard.interfaceType === 'UPDATE') {
+    const tables = wizard.fieldTables.map(t => ({
+      name: t.tableName,
+      fields: t.fields.map(f => ({
+        column: f.column, columnType: f.columnType,
+        sourceType: f.sourceType, paramKey: f.paramKey,
+        constValue: f.constValue, expression: f.expression
+      }))
+    }))
+    base.configJson = JSON.stringify({ tables, conditions: wizard.conditions, processRules: wizard.processRules })
+
+  } else if (wizard.interfaceType === 'DELETE') {
+    const tables = wizard.tables.map(t => ({ name: t.tableName }))
+    base.configJson = JSON.stringify({ tables, conditions: wizard.conditions })
+  }
+
+  return base
+}
+
+async function doPreview() {
+  if (!wizard.interfaceName.trim()) {
+    ElMessage.warning('请先在步骤②填写接口名称')
+    return
+  }
+  previewing.value = true
+  previewDone.value = false
+  try {
+    const id = await saveInterface(buildPayload())
+    wizard.savedId = id
+    if (wizard.interfaceType === 'DELETE') {
+      wizard.previewResult = await deletePreview(id, wizard.previewParams) || []
+    } else {
+      wizard.previewResult = await previewInterface(id, wizard.previewParams) || []
+    }
+    previewDone.value = true
+  } catch {
+    // request.js 统一提示
+  } finally {
+    previewing.value = false
+  }
+}
+
+async function doSave() {
+  if (!wizard.interfaceName.trim()) {
+    ElMessage.warning('请填写接口名称')
+    return
+  }
+  saving.value = true
+  try {
+    const id = await saveInterface(buildPayload())
+    wizard.savedId = id
+    wizard.reset()
+    ElMessage.success('保存成功')
+    router.push('/interface/list')
+  } catch {
+  } finally {
+    saving.value = false
+  }
+}
+
+async function doPublish() {
+  if (!wizard.interfaceName.trim()) {
+    ElMessage.warning('请填写接口名称')
+    return
+  }
+  publishing.value = true
+  try {
+    const id = await saveInterface(buildPayload())
+    wizard.savedId = id
+    await publishInterface(id)
+    wizard.reset()
+    ElMessage.success('发布成功')
+    router.push('/interface/list')
+  } catch {
+  } finally {
+    publishing.value = false
+  }
+}
 </script>
 
 <style scoped>
