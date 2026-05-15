@@ -63,7 +63,7 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessageBox } from 'element-plus'
 import { useWizardStore } from '@/store/wizard'
 
 const router = useRouter()
@@ -132,7 +132,9 @@ function prevStep() {
 }
 
 function nextStep() {
-  wizard.currentStep++
+  if (wizard.currentStep < visibleSteps.value.length - 1) {
+    wizard.currentStep++
+  }
 }
 
 function goList() {

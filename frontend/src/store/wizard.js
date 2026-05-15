@@ -4,6 +4,7 @@ const DRAFT_KEY = 'wizard_draft'
 
 function defaultState() {
   return {
+    _skipNextPersist: false,
     currentStep: 0,
     interfaceType: '',
 
@@ -50,12 +51,17 @@ export const useWizardStore = defineStore('wizard', {
   state: defaultState,
   actions: {
     reset() {
+      this._skipNextPersist = true
       this.$patch(defaultState())
       localStorage.removeItem(DRAFT_KEY)
     },
     persist() {
+      if (this._skipNextPersist) {
+        this._skipNextPersist = false
+        return
+      }
       try {
-        const { previewResult, tableColumns, ...rest } = this.$state
+        const { previewResult, tableColumns, _skipNextPersist, ...rest } = this.$state
         localStorage.setItem(DRAFT_KEY, JSON.stringify(rest))
       } catch (e) {
         console.warn('[wizardStore] persist failed:', e)
