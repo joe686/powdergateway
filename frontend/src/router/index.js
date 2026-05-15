@@ -158,7 +158,7 @@ const router = createRouter({
         {
           path: 'tools/debug',
           name: 'MessageDebug',
-          component: () => import('@/views/placeholder/PlaceholderView.vue'),
+          component: () => import('@/views/tools/MessageDebug.vue'),
           meta: { title: '报文调试' }
         },
         {
