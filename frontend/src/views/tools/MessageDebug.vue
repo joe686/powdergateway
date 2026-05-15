@@ -3,8 +3,8 @@
     <!-- 模式切换 -->
     <div class="mode-bar">
       <el-radio-group v-model="mode" @change="onModeChange">
-        <el-radio-button label="convert">格式转换调试</el-radio-button>
-        <el-radio-button label="exec">接口调用调试</el-radio-button>
+        <el-radio-button value="convert">格式转换调试</el-radio-button>
+        <el-radio-button value="exec">接口调用调试</el-radio-button>
       </el-radio-group>
     </div>
 
@@ -139,7 +139,7 @@ function renderResult(text) {
   try {
     resultHtml.value = hljs.highlightAuto(text).value
   } catch {
-    resultHtml.value = text
+    resultHtml.value = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   }
 }
 
@@ -185,7 +185,8 @@ async function execute() {
     }
   } catch (e) {
     const msg = e?.message || '执行失败'
-    resultHtml.value = `<span style="color:#f38ba8">${msg}</span>`
+    const escaped = msg.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    resultHtml.value = `<span style="color:#f38ba8">${escaped}</span>`
   } finally {
     executing.value = false
   }
@@ -259,11 +260,19 @@ onMounted(() => {
 
 .input-area {
   flex: 1;
-  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.input-area :deep(.el-textarea) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .input-area :deep(.el-textarea__inner) {
-  height: 100%;
+  flex: 1;
+  height: auto;
   font-family: monospace;
   font-size: 13px;
   border: none;
