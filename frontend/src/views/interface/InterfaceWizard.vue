@@ -361,6 +361,10 @@ onMounted(async () => {
       wizard.reset()
     }
   }
+  // 确保 UPDATE/DELETE 的 tables[0] 存在（草稿恢复后可能缺失）
+  if ((wizard.interfaceType === 'UPDATE' || wizard.interfaceType === 'DELETE') && wizard.tables.length === 0) {
+    wizard.tables = [{ tableName: '' }]
+  }
   try {
     dbList.value = await listConnections() || []
   } catch {
@@ -378,6 +382,13 @@ function prevStep() {
 }
 
 function nextStep() {
+  const key = currentStepDef.value.key
+  if (key === 'cond') {
+    if ((wizard.interfaceType === 'UPDATE' || wizard.interfaceType === 'DELETE') && wizard.conditions.length === 0) {
+      ElMessage.warning('UPDATE/DELETE 必须配置至少一个条件')
+      return
+    }
+  }
   if (wizard.currentStep < visibleSteps.value.length - 1) {
     wizard.currentStep++
   }
