@@ -39,4 +39,23 @@ public interface PerfStatMapper extends BaseMapper<PerfStatRecord> {
             "FROM perf_stat WHERE stat_time >= #{from} AND stat_time < #{to}")
     Map<String, Object> statBetween(@Param("from") LocalDateTime from,
                                     @Param("to") LocalDateTime to);
+
+    @Select("SELECT op_type AS opType, COUNT(*) AS count " +
+            "FROM perf_stat WHERE stat_time >= #{from} AND stat_time < #{to} " +
+            "GROUP BY op_type ORDER BY count DESC")
+    List<Map<String, Object>> groupByOpType(@Param("from") LocalDateTime from,
+                                            @Param("to")   LocalDateTime to);
+
+    @Select("SELECT p.interface_id AS interfaceId, " +
+            "       i.name          AS interfaceName, " +
+            "       ROUND(AVG(p.cost_ms), 0) AS avgCostMs, " +
+            "       COUNT(*)        AS callCount " +
+            "FROM perf_stat p LEFT JOIN interface_config i ON p.interface_id = i.id " +
+            "WHERE p.stat_time >= #{from} AND p.stat_time < #{to} " +
+            "GROUP BY p.interface_id, i.name " +
+            "ORDER BY avgCostMs DESC " +
+            "LIMIT #{limit}")
+    List<Map<String, Object>> topSlowInterfaces(@Param("from") LocalDateTime from,
+                                                @Param("to")   LocalDateTime to,
+                                                @Param("limit") int limit);
 }
