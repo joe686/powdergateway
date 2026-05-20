@@ -8,6 +8,7 @@ import com.powergateway.model.dto.CallStatsDTO;
 import com.powergateway.model.dto.CallTrendDTO;
 import com.powergateway.model.dto.HomeOverviewDTO;
 import com.powergateway.model.dto.InterfaceStatsDTO;
+import com.powergateway.model.dto.StatsSummaryDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -32,10 +33,12 @@ public class HomeOverviewService {
         InterfaceStatsDTO interfaceStats = computeInterfaceStats();
         CallStatsDTO      callStats      = computeCallStats(window);
 
+        CallTrendDTO callTrend = computeCallTrend(dimension);
+
         return new HomeOverviewDTO(
                 interfaceStats,
                 callStats,
-                new CallTrendDTO(Collections.emptyList(), Collections.emptyList(), Collections.emptyList()),
+                callTrend,
                 Collections.emptyList(),
                 Collections.emptyList(),
                 Collections.emptyList()
@@ -61,6 +64,15 @@ public class HomeOverviewService {
                 ? BigDecimal.ZERO.setScale(1, RoundingMode.HALF_UP)
                 : BigDecimal.valueOf((total - failCount) * 100.0 / total).setScale(1, RoundingMode.HALF_UP);
         return new CallStatsDTO(total, successRate, avgMs, computeCacheHitRate());
+    }
+
+    private CallTrendDTO computeCallTrend(String dimension) {
+        StatsSummaryDTO summary = perfStatService.summary(dimension);
+        return new CallTrendDTO(
+                summary.getTimeline()      != null ? summary.getTimeline()      : Collections.emptyList(),
+                summary.getSuccessCounts() != null ? summary.getSuccessCounts() : Collections.emptyList(),
+                summary.getFailCounts()    != null ? summary.getFailCounts()    : Collections.emptyList()
+        );
     }
 
     private BigDecimal computeCacheHitRate() {

@@ -159,4 +159,29 @@ class AUX2HomeOverviewTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.callStats.cacheHitRate").value(org.hamcrest.Matchers.nullValue()));
     }
+
+    @Test
+    void overview_today_callTrend为逐小时() throws Exception {
+        long id = insertInterface("intf", "published");
+        insertPerfStat(id, "SELECT", 100, 1, 0);
+
+        mockMvc.perform(get("/api/home/overview").header("satoken", token).param("dimension", "today"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.callTrend.timeline").isArray())
+                .andExpect(jsonPath("$.data.callTrend.successCounts").isArray())
+                .andExpect(jsonPath("$.data.callTrend.failCounts").isArray())
+                .andExpect(jsonPath("$.data.callTrend.timeline[0]",
+                        org.hamcrest.Matchers.matchesPattern("^\\d{2}:00$")));
+    }
+
+    @Test
+    void overview_week_callTrend为逐日() throws Exception {
+        long id = insertInterface("intf", "published");
+        insertPerfStat(id, "SELECT", 100, 1, 0);
+
+        mockMvc.perform(get("/api/home/overview").header("satoken", token).param("dimension", "week"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.callTrend.timeline[0]",
+                        org.hamcrest.Matchers.matchesPattern("^\\d{4}-\\d{2}-\\d{2}$")));
+    }
 }
