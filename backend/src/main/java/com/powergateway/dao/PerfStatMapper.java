@@ -48,12 +48,12 @@ public interface PerfStatMapper extends BaseMapper<PerfStatRecord> {
 
     @Select("SELECT p.interface_id AS interfaceId, " +
             "       i.name          AS interfaceName, " +
-            "       ROUND(AVG(p.cost_ms), 0) AS avgCostMs, " +
+            "       ROUND(COALESCE(AVG(p.cost_ms), 0), 0) AS avgCostMs, " +
             "       COUNT(*)        AS callCount " +
             "FROM perf_stat p LEFT JOIN interface_config i ON p.interface_id = i.id " +
             "WHERE p.stat_time >= #{from} AND p.stat_time < #{to} " +
             "GROUP BY p.interface_id, i.name " +
-            "ORDER BY avgCostMs DESC " +
+            "ORDER BY ROUND(COALESCE(AVG(p.cost_ms), 0), 0) DESC " +
             "LIMIT #{limit}")
     List<Map<String, Object>> topSlowInterfaces(@Param("from") LocalDateTime from,
                                                 @Param("to")   LocalDateTime to,
