@@ -10,6 +10,7 @@ import com.powergateway.model.dto.CallTrendDTO;
 import com.powergateway.model.dto.HomeOverviewDTO;
 import com.powergateway.model.dto.InterfaceStatsDTO;
 import com.powergateway.model.dto.OpTypeCountDTO;
+import com.powergateway.model.dto.SlowInterfaceDTO;
 import com.powergateway.model.dto.StatsSummaryDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -41,12 +42,14 @@ public class HomeOverviewService {
 
         List<OpTypeCountDTO> opTypeDist = computeOpTypeDistribution(window);
 
+        List<SlowInterfaceDTO> topSlow = computeTopSlow(window, 5);
+
         return new HomeOverviewDTO(
                 interfaceStats,
                 callStats,
                 callTrend,
                 opTypeDist,
-                Collections.emptyList(),
+                topSlow,
                 Collections.emptyList()
         );
     }
@@ -79,6 +82,31 @@ public class HomeOverviewService {
             result.add(new OpTypeCountDTO(readStr(row, "opType"), readLong(row, "count")));
         }
         return result;
+    }
+
+    private List<SlowInterfaceDTO> computeTopSlow(TimeWindow w, int limit) {
+        List<Map<String, Object>> rows = perfStatMapper.topSlowInterfaces(w.from, w.to, limit);
+        List<SlowInterfaceDTO> result = new ArrayList<>();
+        for (Map<String, Object> row : rows) {
+            Long id = readNullableLong(row, "interfaceId");
+            result.add(new SlowInterfaceDTO(
+                    id,
+                    readStr(row, "interfaceName"),
+                    readLong(row, "avgCostMs"),
+                    readLong(row, "callCount")
+            ));
+        }
+        return result;
+    }
+
+    private Long readNullableLong(Map<String, Object> row, String alias) {
+        if (row == null) return null;
+        for (Map.Entry<String, Object> e : row.entrySet()) {
+            if (e.getKey().equalsIgnoreCase(alias) && e.getValue() instanceof Number) {
+                return ((Number) e.getValue()).longValue();
+            }
+        }
+        return null;
     }
 
     private String readStr(Map<String, Object> row, String alias) {

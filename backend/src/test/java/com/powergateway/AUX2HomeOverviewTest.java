@@ -202,4 +202,27 @@ class AUX2HomeOverviewTest {
                 .andExpect(jsonPath("$.data.opTypeDistribution[1].opType").value("INSERT"))
                 .andExpect(jsonPath("$.data.opTypeDistribution[1].count").value(1));
     }
+
+    @Test
+    void overview_topSlowInterfaces_按avgCostMs倒序限5条() throws Exception {
+        long id1 = insertInterface("intf-slow", "published");
+        long id2 = insertInterface("intf-fast", "published");
+        long id3 = insertInterface("intf-med",  "published");
+        // id1: 平均 1000ms
+        insertPerfStat(id1, "SELECT", 1000, 1, 0);
+        insertPerfStat(id1, "SELECT", 1000, 1, 0);
+        // id2: 平均 50ms
+        insertPerfStat(id2, "SELECT", 50, 1, 0);
+        // id3: 平均 300ms
+        insertPerfStat(id3, "SELECT", 300, 1, 0);
+
+        mockMvc.perform(get("/api/home/overview").header("satoken", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.topSlowInterfaces.length()").value(3))
+                .andExpect(jsonPath("$.data.topSlowInterfaces[0].interfaceName").value("intf-slow"))
+                .andExpect(jsonPath("$.data.topSlowInterfaces[0].avgCostMs").value(1000))
+                .andExpect(jsonPath("$.data.topSlowInterfaces[0].callCount").value(2))
+                .andExpect(jsonPath("$.data.topSlowInterfaces[1].interfaceName").value("intf-med"))
+                .andExpect(jsonPath("$.data.topSlowInterfaces[2].interfaceName").value("intf-fast"));
+    }
 }
