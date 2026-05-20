@@ -126,4 +126,29 @@ class AUX2HomeOverviewTest {
                 .andExpect(jsonPath("$.data.interfaceStats.published").value(0))
                 .andExpect(jsonPath("$.data.interfaceStats.disabled").value(0));
     }
+
+    @Test
+    void overview_callStats_汇总totalCalls_successRate_avgCostMs() throws Exception {
+        long id = insertInterface("intf", "published");
+        // 3 成功 (100/200/300ms) + 1 失败 (50ms) → total=4, fail=1, successRate=75.0
+        insertPerfStat(id, "SELECT", 100, 1, 0);
+        insertPerfStat(id, "SELECT", 200, 1, 0);
+        insertPerfStat(id, "SELECT", 300, 1, 0);
+        insertPerfStat(id, "SELECT", 50,  0, 0);
+
+        mockMvc.perform(get("/api/home/overview").header("satoken", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.callStats.totalCalls").value(4))
+                .andExpect(jsonPath("$.data.callStats.successRate").value(75.0))
+                .andExpect(jsonPath("$.data.callStats.avgCostMs").value(org.hamcrest.Matchers.greaterThan(100)));
+    }
+
+    @Test
+    void overview_无perfStat_callStats全0_successRate0() throws Exception {
+        mockMvc.perform(get("/api/home/overview").header("satoken", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.callStats.totalCalls").value(0))
+                .andExpect(jsonPath("$.data.callStats.successRate").value(0))
+                .andExpect(jsonPath("$.data.callStats.avgCostMs").value(0));
+    }
 }
