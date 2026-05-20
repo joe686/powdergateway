@@ -184,4 +184,22 @@ class AUX2HomeOverviewTest {
                 .andExpect(jsonPath("$.data.callTrend.timeline[0]",
                         org.hamcrest.Matchers.matchesPattern("^\\d{4}-\\d{2}-\\d{2}$")));
     }
+
+    @Test
+    void overview_opTypeDistribution_按opType分组并倒序() throws Exception {
+        long id = insertInterface("intf", "published");
+        // SELECT × 3, INSERT × 1
+        insertPerfStat(id, "SELECT", 100, 1, 0);
+        insertPerfStat(id, "SELECT", 100, 1, 0);
+        insertPerfStat(id, "SELECT", 100, 1, 0);
+        insertPerfStat(id, "INSERT", 100, 1, 0);
+
+        mockMvc.perform(get("/api/home/overview").header("satoken", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.opTypeDistribution.length()").value(2))
+                .andExpect(jsonPath("$.data.opTypeDistribution[0].opType").value("SELECT"))
+                .andExpect(jsonPath("$.data.opTypeDistribution[0].count").value(3))
+                .andExpect(jsonPath("$.data.opTypeDistribution[1].opType").value("INSERT"))
+                .andExpect(jsonPath("$.data.opTypeDistribution[1].count").value(1));
+    }
 }

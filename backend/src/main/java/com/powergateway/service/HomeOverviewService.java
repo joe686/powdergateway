@@ -2,12 +2,14 @@ package com.powergateway.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.powergateway.dao.InterfaceConfigMapper;
+import com.powergateway.dao.PerfStatMapper;
 import com.powergateway.model.InterfaceConfig;
 import com.powergateway.model.dto.CacheStatDTO;
 import com.powergateway.model.dto.CallStatsDTO;
 import com.powergateway.model.dto.CallTrendDTO;
 import com.powergateway.model.dto.HomeOverviewDTO;
 import com.powergateway.model.dto.InterfaceStatsDTO;
+import com.powergateway.model.dto.OpTypeCountDTO;
 import com.powergateway.model.dto.StatsSummaryDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -16,6 +18,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +27,7 @@ import java.util.Map;
 public class HomeOverviewService {
 
     @Autowired private InterfaceConfigMapper interfaceConfigMapper;
+    @Autowired private PerfStatMapper perfStatMapper;
     @Autowired private PerfStatService perfStatService;
     @Autowired private QueryCacheManager queryCacheManager;
 
@@ -35,11 +39,13 @@ public class HomeOverviewService {
 
         CallTrendDTO callTrend = computeCallTrend(dimension);
 
+        List<OpTypeCountDTO> opTypeDist = computeOpTypeDistribution(window);
+
         return new HomeOverviewDTO(
                 interfaceStats,
                 callStats,
                 callTrend,
-                Collections.emptyList(),
+                opTypeDist,
                 Collections.emptyList(),
                 Collections.emptyList()
         );
@@ -64,6 +70,24 @@ public class HomeOverviewService {
                 ? BigDecimal.ZERO.setScale(1, RoundingMode.HALF_UP)
                 : BigDecimal.valueOf((total - failCount) * 100.0 / total).setScale(1, RoundingMode.HALF_UP);
         return new CallStatsDTO(total, successRate, avgMs, computeCacheHitRate());
+    }
+
+    private List<OpTypeCountDTO> computeOpTypeDistribution(TimeWindow w) {
+        List<Map<String, Object>> rows = perfStatMapper.groupByOpType(w.from, w.to);
+        List<OpTypeCountDTO> result = new ArrayList<>();
+        for (Map<String, Object> row : rows) {
+            result.add(new OpTypeCountDTO(readStr(row, "opType"), readLong(row, "count")));
+        }
+        return result;
+    }
+
+    private String readStr(Map<String, Object> row, String alias) {
+        if (row == null) return "";
+        for (Map.Entry<String, Object> e : row.entrySet()) {
+            if (e.getKey().equalsIgnoreCase(alias))
+                return e.getValue() != null ? String.valueOf(e.getValue()) : "";
+        }
+        return "";
     }
 
     private CallTrendDTO computeCallTrend(String dimension) {
