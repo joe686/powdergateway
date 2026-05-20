@@ -98,4 +98,32 @@ class AUX2HomeOverviewTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(401));
     }
+
+    @Test
+    void overview_interfaceStats_按status分组计数() throws Exception {
+        insertInterface("intf-draft-1", "draft");
+        insertInterface("intf-draft-2", "draft");
+        insertInterface("intf-pub-1",   "published");
+        insertInterface("intf-pub-2",   "published");
+        insertInterface("intf-pub-3",   "published");
+        insertInterface("intf-dis-1",   "disabled");
+
+        mockMvc.perform(get("/api/home/overview").header("satoken", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.interfaceStats.total").value(6))
+                .andExpect(jsonPath("$.data.interfaceStats.draft").value(2))
+                .andExpect(jsonPath("$.data.interfaceStats.published").value(3))
+                .andExpect(jsonPath("$.data.interfaceStats.disabled").value(1));
+    }
+
+    @Test
+    void overview_无接口时_interfaceStats全0() throws Exception {
+        mockMvc.perform(get("/api/home/overview").header("satoken", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.interfaceStats.total").value(0))
+                .andExpect(jsonPath("$.data.interfaceStats.draft").value(0))
+                .andExpect(jsonPath("$.data.interfaceStats.published").value(0))
+                .andExpect(jsonPath("$.data.interfaceStats.disabled").value(0));
+    }
 }
