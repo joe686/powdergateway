@@ -151,4 +151,12 @@ class AUX2HomeOverviewTest {
                 .andExpect(jsonPath("$.data.callStats.successRate").value(0))
                 .andExpect(jsonPath("$.data.callStats.avgCostMs").value(0));
     }
+
+    @Test
+    void overview_无启用缓存接口_cacheHitRate为null() throws Exception {
+        insertInterface("intf-no-cache", "published");
+        mockMvc.perform(get("/api/home/overview").header("satoken", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.callStats.cacheHitRate").value(org.hamcrest.Matchers.nullValue()));
+    }
 }

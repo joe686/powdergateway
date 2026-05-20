@@ -3,6 +3,7 @@ package com.powergateway.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.powergateway.dao.InterfaceConfigMapper;
 import com.powergateway.model.InterfaceConfig;
+import com.powergateway.model.dto.CacheStatDTO;
 import com.powergateway.model.dto.CallStatsDTO;
 import com.powergateway.model.dto.CallTrendDTO;
 import com.powergateway.model.dto.HomeOverviewDTO;
@@ -15,6 +16,7 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -22,6 +24,7 @@ public class HomeOverviewService {
 
     @Autowired private InterfaceConfigMapper interfaceConfigMapper;
     @Autowired private PerfStatService perfStatService;
+    @Autowired private QueryCacheManager queryCacheManager;
 
     public HomeOverviewDTO getOverview(String dimension) {
         TimeWindow window = resolveWindow(dimension);
@@ -57,7 +60,21 @@ public class HomeOverviewService {
         BigDecimal successRate = total == 0
                 ? BigDecimal.ZERO.setScale(1, RoundingMode.HALF_UP)
                 : BigDecimal.valueOf((total - failCount) * 100.0 / total).setScale(1, RoundingMode.HALF_UP);
-        return new CallStatsDTO(total, successRate, avgMs, null);
+        return new CallStatsDTO(total, successRate, avgMs, computeCacheHitRate());
+    }
+
+    private BigDecimal computeCacheHitRate() {
+        List<InterfaceConfig> enabled = interfaceConfigMapper.selectList(
+                new LambdaQueryWrapper<InterfaceConfig>().eq(InterfaceConfig::getCacheEnabled, 1));
+        long totalHit = 0, totalMiss = 0;
+        for (InterfaceConfig cfg : enabled) {
+            CacheStatDTO s = queryCacheManager.getStats(cfg.getId());
+            totalHit  += s.getHitCount();
+            totalMiss += s.getMissCount();
+        }
+        long sum = totalHit + totalMiss;
+        if (sum == 0) return null;
+        return BigDecimal.valueOf(totalHit * 100.0 / sum).setScale(1, RoundingMode.HALF_UP);
     }
 
     private TimeWindow resolveWindow(String dimension) {
