@@ -2,8 +2,10 @@ package com.powergateway.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.powergateway.dao.InterfaceConfigMapper;
+import com.powergateway.dao.PerfAlertMapper;
 import com.powergateway.dao.PerfStatMapper;
 import com.powergateway.model.InterfaceConfig;
+import com.powergateway.model.PerfAlert;
 import com.powergateway.model.dto.CacheStatDTO;
 import com.powergateway.model.dto.CallStatsDTO;
 import com.powergateway.model.dto.CallTrendDTO;
@@ -28,6 +30,7 @@ import java.util.Map;
 public class HomeOverviewService {
 
     @Autowired private InterfaceConfigMapper interfaceConfigMapper;
+    @Autowired private PerfAlertMapper perfAlertMapper;
     @Autowired private PerfStatMapper perfStatMapper;
     @Autowired private PerfStatService perfStatService;
     @Autowired private QueryCacheManager queryCacheManager;
@@ -44,13 +47,15 @@ public class HomeOverviewService {
 
         List<SlowInterfaceDTO> topSlow = computeTopSlow(window, 5);
 
+        List<PerfAlert> activeAlerts = perfAlertMapper.selectUnresolvedLatest(10);
+
         return new HomeOverviewDTO(
                 interfaceStats,
                 callStats,
                 callTrend,
                 opTypeDist,
                 topSlow,
-                Collections.emptyList()
+                activeAlerts
         );
     }
 

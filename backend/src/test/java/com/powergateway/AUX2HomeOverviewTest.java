@@ -225,4 +225,49 @@ class AUX2HomeOverviewTest {
                 .andExpect(jsonPath("$.data.topSlowInterfaces[1].interfaceName").value("intf-med"))
                 .andExpect(jsonPath("$.data.topSlowInterfaces[2].interfaceName").value("intf-fast"));
     }
+
+    @Test
+    void overview_topSlowInterfaces_limit严格为5() throws Exception {
+        for (int i = 1; i <= 7; i++) {
+            long id = insertInterface("intf-" + i, "published");
+            insertPerfStat(id, "SELECT", i * 100, 1, 0);
+        }
+        mockMvc.perform(get("/api/home/overview").header("satoken", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.topSlowInterfaces.length()").value(5));
+    }
+
+    @Test
+    void overview_activeAlerts_只返回resolved为0的告警() throws Exception {
+        insertAlert("FAIL_RATE", 12.5, 10.0, "失败率超阈值", 0, 1);
+        insertAlert("AVG_COST",  500,  300,  "平均耗时超阈值", 0, 2);
+        insertAlert("FAIL_RATE", 8.0,  10.0, "已处理告警", 1, 3);
+
+        mockMvc.perform(get("/api/home/overview").header("satoken", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.activeAlerts.length()").value(2))
+                .andExpect(jsonPath("$.data.activeAlerts[0].resolved").value(0))
+                .andExpect(jsonPath("$.data.activeAlerts[1].resolved").value(0));
+    }
+
+    @Test
+    void overview_无未处理告警时_activeAlerts为空数组() throws Exception {
+        insertAlert("FAIL_RATE", 8.0, 10.0, "已处理", 1, 1);
+
+        mockMvc.perform(get("/api/home/overview").header("satoken", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.activeAlerts").isArray())
+                .andExpect(jsonPath("$.data.activeAlerts.length()").value(0));
+    }
+
+    @Test
+    void overview_dimension为非法值时_回退today逐小时格式() throws Exception {
+        long id = insertInterface("intf", "published");
+        insertPerfStat(id, "SELECT", 100, 1, 0);
+
+        mockMvc.perform(get("/api/home/overview").header("satoken", token).param("dimension", "invalid"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.callTrend.timeline[0]",
+                        org.hamcrest.Matchers.matchesPattern("^\\d{2}:00$")));
+    }
 }
