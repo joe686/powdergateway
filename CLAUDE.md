@@ -13,7 +13,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 PowerGateway 是一个低代码/零代码可视化接口开发平台，核心价值：减少接口开发工时 50% 以上，单个接口转换配置 ~10 分钟内完成。
 
-**当前状态：阶段一全部完成（P0-1 ～ P0-4），阶段二全部完成（M1-1 ～ M1-7），阶段三全部完成（M2-1、M2-2、M2-9、M2-3、M2-4、M2-5、M2-6、M2-7），阶段四 M2-10、M2-8、SYS-3 完成，共 279 个测试全绿。下一阶段：阶段四剩余（SYS-1、SYS-2、SYS-4）。**
+**当前状态（326 个测试全绿）：**
+- ✅ 全部 28 个交付单元已完成（五个阶段全部交付）
+- ✅ 阶段一（P0-1 ～ P0-4）、阶段二（M1-1 ～ M1-7）、阶段三（M2-1/2/3/4/5/6/7/9）
+- ✅ 阶段四（M2-10、M2-8、SYS-1、SYS-2、SYS-3、SYS-4）
+- ✅ 阶段五（SYS-5 九步向导、AUX-1 报文调试、AUX-2 首页概览）
 
 > `backend/CLAUDE.md` 包含后端实现细节（测试配置、Schema 约定、依赖版本）；`frontend/CLAUDE.md` 包含前端路由约定、请求链路和新增页面步骤。
 
@@ -99,10 +103,13 @@ npm run build                      # 生产打包
 | `DataSourceResolver`（请求字段/固定值/计算值解析） | M2-4 | M2-5 |
 | `ColumnValidator`（基于表结构元数据的字段校验） | M2-4 | M2-5 |
 | `DatabaseMetaData` 表结构查询（Redis缓存） | M2-2 | M2-3/4/5/6 |
-| `sys_config` KV 配置读取 | SYS-4 | M2-9、M2-10、SYS-1、SYS-3（日志菜单开关） |
+| `sys_config` KV 配置读取 | SYS-4¹ | M2-9、M2-10、SYS-1、SYS-3（日志菜单开关） |
 | 条件配置前端组件 `ConditionBuilder.vue` | M2-3 | M2-5、M2-6 |
 | `ShardRouter`（分片路由，取模/范围/补查） | M2-8 | M2-8 exec 集成 |
 | `MenuPermission`（角色菜单白名单） | SYS-3 | `AuthService.getMenuForCurrentUser()` |
+| `InterfaceWizard.vue`（9步接口配置向导） | SYS-5 | 各接口配置页（M2-3/4/5/6） |
+
+> ¹ `sys_config` 表由 P0-3 建立并预置默认 KV（cache ttl、audit 保留天数等），M2-9/M2-10 已直接读取；SYS-4 补充管理 UI 和 `ApplicationEvent` 热更新传播，不影响现有读取逻辑。
 
 ## TDD 规范（强制）
 

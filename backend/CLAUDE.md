@@ -168,10 +168,8 @@ class M15TemplateControllerTest {
 | M2-8 | 分库分表配置：`ShardRuleJson`（MODULO/RANGE 路由规则 DTO）、`ShardRouter`（纯静态路由工具，支持取模/范围/补查/补零）、`ShardConfigService/Controller`（CRUD + 路由预览）；`InterfaceConfigService.resolveSharding()` 在4种 exec 方法中替换主表名和 dbConnectionId；前端 `ShardConfig.vue` + `api/shardConfig.js` |
 | SYS-3 | 用户权限管理：`MenuPermission`（三角色菜单白名单常量 + `sys_config` 日志开关）、`GET /api/auth/menu`（登录后拉取可见路由列表）、`UserService/Controller`（用户 CRUD，BCrypt 密码，自删/末位 admin 保护）；前端 `useUserStore.allowedMenus`、`SideMenu.vue` 动态 `v-if`、路由守卫越权拦截、`UserList.vue` |
 | SYS-1 | 操作日志管理：`@SysLogRecord` 注解+`SysLogAspect` AOP 异步写 `sys_log`，`SysLogService`（队列+分页查询+Excel导出），`SysLogArchiveJob`（归档到 `sys_log_history`），`SysLogController`（list/history/export/audit），前端 `LogList.vue`（双Tab：操作日志+SQL审计，含「查历史数据」开关） |
-
-## 下一阶段：SYS-2、SYS-4
-
-| 单元 | 内容 |
-|------|------|
-| SYS-2 | 性能统计：AOP 统计耗时，ECharts 折线图+柱状图，定时告警检查 |
-| SYS-4 | 系统配置：全局 KV 编辑，`ApplicationEvent` 通知各服务刷新 |
+| SYS-2 | 性能统计：`@PerfStat` 注解 + `PerfStatAspect` AOP 异步写 `perf_stat`，`PerfStatService`（队列消费/summary/statBetween/groupByOpType/topSlowInterfaces），`PerfAlertJob`（定时告警检查），`StatsController`（summary/alerts/alert-config），前端 `Stats.vue`（折线图+柱状图+告警列表+阈值配置） |
+| SYS-4 | 系统配置：`SysConfigService`（`@PostConstruct` 预热 ConcurrentHashMap + `batchUpdate` 持久化 + `ApplicationEvent` 热更新广播），`SysConfigController`（GET all / PUT batch），前端 `SystemConfig.vue`（分组表单，仅 admin 可保存） |
+| SYS-5 | 接口配置九步向导：纯前端 `InterfaceWizard.vue`（867 行），Pinia + localStorage 保存中间状态，按接口类型动态裁剪步骤，复用 `ConditionBuilder.vue` |
+| AUX-1 | 报文调试工具：`MessageDebug.vue`，格式转换调试 + 接口调用调试双模式，`/tools/debug` 路由 |
+| AUX-2 | 首页系统概览：`HomeOverviewController/Service`，`GET /api/home/overview?dimension=today\|week\|month`，聚合 interfaceStats/callStats/callTrend/opTypeDistribution/topSlowInterfaces/activeAlerts；前端 `DashboardView.vue`（5卡片+3图表+TOP5表+告警列表+维度切换+30s 轮询） |
