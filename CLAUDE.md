@@ -79,6 +79,9 @@ npm run build                      # 生产打包
 ## 关键架构决策
 
 - **三库分离**：配置库（MySQL，存模板/接口配置）、业务库（`dynamic-datasource-spring-boot-starter` 按 dbId 动态切换）、审计库（独立 MySQL，保留1年）
+  - 配置库：无注解，默认 `master` 数据源
+  - 审计库：`@DS("audit")` 注解，对应独立 MySQL
+  - 业务库：`DynamicDataSourceContextHolder.push(dbId)` 在 Service 中动态切换，exec 方法结束后 `pop`
 - **双层缓存**：Caffeine → Redis → DB；分布式锁（SET NX PX 3000）防缓存击穿；查询目标 ≤ 300ms，增删改 ≤ 500ms
 - **配置驱动 SQL**：接口配置以 JSON 持久化（`interface_config.config_json`），运行时 QueryBuilder/InsertBuilder/UpdateBuilder/DeleteBuilder 动态构造，不存硬编码 SQL
 - **统一执行入口**：所有已发布接口通过 `POST /api/exec/{interfaceId}` 调用，状态流转 `draft → published → disabled`
@@ -90,6 +93,16 @@ npm run build                      # 生产打包
 |------|------|------|
 | 用户登录密码 | BCrypt | `sys_user.password` |
 | 数据源连接密码 | AES-128 | `db_connection.password` |
+
+### AOP 注解速查
+
+| 注解 | 用途 | 切面类 |
+|------|------|------|
+| `@AuditLog` | SQL 增删改操作审计（写审计库） | `SqlAuditAspect` |
+| `@SysLogRecord` | 后台操作日志（写 `sys_log`） | `SysLogAspect` |
+| `@PerfStat` | 接口执行性能统计（写 `perf_stat`） | `PerfStatAspect` |
+
+三者均通过 `LinkedBlockingQueue + @Async` 异步写入，不阻塞主链路。
 
 详细模块说明、目录结构、菜单树、数据库表设计见 [`README/架构说明.md`](README/架构说明.md)。
 

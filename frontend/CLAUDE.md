@@ -66,7 +66,7 @@ MainLayout.vue          # 整体骨架，管理侧边栏折叠状态
 - 列表页统一：搜索栏 + `el-table` + `el-pagination` + 导出按钮
 - 删除操作必须用 `el-popconfirm` 二次确认
 - 多步骤配置使用 `el-steps`，中间状态存 Pinia store 并同步 `localStorage` 防丢失
-- 字段映射拖拽使用 `vue-draggable-next`
+- 字段映射拖拽使用 `vue-draggable-next`（**注意**：必须用 default slot + `v-for`，**禁止**使用 `<template #item>` — `#item` 是 vuedraggable v4 的 API，在 vue-draggable-next v2.x 中被完全忽略，列表渲染为空）
 - 图表使用 `vue-echarts`（已安装）
 
 ### 可复用前端组件（待实现，实现后禁止重复造轮子）
