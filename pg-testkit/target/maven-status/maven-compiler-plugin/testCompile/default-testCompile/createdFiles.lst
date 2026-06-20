@@ -1,0 +1,3 @@
+com\powergateway\testkit\PgTestKitApplicationTest.class
+com\powergateway\testkit\assertkit\PgAssertions.class
+com\powergateway\testkit\base\IntegrationTestBase.class
