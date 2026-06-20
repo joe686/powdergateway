@@ -11,6 +11,7 @@ import com.powergateway.model.dto.AlertConfigRequest;
 import com.powergateway.model.dto.StatsSummaryDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import javax.annotation.PostConstruct;
 import java.time.LocalDate;
@@ -136,6 +137,23 @@ public class PerfStatService {
         return perfAlertMapper.selectPage(
                 new Page<>(page, pageSize),
                 new LambdaQueryWrapper<PerfAlert>().orderByDesc(PerfAlert::getCheckTime));
+    }
+
+    /**
+     * 性能统计明细分页查询（BUG-011 补充，供 /api/perf-stat/list 使用）
+     * 支持 interfaceId/opType/success/时间范围 过滤
+     */
+    public IPage<PerfStatRecord> listRecords(Long interfaceId, String opType, Integer success,
+                                              LocalDateTime startTime, LocalDateTime endTime,
+                                              int page, int size) {
+        LambdaQueryWrapper<PerfStatRecord> w = new LambdaQueryWrapper<>();
+        if (interfaceId != null)   w.eq(PerfStatRecord::getInterfaceId, interfaceId);
+        if (StringUtils.hasText(opType)) w.eq(PerfStatRecord::getOpType, opType);
+        if (success != null)       w.eq(PerfStatRecord::getSuccess, success);
+        if (startTime != null)     w.ge(PerfStatRecord::getStatTime, startTime);
+        if (endTime != null)       w.le(PerfStatRecord::getStatTime, endTime);
+        w.orderByDesc(PerfStatRecord::getStatTime);
+        return perfStatMapper.selectPage(new Page<>(page, size), w);
     }
 
     public Map<String, Object> statBetween(LocalDateTime from, LocalDateTime to) {

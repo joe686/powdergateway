@@ -11,6 +11,8 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
+
 /**
  * 应用启动后初始化基础数据：预置管理员账号 admin/Admin@123
  */
@@ -35,6 +37,10 @@ public class DataInitializer implements ApplicationRunner {
             admin.setPassword(passwordEncoder.encode("Admin@123"));
             admin.setRole("admin");
             admin.setStatus(1);
+            // BUG-012 修复：显式设置 createTime/updateTime，避免 MyBatis-Plus 插入时传 null 覆盖数据库默认值
+            LocalDateTime now = LocalDateTime.now();
+            admin.setCreateTime(now);
+            admin.setUpdateTime(now);
             sysUserMapper.insert(admin);
             log.info("已预置管理员账号：admin / Admin@123");
         }

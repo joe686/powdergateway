@@ -76,6 +76,9 @@ public class InterfaceConfigService {
     @Autowired
     private ShardConfigService shardConfigService;
 
+    @Autowired
+    private InterfaceOpTypeCache interfaceOpTypeCache;
+
     // ─── 保存 ──────────────────────────────────────────────────────────────────
 
     /**
@@ -225,6 +228,8 @@ public class InterfaceConfigService {
         update.setStatus("published");
         update.setPath("/api/exec/" + id);
         interfaceConfigMapper.updateById(update);
+        // BUG-009 修复：发布时预加载 opType 到缓存，避免首次调用时主线程 DB 查询
+        interfaceOpTypeCache.preload(id);
         log.info("[M2-7] 接口 id={} 发布成功，path={}", id, update.getPath());
     }
 
@@ -236,6 +241,8 @@ public class InterfaceConfigService {
         update.setId(id);
         update.setStatus("disabled");
         interfaceConfigMapper.updateById(update);
+        // BUG-009 修复：禁用时清除 opType 缓存
+        interfaceOpTypeCache.evict(id);
         log.info("[M2-7] 接口 id={} 已禁用", id);
     }
 
@@ -247,6 +254,8 @@ public class InterfaceConfigService {
             throw new BusinessException(400, "接口已发布，请先禁用后再删除");
         }
         interfaceConfigMapper.deleteById(id);
+        // BUG-009 修复：删除时清除 opType 缓存
+        interfaceOpTypeCache.evict(id);
     }
 
     /** 单独绑定/解绑分库分表配置（M2-8），shardConfigId=null 表示解绑 */
