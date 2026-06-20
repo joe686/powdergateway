@@ -68,6 +68,9 @@ CREATE TABLE IF NOT EXISTS interface_config (
   allow_batch_delete TINYINT DEFAULT 0,
   status VARCHAR(32) DEFAULT 'draft' COMMENT 'draft/published/disabled',
   log_enabled TINYINT DEFAULT 1,
+  cache_enabled      TINYINT      DEFAULT 0    COMMENT '是否开启缓存：0=否，1=是',
+  cache_ttl_seconds  INT          DEFAULT 300  COMMENT '缓存 TTL（秒）',
+  cache_key_template VARCHAR(512) DEFAULT ''   COMMENT 'key 模板，支持 {参数名} 占位符',
   deleted TINYINT DEFAULT 0,
   creator VARCHAR(64),
   create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -118,15 +121,21 @@ CREATE TABLE IF NOT EXISTS sys_config (
   config_key VARCHAR(128) PRIMARY KEY,
   config_value VARCHAR(1024),
   description VARCHAR(512),
+  value_type   VARCHAR(32)  DEFAULT 'string' COMMENT 'number/boolean/string',
+  group_name   VARCHAR(64)  DEFAULT '其他'   COMMENT '前端分组名',
   update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 -- 初始化系统配置默认值
-INSERT IGNORE INTO sys_config (config_key, config_value, description) VALUES
-('cache.query.ttl', '300', '查询缓存 TTL（秒）'),
-('cache.template.ttl', '600', '转换模板缓存 TTL（秒）'),
-('audit.log.retention.days', '365', '审计日志保留天数'),
-('sql.log.retention.days', '90', 'SQL 日志保留天数');
+INSERT IGNORE INTO sys_config (config_key, config_value, description, value_type, group_name) VALUES
+('cache.query.ttl',         '300',  '查询缓存 TTL（秒）',          'number',  '缓存配置'),
+('cache.template.ttl',      '600',  '模板缓存 TTL（秒）',          'number',  '缓存配置'),
+('sys.log.retention.days',  '30',   '操作日志归档天数',             'number',  '日志配置'),
+('audit.log.retention.days','365',  '审计日志保留天数',             'number',  '日志配置'),
+('sql.log.retention.days',  '90',   'SQL 日志保留天数',             'number',  '日志配置'),
+('log_menu_enabled',        'true', '日志管理菜单显示开关',         'boolean', '日志配置'),
+('alert_fail_rate',         '5',    '告警失败率阈值（%）',          'number',  '告警配置'),
+('alert_response_ms',       '1000', '告警响应时间阈值（ms）',       'number',  '告警配置');
 
 -- ========== 审计库表（M2-9）：在独立 powergateway_audit 库中建表 ==========
 -- 生产环境需单独在审计库执行以下 DDL
@@ -145,4 +154,54 @@ CREATE TABLE IF NOT EXISTS sql_audit_log (
   result          VARCHAR(32)  COMMENT 'SUCCESS/FAIL',
   error_msg       TEXT,
   before_snapshot JSON         COMMENT '修改前数据快照'
+);
+
+-- SYS-1 操作日志表（配置库）
+CREATE TABLE IF NOT EXISTS sys_log (
+  id        BIGINT PRIMARY KEY AUTO_INCREMENT,
+  module    VARCHAR(64)  COMMENT '操作模块（如"模板管理"）',
+  action    VARCHAR(128) COMMENT '操作动作（如"保存模板"）',
+  operator  VARCHAR(64)  COMMENT '操作人（Sa-Token loginId，未登录时为 system）',
+  op_ip     VARCHAR(64),
+  op_time   DATETIME     DEFAULT CURRENT_TIMESTAMP,
+  level     VARCHAR(16)  COMMENT 'INFO / ERROR',
+  error_msg TEXT         COMMENT '失败时的错误信息',
+  cost_ms   INT          COMMENT '执行耗时（ms）'
+);
+
+-- SYS-1 操作日志历史归档表（CHG-006）
+CREATE TABLE IF NOT EXISTS sys_log_history (
+  id            BIGINT PRIMARY KEY AUTO_INCREMENT,
+  module        VARCHAR(64),
+  action        VARCHAR(128),
+  operator      VARCHAR(64),
+  op_ip         VARCHAR(64),
+  op_time       DATETIME,
+  level         VARCHAR(16),
+  error_msg     TEXT,
+  cost_ms       INT,
+  archived_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '归档时间'
+);
+
+-- SYS-2 性能统计明细表
+CREATE TABLE IF NOT EXISTS perf_stat (
+  id           BIGINT       PRIMARY KEY AUTO_INCREMENT,
+  interface_id BIGINT       COMMENT '接口ID，关联 interface_config.id',
+  op_type      VARCHAR(32)  COMMENT 'SELECT/INSERT/UPDATE/DELETE',
+  cost_ms      INT          COMMENT '耗时（毫秒）',
+  success      TINYINT      COMMENT '1=成功 0=失败',
+  stat_time    DATETIME     DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_perf_stat_time (stat_time),
+  INDEX idx_perf_interface (interface_id)
+);
+
+-- SYS-2 告警记录表
+CREATE TABLE IF NOT EXISTS perf_alert (
+  id          BIGINT        PRIMARY KEY AUTO_INCREMENT,
+  alert_type  VARCHAR(64)   COMMENT 'FAIL_RATE / AVG_RESPONSE',
+  alert_value DECIMAL(10,2) COMMENT '实际值（失败率%或毫秒）',
+  threshold   DECIMAL(10,2) COMMENT '触发时的阈值',
+  message     VARCHAR(512),
+  check_time  DATETIME      DEFAULT CURRENT_TIMESTAMP,
+  resolved    TINYINT       DEFAULT 0
 );

@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: com.powergateway.M14ChannelTemplateTest
 -------------------------------------------------------------------------------
-Tests run: 12, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.995 s - in com.powergateway.M14ChannelTemplateTest
+Tests run: 12, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.015 s - in com.powergateway.M14ChannelTemplateTest

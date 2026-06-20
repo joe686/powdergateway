@@ -82,7 +82,11 @@
       "Bash(git config *)",
       "Bash(gh auth *)",
       "Bash(git remote *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "PowerShell(mvn test *)",
+      "Bash(python *)",
+      "Bash(taskkill *)",
+      "Skill(update-config)"
     ]
   }
 }

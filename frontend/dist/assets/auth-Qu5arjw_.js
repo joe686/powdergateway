@@ -1,0 +1,1 @@
+import{r as t}from"./request-g7hsT5gV.js";function r(o,n){return t.post("/auth/login",{username:o,password:n})}function e(){return t.post("/auth/logout")}function s(){return t.get("/auth/menu")}export{e as a,s as g,r as l};

@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: com.powergateway.M17PortRouteTest
 -------------------------------------------------------------------------------
-Tests run: 15, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.146 s - in com.powergateway.M17PortRouteTest
+Tests run: 15, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.205 s - in com.powergateway.M17PortRouteTest

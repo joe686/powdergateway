@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PowerGateway 竞品分析报告</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:#f5f5f5;color:#1a1a1a;line-height:1.7;padding:0}
+.wrap{max-width:800px;margin:0 auto;background:#fff;padding:16px}
+h1{font-size:1.5rem;text-align:center;padding:24px 0 8px;color:#111}
+.sub{text-align:center;color:#888;font-size:.85rem;margin-bottom:20px}
+h2{font-size:1.15rem;color:#fff;background:#2563eb;padding:8px 14px;border-radius:6px;margin:28px 0 12px}
+h3{font-size:1rem;color:#2563eb;margin:18px 0 8px;border-left:3px solid #2563eb;padding-left:8px}
+p{margin:8px 0;font-size:.9rem}
+strong{color:#2563eb}
+.badge{display:inline-block;font-size:.7rem;padding:2px 8px;border-radius:10px;font-weight:600;margin:2px}
+.bg-g{background:#dcfce7;color:#166534}.bg-b{background:#dbeafe;color:#1e40af}.bg-y{background:#fef3c7;color:#92400e}.bg-r{background:#fee2e2;color:#991b1b}
+
+/* stats */
+.stats{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.stats div{flex:1;min-width:100px;background:#f0f7ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px;text-align:center}
+.stats b{display:block;font-size:1.5rem;color:#2563eb}
+.stats small{font-size:.75rem;color:#666}
+
+/* cards */
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+@media(max-width:500px){.cards{grid-template-columns:1fr}}
+.card{background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px}
+.card b{display:block;font-size:.88rem;margin-bottom:4px}
+.card p{font-size:.8rem;color:#555;margin:0}
+
+/* table */
+.tb{overflow-x:auto;margin:12px 0;border:1px solid #e5e7eb;border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:.78rem;min-width:600px}
+th{background:#f0f4ff;color:#333;font-weight:600;text-align:left;padding:6px 8px;white-space:nowrap;border-bottom:2px solid #2563eb}
+td{padding:5px 8px;border-bottom:1px solid #f0f0f0;vertical-align:top}
+tr:nth-child(even){background:#fafafa}
+
+/* pros/cons */
+.pc{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+@media(max-width:500px){.pc{grid-template-columns:1fr}}
+.pros{background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px}
+.cons{background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:12px}
+.pros h4,.cons h4{font-size:.9rem;margin-bottom:6px}
+.pros h4{color:#166534}.cons h4{color:#991b1b}
+.pros li,.cons li{font-size:.82rem;margin-bottom:3px}
+
+/* bar chart */
+.bar-chart{margin:12px 0}
+.bar-row{display:flex;align-items:center;margin:4px 0;font-size:.78rem}
+.bar-label{width:90px;text-align:right;padding-right:8px;color:#555;flex-shrink:0}
+.bar-track{flex:1;background:#f0f0f0;height:20px;border-radius:4px;overflow:hidden;position:relative}
+.bar-fill{height:100%;border-radius:4px;display:flex;align-items:center;justify-content:flex-end;padding-right:6px;font-size:.7rem;color:#fff;font-weight:600;min-width:24px}
+.c1{background:#2563eb}.c2{background:#7c3aed}.c3{background:#f59e0b}.c4{background:#22c55e}.c5{background:#ef4444}
+
+/* callout */
+.callout{background:#fffbeb;border-left:4px solid #f59e0b;border-radius:0 6px 6px 0;padding:10px 14px;margin:12px 0;font-size:.85rem}
+
+/* score table */
+.score td:first-child{font-weight:600;white-space:nowrap}
+
+ul,ol{margin:6px 0 6px 18px;font-size:.85rem}
+li{margin-bottom:3px}
+a{color:#2563eb}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>PowerGateway 竞品分析报告</h1>
+<p class="sub">2026-06-20 | 项目知识图谱 + 市场竞争力评估</p>
+
+<!-- ===== 一、项目概况 ===== -->
+<h2>一、项目概况</h2>
+
+<div class="stats">
+  <div><b>28</b><small>交付单元(全部完成)</small></div>
+  <div><b>326</b><small>自动化测试用例</small></div>
+  <div><b>20</b><small>REST 控制器</small></div>
+  <div><b>15</b><small>数据库表</small></div>
+  <div><b>12</b><small>报文互转组合</small></div>
+</div>
+
+<p>PowerGateway 是一款<strong>低代码/零代码可视化接口开发平台</strong>，核心价值：将单个接口开发工时压缩到 10 分钟以内。技术栈：Spring Boot 2.7 + Vue 3 + MyBatis-Plus + Redis + Sa-Token。</p>
+
+<h3>两大核心模块</h3>
+<div class="cards">
+  <div class="card">
+    <b>报文格式转换 (M1)</b>
+    <p>JSON/XML/CSV/FormData 四种格式 12 种互转，拖拽字段映射，策略式字段加工，渠道模板路由，端口双向分发</p>
+  </div>
+  <div class="card">
+    <b>可视化接口开发 (M2)</b>
+    <p>直连 MySQL/Oracle/PG，配置驱动 SQL 生成，完整 CRUD 可视化，分库分表路由，双层缓存，接口状态机发布</p>
+  </div>
+</div>
+
+<h3>架构亮点</h3>
+<ul>
+  <li><strong>三库分离</strong>：配置库 / 业务库 / 审计库 职责完全隔离</li>
+  <li><strong>双层缓存</strong>：Caffeine 本地缓存 + Redis 分布式缓存 + SET NX PX 防击穿</li>
+  <li><strong>AOP 异步审计</strong>：@AuditLog / @SysLogRecord / @PerfStat 三套独立切面，主链路零阻塞</li>
+  <li><strong>配置驱动 SQL</strong>：QueryBuilder/InsertBuilder/UpdateBuilder/DeleteBuilder 动态生成</li>
+</ul>
+
+<!-- ===== 二、竞品对比 ===== -->
+<h2>二、6 大竞品扫描</h2>
+
+<div class="cards">
+  <div class="card">
+    <b>MuleSoft Anypoint</b>
+    <p>Salesforce 旗下，财富500强 35% 在用。DataWeave 引擎极强，但年费数万~数十万美元，学习曲线陡峭</p>
+    <span class="badge bg-r">价格极高</span>
+  </div>
+  <div class="card">
+    <b>Juggle</b>
+    <p>国内首个开源微服务编排框架，零代码/低代码/AI 增强，支持多脚本语言，几十个套件开箱即用</p>
+    <span class="badge bg-g">免费开源</span>
+  </div>
+  <div class="card">
+    <b>YesApi Pro</b>
+    <p>500+ 企业客户，6万+ 开发者。低代码 API 开发 + 接口开放平台 + 计费商城，33,800 元起</p>
+    <span class="badge bg-y">商业产品</span>
+  </div>
+  <div class="card">
+    <b>Eolink</b>
+    <p>50万+ 开发者，API 全生命周期管理 + 企业级网关(限流/熔断/灰度)，SaaS 订阅制</p>
+    <span class="badge bg-b">SaaS+私有</span>
+  </div>
+  <div class="card">
+    <b>Apache APISIX</b>
+    <p>Apache 顶级项目，云原生高性能 API 网关，动态路由 + 插件热加载，社区庞大</p>
+    <span class="badge bg-g">免费开源</span>
+  </div>
+  <div class="card">
+    <b>YApi</b>
+    <p>去哪儿网开源，聚焦接口文档管理 + Mock 服务 + 自动化测试，近年更新缓慢</p>
+    <span class="badge bg-g">免费开源</span>
+  </div>
+</div>
+
+<!-- ===== 三、功能矩阵 ===== -->
+<h2>三、功能矩阵对比</h2>
+
+<div class="tb">
+<table>
+<tr><th>功能</th><th>PowerGateway</th><th>MuleSoft</th><th>Juggle</th><th>YesApi</th><th>Eolink</th><th>APISIX</th><th>YApi</th></tr>
+<tr><td><strong>可视化 CRUD</strong></td><td>完整</td><td>Flow编排</td><td>流程编排</td><td>低代码</td><td>有限</td><td>-</td><td>-</td></tr>
+<tr><td><strong>报文转换</strong></td><td>12种互转</td><td>极强</td><td>脚本</td><td>有限</td><td>有限</td><td>插件</td><td>-</td></tr>
+<tr><td><strong>字段映射/加工</strong></td><td>拖拽+策略</td><td>DataWeave</td><td>脚本</td><td>基础</td><td>-</td><td>-</td><td>-</td></tr>
+<tr><td><strong>数据库直连</strong></td><td>3种DB</td><td>连接器</td><td>MySQL</td><td>多种</td><td>-</td><td>-</td><td>-</td></tr>
+<tr><td><strong>分库分表</strong></td><td>支持</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+<tr><td><strong>端口双向分发</strong></td><td>支持</td><td>支持</td><td>有限</td><td>-</td><td>-</td><td>反向代理</td><td>-</td></tr>
+<tr><td><strong>双层缓存</strong></td><td>C+R</td><td>内置</td><td>-</td><td>R</td><td>有</td><td>内置</td><td>-</td></tr>
+<tr><td><strong>SQL审计</strong></td><td>完整AOP</td><td>有</td><td>日志</td><td>日志</td><td>日志</td><td>插件</td><td>操作日志</td></tr>
+<tr><td><strong>性能监控</strong></td><td>图表+告警</td><td>CloudHub</td><td>基础</td><td>基础</td><td>完整</td><td>Prometheus</td><td>-</td></tr>
+<tr><td><strong>API文档</strong></td><td>Swagger</td><td>Exchange</td><td>基础</td><td>在线</td><td>完整</td><td>Dashboard</td><td>核心功能</td></tr>
+<tr><td><strong>Mock服务</strong></td><td>-</td><td>-</td><td>-</td><td>-</td><td>有</td><td>-</td><td>核心功能</td></tr>
+<tr><td><strong>API网关</strong></td><td>-</td><td>有</td><td>-</td><td>-</td><td>完整</td><td>核心</td><td>-</td></tr>
+<tr><td><strong>开源/私有</strong></td><td>私有</td><td>SaaS+私有</td><td>开源</td><td>私有</td><td>SaaS+私有</td><td>开源</td><td>开源</td></tr>
+<tr><td><strong>价格</strong></td><td>内部</td><td>数十万$/年</td><td>免费</td><td>3.38万起</td><td>订阅制</td><td>免费</td><td>免费</td></tr>
+</table>
+</div>
+
+<!-- ===== 四、竞争力评分 ===== -->
+<h2>四、竞争力评分 (满分10分)</h2>
+
+<div class="bar-chart">
+  <div class="bar-row"><span class="bar-label">报文转换</span><div class="bar-track"><div class="bar-fill c1" style="width:90%">PG 9</div></div></div>
+  <div class="bar-row"><span class="bar-label">可视化CRUD</span><div class="bar-track"><div class="bar-fill c1" style="width:90%">PG 9</div></div></div>
+  <div class="bar-row"><span class="bar-label">分库分表</span><div class="bar-track"><div class="bar-fill c1" style="width:90%">PG 9</div></div></div>
+  <div class="bar-row"><span class="bar-label">监控审计</span><div class="bar-track"><div class="bar-fill c1" style="width:80%">PG 8</div></div></div>
+  <div class="bar-row"><span class="bar-label">部署便捷</span><div class="bar-track"><div class="bar-fill c1" style="width:70%">PG 7</div></div></div>
+  <div class="bar-row"><span class="bar-label">性价比</span><div class="bar-track"><div class="bar-fill c1" style="width:80%">PG 8</div></div></div>
+  <div class="bar-row"><span class="bar-label">接口编排</span><div class="bar-track"><div class="bar-fill c1" style="width:30%">PG 3</div></div></div>
+  <div class="bar-row"><span class="bar-label">API网关</span><div class="bar-track"><div class="bar-fill c1" style="width:20%">PG 2</div></div></div>
+  <div class="bar-row"><span class="bar-label">协作生态</span><div class="bar-track"><div class="bar-fill c1" style="width:30%">PG 3</div></div></div>
+</div>
+
+<div class="tb">
+<table class="score">
+<tr><th>维度</th><th>PG</th><th>MuleSoft</th><th>Juggle</th><th>YesApi</th><th>Eolink</th></tr>
+<tr><td>报文转换</td><td><strong>9</strong></td><td>10</td><td>4</td><td>3</td><td>3</td></tr>
+<tr><td>可视化CRUD</td><td><strong>9</strong></td><td>5</td><td>4</td><td>7</td><td>2</td></tr>
+<tr><td>分库分表</td><td><strong>9</strong></td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+<tr><td>监控审计</td><td><strong>8</strong></td><td>9</td><td>5</td><td>5</td><td>7</td></tr>
+<tr><td>部署便捷</td><td><strong>7</strong></td><td>4</td><td>8</td><td>7</td><td>6</td></tr>
+<tr><td>性价比</td><td><strong>8</strong></td><td>2</td><td>10</td><td>7</td><td>6</td></tr>
+<tr><td>接口编排</td><td>3</td><td><strong>9</strong></td><td>9</td><td>2</td><td>3</td></tr>
+<tr><td>API网关</td><td>2</td><td>6</td><td>2</td><td>3</td><td><strong>8</strong></td></tr>
+<tr><td>协作生态</td><td>3</td><td><strong>8</strong></td><td>7</td><td>5</td><td>8</td></tr>
+</table>
+</div>
+
+<!-- ===== 五、优劣势 ===== -->
+<h2>五、优劣势总结</h2>
+
+<div class="pc">
+  <div class="pros">
+    <h4>优势 (别人没有的)</h4>
+    <ul>
+      <li>12种报文互转 + 拖拽映射 + 策略加工，国产罕见</li>
+      <li>可视化直连数据库生成SQL，零代码开发接口</li>
+      <li>分库分表内置支持，竞品几乎都没有</li>
+      <li>端口双向分发 + GBK/UTF-8转码</li>
+      <li>三库分离架构，安全性和可维护性优秀</li>
+      <li>326个自动化测试，TDD质量有保障</li>
+      <li>Spring Boot单体轻量部署</li>
+    </ul>
+  </div>
+  <div class="cons">
+    <h4>劣势 (需要补齐的)</h4>
+    <ul>
+      <li>未容器化，不支持Docker/K8s部署</li>
+      <li>无API网关能力(限流/熔断/灰度)</li>
+      <li>不支持复杂流程编排(对比Juggle/MuleSoft)</li>
+      <li>无Mock服务(对比YApi/Eolink)</li>
+      <li>缺少团队协作和版本管理</li>
+      <li>未集成AI辅助能力</li>
+      <li>无开源社区和插件生态</li>
+      <li>Spring Boot 2.7 + Java 8 技术栈偏旧</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ===== 六、建议 ===== -->
+<h2>六、改进建议</h2>
+
+<div class="callout">
+  <strong>核心定位</strong>：报文转换 + 可视化数据库CRUD 的深度融合，这是市面上大多数产品不具备的组合能力，是最大差异化优势。
+</div>
+
+<h3>短期 (1-3个月)</h3>
+<ul>
+  <li><span class="badge bg-r">P0</span> 容器化部署 — 提供 Dockerfile + docker-compose.yml</li>
+  <li><span class="badge bg-r">P0</span> Mock 服务 — 基于接口配置自动生成 Mock 数据</li>
+  <li><span class="badge bg-y">P1</span> 完成批量导入导出 (AUX-3/4/5)</li>
+</ul>
+
+<h3>中期 (3-6个月)</h3>
+<ul>
+  <li><span class="badge bg-y">P1</span> API 网关能力 — 限流、熔断、灰度、IP白名单</li>
+  <li><span class="badge bg-y">P1</span> 流程编排引擎 — 多步骤串联、条件分支、异常处理</li>
+  <li><span class="badge bg-b">P2</span> 技术栈升级 — Spring Boot 3.x + JDK 17</li>
+</ul>
+
+<h3>长期 (6-12个月)</h3>
+<ul>
+  <li><span class="badge bg-b">P2</span> AI 集成 — 自然语言生成接口配置、智能字段映射</li>
+  <li><span class="badge bg-b">P2</span> 开源社区 — 核心模块开源，建立开发者生态</li>
+  <li><span class="badge bg-g">P3</span> 插件化架构 — 第三方扩展报文格式、数据库类型</li>
+</ul>
+
+<p style="text-align:center;color:#aaa;font-size:.75rem;margin-top:30px">PowerGateway 竞品分析报告 | 2026-06-20</p>
+
+</div>
+</body>
+</html>

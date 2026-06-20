@@ -359,7 +359,7 @@ public class InterfaceConfigService {
                 Object value = dataSourceResolver.resolve(field, params);
                 fieldValues.put(field.getColumn(), value);
             }
-            columnValidator.validate(tableConfig.getTableName(), fieldValues, config.getDbConnectionId());
+            columnValidator.validate(tableConfig.getTableName(), fieldValues, insertDbConnId);
             sqlResults.add(InsertBuilder.build(tableConfig.getTableName(), fieldValues));
         }
 
@@ -436,7 +436,7 @@ public class InterfaceConfigService {
                 Object value = dataSourceResolver.resolve(field, params);
                 fieldValues.put(field.getColumn(), value);
             }
-            columnValidator.validate(tableConfig.getTableName(), fieldValues, config.getDbConnectionId());
+            columnValidator.validate(tableConfig.getTableName(), fieldValues, updateDbConnId);
             List<ConditionConfig> tableConditions = filterConditions(
                     updateConfig.getConditions(), tableConfig.getTableName());
             if (tableConditions.isEmpty()) {
