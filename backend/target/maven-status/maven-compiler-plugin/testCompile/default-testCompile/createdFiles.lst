@@ -29,6 +29,7 @@ com\powergateway\SYS4SysConfigServiceTest.class
 com\powergateway\utils\H2DateFormatAlias.class
 com\powergateway\SYS4SysConfigServiceTest$EventCapture.class
 com\powergateway\M26DeleteConfigTest$3.class
+com\powergateway\BUG011_012_FixTest.class
 com\powergateway\SYS1AuditLogQueryTest.class
 com\powergateway\M28ShardConfigTest.class
 com\powergateway\M26DeleteConfigTest.class

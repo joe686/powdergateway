@@ -1,5 +1,6 @@
 com\powergateway\model\dto\CallTrendDTO.class
 com\powergateway\model\dto\HeaderConfig.class
+com\powergateway\controller\PerfStatController.class
 com\powergateway\model\dto\SlowInterfaceDTO.class
 com\powergateway\event\ConfigChangedEvent.class
 com\powergateway\controller\ExecController.class
@@ -14,6 +15,7 @@ com\powergateway\model\InterfaceConfig.class
 com\powergateway\utils\ShardRouter.class
 com\powergateway\dao\PerfAlertMapper.class
 com\powergateway\service\HomeOverviewService$TimeWindow.class
+com\powergateway\controller\SysConfigQueryController.class
 com\powergateway\model\dto\InterfaceExecuteRequest.class
 com\powergateway\model\dto\InsertConfigJson$FieldInsertConfig.class
 com\powergateway\controller\SysLogController.class
@@ -27,6 +29,7 @@ com\powergateway\model\dto\StatsSummaryDTO.class
 com\powergateway\utils\UpdateBuilder.class
 com\powergateway\model\dto\DeleteConfigJson$TableDeleteConfig.class
 com\powergateway\config\MybatisPlusConfig.class
+com\powergateway\controller\SysLogQueryController.class
 com\powergateway\utils\ColumnValidator.class
 com\powergateway\model\dto\InterfaceStatsDTO.class
 com\powergateway\config\RestTemplateConfig.class
@@ -38,6 +41,7 @@ com\powergateway\aop\SysLogAspect.class
 com\powergateway\model\dto\ShardRuleJson$DbSegment.class
 com\powergateway\model\dto\ShardRouteResult.class
 com\powergateway\model\SysLog.class
+com\powergateway\controller\SqlAuditLogController.class
 com\powergateway\service\HomeOverviewService.class
 com\powergateway\controller\UserController.class
 com\powergateway\utils\DataSourceResolver.class
@@ -71,6 +75,7 @@ com\powergateway\utils\FormatConverter$1.class
 com\powergateway\config\CacheConfig.class
 com\powergateway\model\dto\ShardRuleJson$AlgorithmConfig.class
 com\powergateway\model\dto\ShardSaveRequest.class
+com\powergateway\service\InterfaceOpTypeCache.class
 com\powergateway\controller\SysConfigController.class
 com\powergateway\aop\PerfStat.class
 com\powergateway\model\dto\DeleteConfigJson.class
@@ -78,6 +83,7 @@ com\powergateway\model\SysLogHistory.class
 com\powergateway\model\dto\InsertConfigJson$TableInsertConfig.class
 com\powergateway\model\dto\AlertConfigRequest.class
 com\powergateway\model\dto\CallStatsDTO.class
+com\powergateway\config\MyMetaObjectHandler.class
 com\powergateway\service\ConfigChangeListener.class
 com\powergateway\model\dto\UpdateConfigJson$TableUpdateConfig.class
 com\powergateway\job\SysLogArchiveJob.class

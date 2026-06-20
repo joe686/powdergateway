@@ -126,6 +126,13 @@ CREATE TABLE IF NOT EXISTS sys_config (
   update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
+-- 兼容旧库：CHG-005 新增 value_type/group_name 字段（BUG-010 修复）
+-- 对于在 CHG-005 之前创建的数据库，需执行以下 ALTER TABLE 补齐字段
+-- 新库通过上面的 CREATE TABLE 已包含这两个字段，以下语句会因字段已存在而报错，可忽略
+-- 如需幂等执行，请使用 migration-sys-config.sql 存储过程版本
+-- ALTER TABLE sys_config ADD COLUMN value_type VARCHAR(32) DEFAULT 'string' COMMENT 'number/boolean/string';
+-- ALTER TABLE sys_config ADD COLUMN group_name VARCHAR(64) DEFAULT '其他' COMMENT '前端分组名';
+
 -- 初始化系统配置默认值
 INSERT IGNORE INTO sys_config (config_key, config_value, description, value_type, group_name) VALUES
 ('cache.query.ttl',         '300',  '查询缓存 TTL（秒）',          'number',  '缓存配置'),
@@ -138,23 +145,9 @@ INSERT IGNORE INTO sys_config (config_key, config_value, description, value_type
 ('alert_response_ms',       '1000', '告警响应时间阈值（ms）',       'number',  '告警配置');
 
 -- ========== 审计库表（M2-9）：在独立 powergateway_audit 库中建表 ==========
--- 生产环境需单独在审计库执行以下 DDL
--- CREATE DATABASE IF NOT EXISTS powergateway_audit DEFAULT CHARACTER SET utf8mb4;
--- USE powergateway_audit;
-CREATE TABLE IF NOT EXISTS sql_audit_log (
-  id              BIGINT PRIMARY KEY AUTO_INCREMENT,
-  interface_id    BIGINT,
-  sql_text        TEXT,
-  op_type         VARCHAR(32),
-  operator        VARCHAR(64),
-  op_ip           VARCHAR(64),
-  op_time         DATETIME,
-  target_db       VARCHAR(128),
-  target_table    VARCHAR(128),
-  result          VARCHAR(32)  COMMENT 'SUCCESS/FAIL',
-  error_msg       TEXT,
-  before_snapshot JSON         COMMENT '修改前数据快照'
-);
+-- 注意：审计表 DDL 已拆分到独立文件 init-audit.sql（BUG-007/BUG-008 修复）
+-- 请在审计库 powergateway_audit 中单独执行 init-audit.sql
+-- 脚本位置：backend/src/main/resources/db/init-audit.sql
 
 -- SYS-1 操作日志表（配置库）
 CREATE TABLE IF NOT EXISTS sys_log (
