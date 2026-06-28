@@ -9,3 +9,4 @@ backend/target/
 .DS_Store
 .worktrees/
 .superpowers/
+logs/
