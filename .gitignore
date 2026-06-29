@@ -1,5 +1,6 @@
 frontend/node_modules/
 backend/target/
+pg-testkit/target/
 *.class
 *.jar
 *.war
@@ -9,4 +10,6 @@ backend/target/
 .DS_Store
 .worktrees/
 .superpowers/
+.playwright-mcp/
 logs/
+*.stackdump
