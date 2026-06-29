@@ -53,6 +53,11 @@ public class ExecController {
                         service.executeQuery(interfaceId, params, req.getPage(), req.getPageSize());
                 return Result.success(rows);
             case "INSERT":
+                AuditContextHolder.set(new AuditContext()
+                        .setInterfaceId(interfaceId)
+                        .setOpType("INSERT")
+                        .setTargetDb(config.getDbConnectionId() != null
+                                ? config.getDbConnectionId().toString() : "unknown"));
                 return Result.success(service.executeInsert(interfaceId, params));
             case "UPDATE":
                 AuditContextHolder.set(new AuditContext()

@@ -7,9 +7,9 @@
         <div style="display:flex;align-items:center;justify-content:space-between">
           <span>接口调用趋势</span>
           <el-radio-group v-model="dimension" @change="loadSummary">
-            <el-radio-button label="today">今天</el-radio-button>
-            <el-radio-button label="week">本周</el-radio-button>
-            <el-radio-button label="month">本月</el-radio-button>
+            <el-radio-button value="today">今天</el-radio-button>
+            <el-radio-button value="week">本周</el-radio-button>
+            <el-radio-button value="month">本月</el-radio-button>
           </el-radio-group>
         </div>
       </template>

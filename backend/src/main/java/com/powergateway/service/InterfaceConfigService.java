@@ -335,6 +335,7 @@ public class InterfaceConfigService {
      * @param params 请求参数（REQUEST 类型字段从此 Map 取值）
      * @return 总影响行数
      */
+    @AuditLog
     public int executeInsert(Long id, Map<String, Object> params) {
         InterfaceConfig config = interfaceConfigMapper.selectById(id);
         if (config == null) throw new BusinessException(404, "接口配置不存在");
@@ -356,6 +357,13 @@ public class InterfaceConfigService {
         List<TableInsertConfig> tables = insertConfig.getTables();
         if (tables == null || tables.isEmpty()) throw new BusinessException(400, "未配置插入表");
         if (tables.size() > 3) throw new BusinessException(400, "最多支持3张表");
+
+        AuditContext auditCtx = AuditContextHolder.get();
+        if (auditCtx != null) {
+            auditCtx.setTargetTable(tables.stream()
+                    .map(TableInsertConfig::getTableName)
+                    .collect(java.util.stream.Collectors.joining(",")));
+        }
 
         DbConnection conn = dbConnectionMapper.selectById(insertDbConnId);
         if (conn == null) throw new BusinessException(404, "数据库连接不存在");

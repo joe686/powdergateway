@@ -136,7 +136,7 @@ public class TableMetaService {
         String password = aesUtil.decrypt(conn.getPassword());
         List<TableMeta> tables = new ArrayList<>();
 
-        try (Connection jdbc = DriverManager.getConnection(conn.getUrl(), conn.getUsername(), password)) {
+        try (Connection jdbc = DriverManager.getConnection(normalizeUrlForMetaQuery(conn.getUrl()), conn.getUsername(), password)) {
             DatabaseMetaData meta = jdbc.getMetaData();
             String catalog = jdbc.getCatalog();
 
@@ -212,6 +212,30 @@ public class TableMetaService {
             log.warn("[M2-2] 获取唯一索引失败: {}", e.getMessage());
         }
         return uniqueCols;
+    }
+
+    /**
+     * MySQL Connector/J 读 DatabaseMetaData.REMARKS 时，若 URL 缺少 useInformationSchema=true
+     * 会回退到 SHOW FULL COLUMNS，其字符集协商不走 URL 的 characterEncoding，导致 utf8mb4 中
+     * 文注释被按 latin1/GBK 解析后乱码（如"渠道编码"→"娓犻亾缂栫爜"）。
+     * 此方法在不修改用户原始 URL 的前提下，临时为元数据查询会话补齐 utf-8 协议参数。
+     */
+    private String normalizeUrlForMetaQuery(String url) {
+        if (url == null || url.isEmpty()) return url;
+        StringBuilder sb = new StringBuilder(url);
+        char sep = url.contains("?") ? '&' : '?';
+        if (!url.contains("useInformationSchema=")) {
+            sb.append(sep).append("useInformationSchema=true");
+            sep = '&';
+        }
+        if (!url.contains("useUnicode=")) {
+            sb.append(sep).append("useUnicode=true");
+            sep = '&';
+        }
+        if (!url.contains("characterEncoding=")) {
+            sb.append(sep).append("characterEncoding=utf8");
+        }
+        return sb.toString();
     }
 
     private boolean isSystemSchema(String schema) {

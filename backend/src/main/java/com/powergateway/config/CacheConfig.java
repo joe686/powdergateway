@@ -3,6 +3,7 @@ package com.powergateway.config;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -23,8 +24,13 @@ public class CacheConfig {
                 .build();
     }
 
+    /**
+     * cacheRedisTemplate 用于 M2-10 双层缓存。
+     * 之前用 @ConditionalOnBean 在 backend 启动顺序敏感时会判定 RedisConnectionFactory 还未注册，
+     * 导致 Bean 不创建、QueryCacheManager.redisTemplate 注入 null、hit/miss 计数器永远是 0。
+     * 改为直接依赖注入 — Spring 容器中确实存在 RedisConnectionFactory 时才会调用本 Bean，无需条件守护。
+     */
     @Bean("cacheRedisTemplate")
-    @ConditionalOnBean(RedisConnectionFactory.class)
     public RedisTemplate<String, Object> cacheRedisTemplate(RedisConnectionFactory factory) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(factory);

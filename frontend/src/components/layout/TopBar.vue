@@ -39,6 +39,7 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
+import { UserFilled } from '@element-plus/icons-vue'
 import { useUserStore } from '@/store/user'
 import { logout as logoutApi } from '@/api/auth'
 

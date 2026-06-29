@@ -135,7 +135,7 @@
         </template>
         <template v-else>
           <el-form label-width="100px" style="max-width:500px">
-            <el-form-item label="目标表" required>
+            <el-form-item v-if="wizard.tables[0]" label="目标表" required>
               <el-select v-model="wizard.tables[0].tableName" placeholder="请选择目标表" filterable style="width:260px" @change="v => onTargetTableChange(0, v)">
                 <el-option v-for="t in tableList" :key="t.tableName" :label="t.tableName" :value="t.tableName" />
               </el-select>

@@ -73,7 +73,6 @@
       style="margin-top: 16px; text-align: right"
       @current-change="loadList"
     />
-  </div>
 
   <!-- 绑定分片配置弹窗 -->
   <el-dialog v-model="shardDialogVisible" title="绑定分库分表配置" width="420px">
@@ -90,6 +89,7 @@
       <el-button type="primary" :loading="shardSaving" @click="handleBindShard">保存</el-button>
     </template>
   </el-dialog>
+  </div>
 </template>
 
 <script setup>
