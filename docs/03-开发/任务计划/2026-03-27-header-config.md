@@ -1433,7 +1433,7 @@ npm run build 2>&1 | tail -5
 
 - [ ] **Step 3：更新问题清单**
 
-在 `README/问题清单.md` 的"已规划"部分，将问题2迁移到"已解决"：
+在 `docs/03-开发/问题清单.md` 的"已规划"部分，将问题2迁移到"已解决"：
 
 ```markdown
 ### 问题2：报文头格式需支持渠道级别的适配配置（已解决）
@@ -1444,6 +1444,6 @@ npm run build 2>&1 | tail -5
 - [ ] **Step 4：最终提交**
 
 ```bash
-git add README/问题清单.md
+git add docs/03-开发/问题清单.md
 git commit -m "docs: mark 问题2 as resolved after CHG-002 implementation"
 ```

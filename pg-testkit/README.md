@@ -74,4 +74,4 @@ powergateway/
 └── pg-testkit/       # 独立测试工具（本项目，不引用 backend 内部类）
 ```
 
-详细设计见 `README/测试工具计划.md`。
+详细设计见 [`docs/04-测试/测试工具计划.md`](../docs/04-测试/测试工具计划.md)。
