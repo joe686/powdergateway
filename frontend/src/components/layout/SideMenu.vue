@@ -154,4 +154,36 @@ const hasTools     = computed(function() { return TOOLS_PATHS.some(function(p) {
 .menu:not(.el-menu--collapse) {
   width: 220px;
 }
+
+/* UX-A UI-02 · SideMenu 视觉增强 —— 仅样式，无结构变化 */
+.el-menu {
+  background: transparent !important;
+  border-right: none !important;
+}
+.el-menu-item, .el-sub-menu__title {
+  border-radius: var(--pg-radius-sm);
+  margin: 2px 8px !important;
+  transition: background 0.2s, color 0.2s;
+}
+.el-menu-item:hover, .el-sub-menu__title:hover {
+  background: var(--pg-hover-surface) !important;
+  color: var(--pg-primary) !important;
+}
+.el-menu-item.is-active {
+  background: var(--pg-primary-soft) !important;
+  color: var(--pg-text-white) !important;
+  font-weight: 600;
+  position: relative;
+}
+.el-menu-item.is-active::before {
+  content: "";
+  position: absolute;
+  left: -8px; top: 8px; bottom: 8px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--pg-primary-grad);
+}
+[data-theme="dark"] .el-menu-item.is-active::before {
+  box-shadow: 0 0 12px rgba(109, 160, 255, 0.7);
+}
 </style>
