@@ -51,6 +51,13 @@
               </div>
             </template>
 
+            <!--
+              vue-draggable-next v2.x 强制约束（详见 frontend/CLAUDE.md）：
+              必须使用 default slot + v-for，禁止 <template #item>。
+              #item 是 vuedraggable v4 API，在 vue-draggable-next 中被忽略，
+              会导致列表 DOM 渲染为空。
+              历史事故：CHG-003 (2026-03-27) 首次修复 → 2026-07-19 FN-01 回滚复发 → CHG-018 二次修复并加此注释锁定。
+            -->
             <draggable
               v-model="srcFields"
               :group="{ name: 'srcGroup', pull: 'clone', put: false }"
@@ -58,17 +65,15 @@
               item-key="id"
               class="src-field-list"
             >
-              <template #item="{ element }">
-                <div class="field-tag">
-                  <el-icon class="drag-icon"><Grid /></el-icon>
-                  <span class="field-name">{{ element.name }}</span>
-                  <el-button
-                    link size="small" type="danger"
-                    class="remove-btn"
-                    @click.stop="removeSrcField(element)"
-                  ><el-icon><Close /></el-icon></el-button>
-                </div>
-              </template>
+              <div v-for="element in srcFields" :key="element.id" class="field-tag">
+                <el-icon class="drag-icon"><Grid /></el-icon>
+                <span class="field-name">{{ element.name }}</span>
+                <el-button
+                  link size="small" type="danger"
+                  class="remove-btn"
+                  @click.stop="removeSrcField(element)"
+                ><el-icon><Close /></el-icon></el-button>
+              </div>
             </draggable>
 
             <el-empty v-if="srcFields.length === 0" description="暂无源字段" :image-size="60" />
@@ -110,61 +115,63 @@
               @add="onDragAdd"
               class="mapping-rule-list"
             >
-              <template #item="{ element, index }">
-                <div class="mapping-row">
-                  <el-icon class="row-drag-handle col-drag"><Rank /></el-icon>
+              <div
+                v-for="(element, index) in mappingRules"
+                :key="element.id"
+                class="mapping-row"
+              >
+                <el-icon class="row-drag-handle col-drag"><Rank /></el-icon>
 
-                  <div class="col-target">
-                    <el-input v-model="element.targetField" placeholder="目标字段名" size="small" />
-                  </div>
-
-                  <div class="col-src">
-                    <el-select
-                      v-model="element.srcField"
-                      placeholder="选择源字段"
-                      size="small"
-                      clearable
-                      :disabled="element.useFixed"
-                      style="width:100%"
-                    >
-                      <el-option
-                        v-for="sf in srcFields"
-                        :key="sf.name"
-                        :label="sf.name"
-                        :value="sf.name"
-                      />
-                    </el-select>
-                  </div>
-
-                  <div class="col-fixed">
-                    <el-checkbox
-                      v-model="element.useFixed"
-                      size="small"
-                      @change="onUseFixedChange(element)"
-                    >固定值</el-checkbox>
-                    <el-input
-                      v-if="element.useFixed"
-                      v-model="element.fixedValue"
-                      placeholder="填入固定值"
-                      size="small"
-                      class="fixed-input"
-                    />
-                  </div>
-
-                  <div class="col-op">
-                    <el-popconfirm
-                      title="确认删除这条映射规则？"
-                      @confirm="removeMappingRow(index)"
-                    >
-                      <template #reference>
-                        <el-button type="danger" link size="small">
-                          <el-icon><Delete /></el-icon>
-                        </el-button>
-                      </template>
-                    </el-popconfirm>
-                  </div>
+                <div class="col-target">
+                  <el-input v-model="element.targetField" placeholder="目标字段名" size="small" />
                 </div>
-              </template>
+
+                <div class="col-src">
+                  <el-select
+                    v-model="element.srcField"
+                    placeholder="选择源字段"
+                    size="small"
+                    clearable
+                    :disabled="element.useFixed"
+                    style="width:100%"
+                  >
+                    <el-option
+                      v-for="sf in srcFields"
+                      :key="sf.name"
+                      :label="sf.name"
+                      :value="sf.name"
+                    />
+                  </el-select>
+                </div>
+
+                <div class="col-fixed">
+                  <el-checkbox
+                    v-model="element.useFixed"
+                    size="small"
+                    @change="onUseFixedChange(element)"
+                  >固定值</el-checkbox>
+                  <el-input
+                    v-if="element.useFixed"
+                    v-model="element.fixedValue"
+                    placeholder="填入固定值"
+                    size="small"
+                    class="fixed-input"
+                  />
+                </div>
+
+                <div class="col-op">
+                  <el-popconfirm
+                    title="确认删除这条映射规则？"
+                    @confirm="removeMappingRow(index)"
+                  >
+                    <template #reference>
+                      <el-button type="danger" link size="small">
+                        <el-icon><Delete /></el-icon>
+                      </el-button>
+                    </template>
+                  </el-popconfirm>
+                </div>
+              </div>
             </draggable>
 
             <el-empty
