@@ -43,6 +43,9 @@
             <el-tag type="success" size="small">{{ row.targetFormat }}</el-tag>
           </template>
         </el-table-column>
+        <el-table-column prop="functionCode" label="功能号" width="150" show-overflow-tooltip>
+          <template #default="{ row }">{{ row.functionCode || '—' }}</template>
+        </el-table-column>
         <el-table-column prop="version" label="版本" width="70" align="center" />
         <el-table-column prop="creator" label="创建人" width="100" />
         <el-table-column prop="createTime" label="创建时间" width="170">

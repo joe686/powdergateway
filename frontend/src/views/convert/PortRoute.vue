@@ -36,6 +36,9 @@
           <span>{{ templateNameById(row.responseTemplateId) }}</span>
         </template>
       </el-table-column>
+      <el-table-column prop="functionCode" label="功能号" width="160" show-overflow-tooltip>
+        <template #default="{ row }">{{ row.functionCode || '—' }}</template>
+      </el-table-column>
       <el-table-column prop="createTime" label="创建时间" width="170" />
       <el-table-column label="操作" width="190" fixed="right">
         <template #default="{ row }">
@@ -79,6 +82,12 @@
       @closed="resetForm"
     >
       <el-form ref="formRef" :model="form" :rules="rules" label-width="110px">
+        <el-form-item label="功能号">
+          <el-input v-model="form.functionCode" placeholder="可选，如 CBS_QUERY_ACCOUNT" />
+        </el-form-item>
+        <el-form-item label="功能号中文名">
+          <el-input v-model="form.functionName" placeholder="可选" />
+        </el-form-item>
         <el-form-item label="渠道编码" prop="channelCode">
           <el-select
             v-model="form.channelCode"
@@ -252,6 +261,8 @@ const formRef = ref(null)
 
 const form = ref({
   id: null,
+  functionCode: '',
+  functionName: '',
   channelCode: '',
   portAddress: '',
   portMethod: 'POST',
@@ -341,6 +352,8 @@ function openDialog(row) {
     const hc = (row && row.headerConfig) ? row.headerConfig : {}
     form.value = {
       id: row.id,
+      functionCode: row.functionCode || '',
+      functionName: row.functionName || '',
       channelCode: row.channelCode,
       portAddress: row.portAddress,
       portMethod: row.portMethod || 'POST',
@@ -366,6 +379,8 @@ function openDialog(row) {
 function resetForm() {
   form.value = {
     id: null,
+    functionCode: '',
+    functionName: '',
     channelCode: '',
     portAddress: '',
     portMethod: 'POST',
