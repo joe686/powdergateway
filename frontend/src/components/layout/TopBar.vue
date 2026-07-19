@@ -14,6 +14,11 @@
 
     <!-- 右侧：用户信息 -->
     <div class="top-right">
+      <!-- UX-A THEME START -->
+      <ThemeToggle style="margin-right: 8px" />
+      <span class="topbar-icon" title="主题设置" style="cursor:pointer; margin-right: 12px" @click="themeDrawerVisible = true">⚙</span>
+      <ThemeDrawer v-model:visible="themeDrawerVisible" />
+      <!-- UX-A THEME END -->
       <el-dropdown trigger="click" @command="handleCommand">
         <div class="user-info">
           <el-avatar :size="32" :icon="UserFilled" />
@@ -36,12 +41,15 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
 import { UserFilled } from '@element-plus/icons-vue'
 import { useUserStore } from '@/store/user'
 import { logout as logoutApi } from '@/api/auth'
+import ThemeToggle from '@/components/theme/ThemeToggle.vue'
+import ThemeDrawer from '@/components/theme/ThemeDrawer.vue'
+const themeDrawerVisible = ref(false)
 
 const props = defineProps({
   collapsed: {
