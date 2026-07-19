@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<title>PowerGateway · V3 双主题可切换</title>
+<style>
+  /* ===== 亮色 tokens ===== */
+  [data-theme="light"] {
+    --pg-bg-base: #F4F6FB;
+    --pg-bg-blob-1: #C6D4FF;
+    --pg-bg-blob-2: #E8CCFF;
+    --pg-bg-blob-3: #D5FFEA;
+    --pg-stars-opacity: 0;
+
+    --pg-glass-bg: rgba(255, 255, 255, 0.66);
+    --pg-glass-bg-strong: rgba(255, 255, 255, 0.82);
+    --pg-glass-border: rgba(255, 255, 255, 0.75);
+    --pg-glass-blur: 24px;
+    --pg-glass-shadow: 0 8px 32px rgba(60, 79, 148, 0.10), 0 2px 8px rgba(60, 79, 148, 0.06);
+    --pg-glow: none;
+
+    --pg-primary: #5B7CFA;
+    --pg-primary-soft: rgba(91, 124, 250, 0.12);
+    --pg-primary-grad: linear-gradient(135deg, #5B7CFA 0%, #8B5CF6 100%);
+    --pg-success: #14B98A;
+    --pg-warning: #F59E0B;
+    --pg-danger:  #F5556B;
+    --pg-purple:  #8B5CF6;
+
+    --pg-text-primary:   #1F2937;
+    --pg-text-white:     #1F2937;
+    --pg-text-regular:   #4B5563;
+    --pg-text-secondary: #7B8291;
+    --pg-text-placeholder: #A9B0BE;
+
+    --pg-line: rgba(0, 0, 0, 0.05);
+    --pg-line-strong: rgba(0, 0, 0, 0.08);
+    --pg-hover-surface: rgba(91, 124, 250, 0.06);
+    --pg-track-bg: #EEF1F8;
+
+    --pg-blob-blur: 80px;
+    --pg-blob-opacity: 0.75;
+  }
+
+  /* ===== 暗色 tokens ===== */
+  [data-theme="dark"] {
+    --pg-bg-base: #0B0F1C;
+    --pg-bg-blob-1: #2B3EA1;
+    --pg-bg-blob-2: #7A2CB0;
+    --pg-bg-blob-3: #1EC7CB;
+    --pg-stars-opacity: 1;
+
+    --pg-glass-bg: rgba(20, 25, 45, 0.55);
+    --pg-glass-bg-strong: rgba(20, 25, 45, 0.75);
+    --pg-glass-border: rgba(255, 255, 255, 0.10);
+    --pg-glass-blur: 28px;
+    --pg-glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+    --pg-glow: 0 0 20px rgba(109, 160, 255, 0.15);
+
+    --pg-primary: #6DA0FF;
+    --pg-primary-soft: rgba(109, 160, 255, 0.14);
+    --pg-primary-grad: linear-gradient(135deg, #6DA0FF 0%, #A879FF 100%);
+    --pg-success: #22D3AA;
+    --pg-warning: #FBBF24;
+    --pg-danger:  #FF6B85;
+    --pg-purple:  #A879FF;
+
+    --pg-text-primary:   #F1F5F9;
+    --pg-text-white:     #FFFFFF;
+    --pg-text-regular:   #CBD5E1;
+    --pg-text-secondary: #94A3C4;
+    --pg-text-placeholder: #64748B;
+
+    --pg-line: rgba(255, 255, 255, 0.06);
+    --pg-line-strong: rgba(255, 255, 255, 0.10);
+    --pg-hover-surface: rgba(109, 160, 255, 0.10);
+    --pg-track-bg: rgba(255, 255, 255, 0.06);
+
+    --pg-blob-blur: 120px;
+    --pg-blob-opacity: 0.5;
+  }
+
+  :root {
+    --pg-radius-lg: 20px;
+    --pg-radius-md: 14px;
+    --pg-radius-sm: 10px;
+    --pg-sidebar-w: 232px;
+    --pg-topbar-h: 60px;
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    color: var(--pg-text-primary);
+    background: var(--pg-bg-base);
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+    overflow: hidden;
+    transition: background 0.35s ease, color 0.35s ease;
+  }
+
+  body::before, body::after, .bg-blob {
+    content: "";
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(var(--pg-blob-blur));
+    z-index: 0;
+    opacity: var(--pg-blob-opacity);
+    pointer-events: none;
+    transition: background 0.5s ease, opacity 0.5s ease, filter 0.5s ease;
+  }
+  body::before {
+    width: 620px; height: 620px;
+    background: var(--pg-bg-blob-1);
+    top: -140px; left: -100px;
+  }
+  body::after {
+    width: 520px; height: 520px;
+    background: var(--pg-bg-blob-2);
+    bottom: -160px; right: -80px;
+  }
+  .bg-blob {
+    width: 380px; height: 380px;
+    background: var(--pg-bg-blob-3);
+    top: 40%; left: 55%;
+  }
+
+  .stars {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    opacity: var(--pg-stars-opacity);
+    transition: opacity 0.5s ease;
+    background-image:
+      radial-gradient(1px 1px at 15% 20%, rgba(255,255,255,0.5) 50%, transparent),
+      radial-gradient(1px 1px at 40% 65%, rgba(255,255,255,0.4) 50%, transparent),
+      radial-gradient(1px 1px at 70% 30%, rgba(255,255,255,0.5) 50%, transparent),
+      radial-gradient(1px 1px at 85% 80%, rgba(255,255,255,0.3) 50%, transparent),
+      radial-gradient(1px 1px at 25% 85%, rgba(255,255,255,0.4) 50%, transparent);
+  }
+
+  .app {
+    position: relative; z-index: 1;
+    display: grid;
+    grid-template-columns: var(--pg-sidebar-w) 1fr;
+    grid-template-rows: var(--pg-topbar-h) 1fr;
+    grid-template-areas: "sidebar topbar" "sidebar main";
+    height: 100vh;
+    gap: 16px;
+    padding: 16px;
+  }
+
+  .sidebar, .topbar, .glass-card, .kpi-card, .drawer-content {
+    background: var(--pg-glass-bg);
+    backdrop-filter: blur(var(--pg-glass-blur));
+    -webkit-backdrop-filter: blur(var(--pg-glass-blur));
+    border: 1px solid var(--pg-glass-border);
+    box-shadow: var(--pg-glass-shadow);
+    transition: background 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
+  }
+  .sidebar { background: var(--pg-glass-bg-strong); }
+
+  .sidebar { grid-area: sidebar; border-radius: var(--pg-radius-lg); padding: 20px 12px; display: flex; flex-direction: column; gap: 4px; overflow-y: auto; }
+  .brand { display: flex; align-items: center; gap: 10px; padding: 8px 12px 20px; border-bottom: 1px solid var(--pg-line); margin-bottom: 12px; }
+  .brand-logo { width: 34px; height: 34px; border-radius: 10px; background: var(--pg-primary-grad); display: grid; place-items: center; color: white; font-weight: 700; font-size: 18px; box-shadow: 0 4px 12px rgba(91, 124, 250, 0.35); }
+  .brand-name { font-weight: 700; font-size: 15px; letter-spacing: 0.5px; color: var(--pg-text-white); }
+  .brand-sub  { font-size: 11px; color: var(--pg-text-secondary); }
+  .menu-group { padding: 12px 8px 4px; font-size: 11px; color: var(--pg-text-placeholder); font-weight: 500; letter-spacing: 1px; }
+  .menu-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: var(--pg-radius-sm); font-size: 13.5px; color: var(--pg-text-regular); cursor: pointer; position: relative; transition: background 0.2s, color 0.2s; }
+  .menu-item .icon { width: 18px; opacity: 0.7; }
+  .menu-item:hover { background: var(--pg-hover-surface); color: var(--pg-primary); }
+  .menu-item.active { background: var(--pg-primary-soft); color: var(--pg-text-white); font-weight: 600; box-shadow: var(--pg-glow) inset; }
+  .menu-item.active::before { content: ""; position: absolute; left: -8px; top: 8px; bottom: 8px; width: 3px; border-radius: 2px; background: var(--pg-primary-grad); }
+  [data-theme="dark"] .menu-item.active::before { box-shadow: 0 0 12px rgba(109, 160, 255, 0.7); }
+
+  .topbar { grid-area: topbar; border-radius: var(--pg-radius-lg); padding: 0 20px; display: flex; align-items: center; gap: 12px; }
+  .breadcrumb { font-size: 14px; color: var(--pg-text-regular); }
+  .breadcrumb b { color: var(--pg-text-white); }
+  .topbar-spacer { flex: 1; }
+  .search-box { display: flex; align-items: center; gap: 8px; background: var(--pg-hover-surface); padding: 6px 12px; border-radius: 10px; font-size: 13px; color: var(--pg-text-secondary); min-width: 220px; }
+  .topbar-icon { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; color: var(--pg-text-regular); cursor: pointer; transition: background 0.2s; }
+  .topbar-icon:hover { background: var(--pg-hover-surface); color: var(--pg-primary); }
+  .avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--pg-primary-grad); display: grid; place-items: center; color: white; font-weight: 600; font-size: 13px; cursor: pointer; box-shadow: 0 4px 12px rgba(91, 124, 250, 0.35); }
+
+  /* 主题切换按钮 */
+  .theme-toggle {
+    position: relative; width: 60px; height: 30px;
+    border-radius: 999px;
+    background: var(--pg-hover-surface);
+    border: 1px solid var(--pg-glass-border);
+    cursor: pointer;
+    padding: 3px;
+    transition: background 0.3s;
+  }
+  .theme-toggle .thumb {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--pg-primary-grad);
+    box-shadow: 0 2px 8px rgba(91, 124, 250, 0.4);
+    display: grid; place-items: center;
+    font-size: 12px; color: white;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  [data-theme="dark"] .theme-toggle .thumb { transform: translateX(30px); }
+  .theme-toggle .thumb::before { content: "☀"; }
+  [data-theme="dark"] .theme-toggle .thumb::before { content: "☾"; }
+  .theme-toggle:hover { background: var(--pg-primary-soft); }
+  .theme-toggle .icons { position: absolute; inset: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 8px; font-size: 11px; color: var(--pg-text-secondary); pointer-events: none; }
+
+  /* 主内容 */
+  .main { grid-area: main; overflow-y: auto; padding: 4px 0; }
+  .page-title { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .page-title h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.3px; color: var(--pg-text-white); }
+  .page-title .subtitle { color: var(--pg-text-secondary); font-size: 13px; margin-top: 4px; }
+  .dim-tabs { display: inline-flex; background: var(--pg-glass-bg-strong); backdrop-filter: blur(var(--pg-glass-blur)); border: 1px solid var(--pg-glass-border); border-radius: 10px; padding: 3px; }
+  .dim-tab { padding: 6px 16px; font-size: 13px; border-radius: 8px; color: var(--pg-text-regular); cursor: pointer; }
+  .dim-tab.active { background: var(--pg-primary-grad); color: white; box-shadow: 0 4px 12px rgba(91, 124, 250, 0.35); }
+
+  .kpi-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; margin-bottom: 20px; }
+  .kpi-card { border-radius: var(--pg-radius-md); padding: 18px 20px; display: flex; align-items: center; justify-content: space-between; transition: transform 0.2s, box-shadow 0.2s, background 0.35s ease, border-color 0.35s ease; }
+  .kpi-card:hover { transform: translateY(-2px); }
+  .kpi-label { font-size: 12.5px; color: var(--pg-text-secondary); margin-bottom: 6px; }
+  .kpi-value { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; color: var(--pg-text-white); }
+  .kpi-delta { font-size: 11.5px; margin-top: 4px; }
+  .kpi-delta.up { color: var(--pg-success); }
+  .kpi-delta.down { color: var(--pg-danger); }
+  .kpi-icon { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; font-size: 20px; }
+  .kpi-icon.i1 { background: var(--pg-primary-soft); color: var(--pg-primary); }
+  .kpi-icon.i2 { background: rgba(20,185,138,0.16); color: var(--pg-success); }
+  .kpi-icon.i3 { background: rgba(245,158,11,0.16); color: var(--pg-warning); }
+  .kpi-icon.i4 { background: rgba(245,85,107,0.16); color: var(--pg-danger); }
+  .kpi-icon.i5 { background: rgba(139,92,246,0.16); color: var(--pg-purple); }
+
+  .row-2 { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .row-3 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .glass-card { border-radius: var(--pg-radius-md); padding: 18px 20px; }
+  .card-title { font-size: 14px; font-weight: 600; margin: 0 0 14px; display: flex; align-items: center; justify-content: space-between; color: var(--pg-text-white); }
+  .card-title .link { font-size: 12px; color: var(--pg-primary); font-weight: 500; cursor: pointer; }
+  .mini-chart { width: 100%; height: 200px; }
+
+  .shortcuts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .shortcut { padding: 14px 16px; border-radius: 12px; background: var(--pg-hover-surface); border: 1px solid var(--pg-glass-border); display: flex; align-items: center; gap: 12px; cursor: pointer; transition: all 0.2s; }
+  .shortcut:hover { transform: translateY(-1px); }
+  .shortcut-icon { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; font-size: 16px; }
+  .shortcut-icon.s1 { background: var(--pg-primary-soft); color: var(--pg-primary); }
+  .shortcut-icon.s2 { background: rgba(20,185,138,0.16); color: var(--pg-success); }
+  .shortcut-icon.s3 { background: rgba(245,158,11,0.16); color: var(--pg-warning); }
+  .shortcut-icon.s4 { background: rgba(139,92,246,0.16); color: var(--pg-purple); }
+  .shortcut-name { font-size: 13.5px; font-weight: 600; color: var(--pg-text-white); }
+  .shortcut-desc { font-size: 11.5px; color: var(--pg-text-secondary); }
+
+  .mini-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .mini-table th { text-align: left; color: var(--pg-text-secondary); font-weight: 500; padding: 8px 4px; border-bottom: 1px solid var(--pg-line-strong); font-size: 12px; }
+  .mini-table td { padding: 10px 4px; border-bottom: 1px solid var(--pg-line); color: var(--pg-text-regular); }
+  .mini-table tr:last-child td { border-bottom: none; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 500; }
+  .tag.ok { background: rgba(20,185,138,0.14); color: var(--pg-success); }
+  .tag.warn { background: rgba(245,158,11,0.16); color: var(--pg-warning); }
+  .tag.err { background: rgba(245,85,107,0.16); color: var(--pg-danger); }
+
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: var(--pg-line-strong); border-radius: 4px; }
+
+  /* =========== 主题设置抽屉 =========== */
+  .drawer-mask {
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(0, 0, 0, 0.35);
+    display: none;
+    backdrop-filter: blur(4px);
+  }
+  .drawer-mask.open { display: block; }
+  .drawer {
+    position: fixed; top: 16px; right: 16px; bottom: 16px;
+    width: 380px; z-index: 101;
+    border-radius: var(--pg-radius-lg);
+    transform: translateX(420px);
+    transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+    display: flex; flex-direction: column;
+    background: var(--pg-glass-bg-strong);
+    backdrop-filter: blur(var(--pg-glass-blur));
+    -webkit-backdrop-filter: blur(var(--pg-glass-blur));
+    border: 1px solid var(--pg-glass-border);
+    box-shadow: var(--pg-glass-shadow);
+    overflow: hidden;
+  }
+  .drawer.open { transform: translateX(0); }
+  .drawer-head { padding: 18px 20px; border-bottom: 1px solid var(--pg-line); display: flex; justify-content: space-between; align-items: center; }
+  .drawer-head h2 { margin: 0; font-size: 16px; font-weight: 700; color: var(--pg-text-white); }
+  .drawer-close { cursor: pointer; color: var(--pg-text-secondary); font-size: 20px; padding: 0 6px; }
+  .drawer-body { padding: 18px 20px; overflow-y: auto; flex: 1; }
+  .drawer-section { margin-bottom: 22px; }
+  .drawer-section-title { font-size: 12px; color: var(--pg-text-placeholder); letter-spacing: 1px; margin-bottom: 10px; font-weight: 500; }
+  .mode-list { display: flex; flex-direction: column; gap: 8px; }
+  .mode-item {
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1.5px solid var(--pg-line-strong);
+    background: var(--pg-hover-surface);
+    cursor: pointer;
+    display: flex; align-items: flex-start; gap: 12px;
+    transition: all 0.2s;
+  }
+  .mode-item:hover { border-color: var(--pg-primary); }
+  .mode-item.active { border-color: var(--pg-primary); background: var(--pg-primary-soft); }
+  .mode-item .radio { flex-shrink: 0; width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--pg-text-placeholder); margin-top: 2px; position: relative; }
+  .mode-item.active .radio { border-color: var(--pg-primary); }
+  .mode-item.active .radio::after { content: ""; position: absolute; inset: 2px; border-radius: 50%; background: var(--pg-primary); }
+  .mode-name { font-size: 14px; font-weight: 600; color: var(--pg-text-white); }
+  .mode-desc { font-size: 12px; color: var(--pg-text-secondary); margin-top: 4px; line-height: 1.5; }
+
+  .schedule-inputs { margin-top: 10px; padding: 10px 12px; background: var(--pg-hover-surface); border-radius: 10px; display: none; }
+  .mode-item.active .schedule-inputs { display: block; }
+  .schedule-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 12.5px; color: var(--pg-text-regular); }
+  .schedule-row:last-child { margin-bottom: 0; }
+  .schedule-row input {
+    background: var(--pg-glass-bg);
+    border: 1px solid var(--pg-glass-border);
+    border-radius: 6px;
+    padding: 4px 8px;
+    color: var(--pg-text-white);
+    font-size: 12.5px;
+    width: 82px;
+    outline: none;
+  }
+  .schedule-row input:focus { border-color: var(--pg-primary); }
+  .location-row { margin-top: 8px; font-size: 12px; color: var(--pg-text-secondary); }
+
+  .drawer-btn-row { padding: 14px 20px; border-top: 1px solid var(--pg-line); display: flex; gap: 10px; }
+  .drawer-btn { flex: 1; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--pg-glass-border); background: var(--pg-hover-surface); cursor: pointer; font-size: 13px; color: var(--pg-text-regular); }
+  .drawer-btn.primary { background: var(--pg-primary-grad); color: white; border: none; box-shadow: 0 4px 12px rgba(91,124,250,0.35); }
+
+  /* 提示浮层 */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translate(-50%, 100px);
+    background: var(--pg-glass-bg-strong);
+    backdrop-filter: blur(var(--pg-glass-blur));
+    border: 1px solid var(--pg-glass-border);
+    box-shadow: var(--pg-glass-shadow);
+    padding: 10px 20px; border-radius: 999px;
+    color: var(--pg-text-white); font-size: 13px;
+    transition: transform 0.3s;
+    z-index: 200;
+  }
+  .toast.show { transform: translate(-50%, 0); }
+</style>
+</head>
+<body>
+<div class="stars"></div>
+<div class="bg-blob"></div>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-logo">P</div>
+      <div>
+        <div class="brand-name">PowerGateway</div>
+        <div class="brand-sub">v0.1 · 接口开发平台</div>
+      </div>
+    </div>
+    <div class="menu-item active"><span class="icon">◈</span> 系统概览</div>
+    <div class="menu-group">接口转换</div>
+    <div class="menu-item"><span class="icon">▤</span> 转换模板管理</div>
+    <div class="menu-item"><span class="icon">▤</span> 字段映射配置</div>
+    <div class="menu-item"><span class="icon">▤</span> 字段加工规则</div>
+    <div class="menu-item"><span class="icon">▤</span> 字段公式管理</div>
+    <div class="menu-item"><span class="icon">▤</span> 渠道模板管理</div>
+    <div class="menu-item"><span class="icon">▤</span> 端口路由转发</div>
+    <div class="menu-item"><span class="icon">▤</span> 报文格式转换</div>
+    <div class="menu-group">可视化接口</div>
+    <div class="menu-item"><span class="icon">◇</span> 接口列表</div>
+    <div class="menu-item"><span class="icon">◇</span> 配置向导</div>
+    <div class="menu-item"><span class="icon">◇</span> 接口文档</div>
+    <div class="menu-group">辅助工具</div>
+    <div class="menu-item"><span class="icon">◐</span> 报文调试</div>
+    <div class="menu-group">系统管理</div>
+    <div class="menu-item"><span class="icon">▦</span> 用户权限</div>
+    <div class="menu-item"><span class="icon">▦</span> 系统配置</div>
+    <div class="menu-item"><span class="icon">▦</span> 操作日志</div>
+    <div class="menu-item"><span class="icon">▦</span> 性能统计</div>
+  </aside>
+
+  <header class="topbar">
+    <div class="topbar-icon">≡</div>
+    <div class="breadcrumb">首页 / <b>系统概览</b></div>
+    <div class="topbar-spacer"></div>
+    <div class="search-box"><span>⌕</span> 搜索接口 / 模板 / 菜单</div>
+    <div class="topbar-icon" title="通知">♫</div>
+    <!-- 主题切换 -->
+    <div class="theme-toggle" id="themeToggle" title="点击切换主题（长按打开主题设置）">
+      <div class="thumb"></div>
+    </div>
+    <div class="topbar-icon" id="themeSettingBtn" title="主题设置">⚙</div>
+    <div class="avatar" title="admin">A</div>
+  </header>
+
+  <main class="main">
+    <div class="page-title">
+      <div>
+        <h1>系统概览</h1>
+        <div class="subtitle">今日各接口调用情况一览 · 当前主题：<span id="themeName">亮色</span> · 模式：<span id="modeName">手动切换</span></div>
+      </div>
+      <div class="dim-tabs">
+        <div class="dim-tab active">今日</div>
+        <div class="dim-tab">本周</div>
+        <div class="dim-tab">本月</div>
+      </div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card"><div><div class="kpi-label">总接口数</div><div class="kpi-value">6</div><div class="kpi-delta up">↑ 本月 +2</div></div><div class="kpi-icon i1">◈</div></div>
+      <div class="kpi-card"><div><div class="kpi-label">调用成功率</div><div class="kpi-value">98.2%</div><div class="kpi-delta up">↑ 1.4%</div></div><div class="kpi-icon i2">✓</div></div>
+      <div class="kpi-card"><div><div class="kpi-label">平均响应</div><div class="kpi-value">42<span style="font-size:14px;">ms</span></div><div class="kpi-delta down">↓ 3ms</div></div><div class="kpi-icon i3">⌚</div></div>
+      <div class="kpi-card"><div><div class="kpi-label">今日调用</div><div class="kpi-value">12.4k</div><div class="kpi-delta up">↑ 8.6%</div></div><div class="kpi-icon i4">≋</div></div>
+      <div class="kpi-card"><div><div class="kpi-label">缓存命中率</div><div class="kpi-value">88.4%</div><div class="kpi-delta up">↑ 2.1%</div></div><div class="kpi-icon i5">◐</div></div>
+    </div>
+
+    <div class="row-2">
+      <div class="glass-card">
+        <div class="card-title">调用趋势 <span class="link">详情 →</span></div>
+        <svg class="mini-chart" viewBox="0 0 600 200" preserveAspectRatio="none">
+          <defs><linearGradient id="grad1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="currentColor" stop-opacity="0.38"/><stop offset="100%" stop-color="currentColor" stop-opacity="0"/></linearGradient></defs>
+          <g style="color: var(--pg-primary);">
+            <path d="M 0 160 L 60 140 L 120 150 L 180 100 L 240 120 L 300 70 L 360 90 L 420 50 L 480 80 L 540 40 L 600 60 L 600 200 L 0 200 Z" fill="url(#grad1)"/>
+            <path d="M 0 160 L 60 140 L 120 150 L 180 100 L 240 120 L 300 70 L 360 90 L 420 50 L 480 80 L 540 40 L 600 60" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </g>
+          <g font-size="10" fill="var(--pg-text-secondary)">
+            <text x="0" y="195">00:00</text><text x="150" y="195">06:00</text><text x="300" y="195">12:00</text><text x="450" y="195">18:00</text><text x="565" y="195">24:00</text>
+          </g>
+        </svg>
+      </div>
+
+      <div class="glass-card">
+        <div class="card-title">操作类型分布</div>
+        <svg class="mini-chart" viewBox="0 0 200 200">
+          <circle cx="100" cy="100" r="70" fill="none" stroke="var(--pg-track-bg)" stroke-width="24"/>
+          <circle cx="100" cy="100" r="70" fill="none" stroke="var(--pg-primary)" stroke-width="24" stroke-dasharray="200 440" transform="rotate(-90 100 100)"/>
+          <circle cx="100" cy="100" r="70" fill="none" stroke="var(--pg-success)" stroke-width="24" stroke-dasharray="120 440" stroke-dashoffset="-200" transform="rotate(-90 100 100)"/>
+          <circle cx="100" cy="100" r="70" fill="none" stroke="var(--pg-warning)" stroke-width="24" stroke-dasharray="80 440" stroke-dashoffset="-320" transform="rotate(-90 100 100)"/>
+          <circle cx="100" cy="100" r="70" fill="none" stroke="var(--pg-purple)" stroke-width="24" stroke-dasharray="40 440" stroke-dashoffset="-400" transform="rotate(-90 100 100)"/>
+          <text x="100" y="98" text-anchor="middle" font-size="20" fill="var(--pg-text-white)" font-weight="700">12.4k</text>
+          <text x="100" y="115" text-anchor="middle" font-size="10" fill="var(--pg-text-secondary)">今日总调用</text>
+        </svg>
+      </div>
+    </div>
+
+    <div class="row-3">
+      <div class="glass-card">
+        <div class="card-title">TOP 5 慢接口 <span class="link">全部 →</span></div>
+        <table class="mini-table">
+          <thead><tr><th>接口</th><th>平均耗时</th><th>调用</th></tr></thead>
+          <tbody>
+            <tr><td>e2e_join_user_log</td><td>128ms</td><td>1,240</td></tr>
+            <tr><td>e2e_query_users</td><td>96ms</td><td>3,842</td></tr>
+            <tr><td>e2e_delete_user</td><td>72ms</td><td>218</td></tr>
+            <tr><td>e2e_update_user</td><td>58ms</td><td>612</td></tr>
+            <tr><td>e2e_insert_user</td><td>44ms</td><td>1,006</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="glass-card">
+        <div class="card-title">未处理告警 <span class="link">告警中心 →</span></div>
+        <table class="mini-table">
+          <thead><tr><th>类型</th><th>接口</th><th>触发时间</th></tr></thead>
+          <tbody>
+            <tr><td><span class="tag err">RATE</span></td><td>e2e_join_user_log</td><td>10:24</td></tr>
+            <tr><td><span class="tag warn">SLOW</span></td><td>e2e_query_users</td><td>09:56</td></tr>
+            <tr><td><span class="tag err">RATE</span></td><td>e2e_delete_user</td><td>09:42</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="glass-card">
+      <div class="card-title">快捷入口</div>
+      <div class="shortcuts">
+        <div class="shortcut"><div class="shortcut-icon s1">＋</div><div><div class="shortcut-name">新建接口</div><div class="shortcut-desc">通过向导创建</div></div></div>
+        <div class="shortcut"><div class="shortcut-icon s2">⇄</div><div><div class="shortcut-name">格式转换</div><div class="shortcut-desc">JSON/XML/CSV</div></div></div>
+        <div class="shortcut"><div class="shortcut-icon s3">◐</div><div><div class="shortcut-name">报文调试</div><div class="shortcut-desc">在线测试转换</div></div></div>
+        <div class="shortcut"><div class="shortcut-icon s4">▤</div><div><div class="shortcut-name">模板管理</div><div class="shortcut-desc">复用配置</div></div></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ============ 主题设置抽屉 ============ -->
+<div class="drawer-mask" id="drawerMask"></div>
+<aside class="drawer" id="drawer">
+  <div class="drawer-head">
+    <h2>主题设置</h2>
+    <span class="drawer-close" id="drawerClose">×</span>
+  </div>
+  <div class="drawer-body">
+    <div class="drawer-section">
+      <div class="drawer-section-title">切换模式</div>
+      <div class="mode-list" id="modeList">
+
+        <div class="mode-item active" data-mode="manual">
+          <div class="radio"></div>
+          <div>
+            <div class="mode-name">☀ / ☾ 手动切换</div>
+            <div class="mode-desc">顶栏按钮点一下就切。系统不会自动改，最省心。</div>
+          </div>
+        </div>
+
+        <div class="mode-item" data-mode="schedule">
+          <div class="radio"></div>
+          <div style="flex:1;">
+            <div class="mode-name">⏰ 定时切换</div>
+            <div class="mode-desc">按每天固定的两个时间点自动切主题。</div>
+            <div class="schedule-inputs">
+              <div class="schedule-row">
+                <span>切换到亮色：</span>
+                <input type="time" value="07:00" />
+              </div>
+              <div class="schedule-row">
+                <span>切换到暗色：</span>
+                <input type="time" value="19:00" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mode-item" data-mode="system">
+          <div class="radio"></div>
+          <div>
+            <div class="mode-name">⚙ 跟随系统</div>
+            <div class="mode-desc">读取操作系统的 prefers-color-scheme。系统改一次这里就跟着变。</div>
+          </div>
+        </div>
+
+        <div class="mode-item" data-mode="sun">
+          <div class="radio"></div>
+          <div style="flex:1;">
+            <div class="mode-name">☼ 日出日落</div>
+            <div class="mode-desc">按所在城市的日出日落时间自动切。</div>
+            <div class="schedule-inputs" style="display:block;">
+              <div class="location-row">
+                当前定位：<b style="color:var(--pg-text-white)">北京</b>（今日 05:12 日出 / 19:38 日落）
+                <span style="color:var(--pg-primary); cursor:pointer; margin-left:8px;">修改城市</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="drawer-section">
+      <div class="drawer-section-title">应用范围</div>
+      <div class="mode-list">
+        <div class="mode-item">
+          <div class="radio"></div>
+          <div>
+            <div class="mode-name">仅本设备（localStorage）</div>
+            <div class="mode-desc">设置只在当前浏览器生效，换电脑要重设。</div>
+          </div>
+        </div>
+        <div class="mode-item active">
+          <div class="radio"></div>
+          <div>
+            <div class="mode-name">跟随账号（后端存储）</div>
+            <div class="mode-desc">保存到用户配置，换设备登录同步生效。</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="drawer-btn-row">
+    <button class="drawer-btn">恢复默认</button>
+    <button class="drawer-btn primary">保存并应用</button>
+  </div>
+</aside>
+
+<div class="toast" id="toast">主题已切换</div>
+
+<script>
+  const html = document.documentElement;
+  const themeToggle = document.getElementById('themeToggle');
+  const themeSettingBtn = document.getElementById('themeSettingBtn');
+  const drawer = document.getElementById('drawer');
+  const drawerMask = document.getElementById('drawerMask');
+  const drawerClose = document.getElementById('drawerClose');
+  const themeName = document.getElementById('themeName');
+  const modeName = document.getElementById('modeName');
+  const toast = document.getElementById('toast');
+  const modeList = document.getElementById('modeList');
+
+  function setTheme(t) {
+    html.setAttribute('data-theme', t);
+    themeName.textContent = t === 'dark' ? '暗色' : '亮色';
+    showToast('切换到' + (t === 'dark' ? '暗色' : '亮色') + '主题');
+  }
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => toast.classList.remove('show'), 1800);
+  }
+
+  themeToggle.addEventListener('click', () => {
+    const cur = html.getAttribute('data-theme');
+    setTheme(cur === 'dark' ? 'light' : 'dark');
+  });
+  themeSettingBtn.addEventListener('click', () => {
+    drawer.classList.add('open');
+    drawerMask.classList.add('open');
+  });
+  drawerClose.addEventListener('click', close);
+  drawerMask.addEventListener('click', close);
+  function close() { drawer.classList.remove('open'); drawerMask.classList.remove('open'); }
+
+  modeList.addEventListener('click', (e) => {
+    const item = e.target.closest('.mode-item');
+    if (!item) return;
+    modeList.querySelectorAll('.mode-item').forEach(x => x.classList.remove('active'));
+    item.classList.add('active');
+    const mode = item.dataset.mode;
+    const map = { manual: '手动切换', schedule: '定时切换', system: '跟随系统', sun: '日出日落' };
+    modeName.textContent = map[mode] || '手动切换';
+  });
+</script>
+</body>
+</html>
