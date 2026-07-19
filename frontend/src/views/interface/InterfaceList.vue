@@ -56,6 +56,7 @@
             @click="$router.push('/interface/cache')"
           >缓存</el-button>
           <el-button size="small" @click="openShardDialog(row)">分片</el-button>
+          <el-button size="small" @click="handleExportFields(row)">导出字段</el-button>
           <el-button type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
           <el-popconfirm
             :title="row.status === 'published' ? '已发布接口请先禁用再删除' : '确认删除该接口？'"
@@ -110,6 +111,8 @@ import {
 } from '@/api/interface'
 import { listShardConfigs } from '@/api/shardConfig'
 import { useWizardStore } from '@/store/wizard'
+import { exportFieldSchema } from '@/api/interfaceFieldSchema'
+import { downloadBlob } from '@/utils/download'
 
 const router = useRouter()
 const wizardStore = useWizardStore()
@@ -177,6 +180,15 @@ function handleEdit(row) {
     router.push({ path, query: { id: row.id } })
   } else {
     ElMessage.warning('未知接口类型')
+  }
+}
+
+async function handleExportFields(row) {
+  try {
+    const blob = await exportFieldSchema(row.id)
+    downloadBlob(blob, `${row.name}_字段清单.xlsx`)
+  } catch {
+    ElMessage.error('导出字段清单失败')
   }
 }
 
