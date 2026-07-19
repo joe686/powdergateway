@@ -13,6 +13,8 @@ public class MenuPermission {
 
     public static final List<String> ADMIN_MENUS = Arrays.asList(
         "/dashboard",
+        // 接口转换配置 · 向导（UX-D）
+        "/convert/wizard",
         // 接口转换配置 · 基础配置
         "/convert/template", "/convert/channel",
         // 接口转换配置 · 转换规则
@@ -31,6 +33,8 @@ public class MenuPermission {
 
     public static final List<String> USER_MENUS = Arrays.asList(
         "/dashboard",
+        // 接口转换配置 · 向导（UX-D）
+        "/convert/wizard",
         // 接口转换配置 · 基础配置
         "/convert/template", "/convert/channel",
         // 接口转换配置 · 转换规则

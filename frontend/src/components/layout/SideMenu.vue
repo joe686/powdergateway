@@ -29,6 +29,9 @@
           <span>接口转换配置</span>
         </template>
 
+        <!-- 向导入口（UX-D） -->
+        <el-menu-item v-if="can('/convert/wizard')" index="/convert/wizard">接口转换配置向导</el-menu-item>
+
         <!-- 基础配置 -->
         <el-menu-item-group
           v-if="hasGroupBaseConfig"
@@ -148,7 +151,7 @@ function can(path) {
   return userStore.allowedMenus.includes(path)
 }
 
-var CONVERT_PATHS  = ['/convert/template', '/convert/channel',
+var CONVERT_PATHS  = ['/convert/wizard', '/convert/template', '/convert/channel',
                       '/convert/field-mapping', '/convert/field-process',
                       '/convert/port-route', '/convert/format']
 var INTERFACE_PATHS = ['/interface/wizard', '/interface/db', '/interface/table', '/interface/dev',

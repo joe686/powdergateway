@@ -27,6 +27,12 @@ const router = createRouter({
         },
         // 接口转换配置（模块一）
         {
+          path: 'convert/wizard',
+          name: 'TransformWizard',
+          component: () => import('@/views/convert/TransformWizard.vue'),
+          meta: { title: '接口转换配置向导' }
+        },
+        {
           path: 'convert/format',
           name: 'FormatConvert',
           component: () => import('@/views/convert/FormatConvert.vue'),
