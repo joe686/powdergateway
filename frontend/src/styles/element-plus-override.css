@@ -1,0 +1,62 @@
+/* UX-A · Element Plus 变量桥接 + 组件深度覆盖 */
+
+:root {
+  --el-color-primary: var(--pg-primary);
+  --el-color-primary-light-3: color-mix(in srgb, var(--pg-primary) 60%, white);
+  --el-color-primary-light-5: color-mix(in srgb, var(--pg-primary) 40%, white);
+  --el-color-primary-light-7: var(--pg-primary-soft);
+  --el-color-primary-light-9: color-mix(in srgb, var(--pg-primary) 10%, white);
+  --el-color-success: var(--pg-success);
+  --el-color-warning: var(--pg-warning);
+  --el-color-danger:  var(--pg-danger);
+
+  --el-bg-color: transparent;
+  --el-bg-color-overlay: var(--pg-glass-bg-strong);
+  --el-text-color-primary: var(--pg-text-primary);
+  --el-text-color-regular: var(--pg-text-regular);
+  --el-text-color-secondary: var(--pg-text-secondary);
+  --el-text-color-placeholder: var(--pg-text-placeholder);
+  --el-border-color: var(--pg-glass-border);
+  --el-border-color-light: var(--pg-line-strong);
+  --el-border-color-lighter: var(--pg-line);
+
+  --el-border-radius-base: var(--pg-radius-sm);
+  --el-border-radius-small: 6px;
+  --el-border-radius-round: 999px;
+
+  --el-box-shadow: var(--pg-glass-shadow);
+  --el-box-shadow-light: 0 4px 12px rgba(60, 79, 148, 0.06);
+}
+
+.el-card, .el-dialog, .el-drawer, .el-message-box {
+  background: var(--pg-glass-bg);
+  backdrop-filter: blur(var(--pg-glass-blur));
+  -webkit-backdrop-filter: blur(var(--pg-glass-blur));
+  border: 1px solid var(--pg-glass-border);
+  box-shadow: var(--pg-glass-shadow);
+}
+
+.el-input__wrapper, .el-select__wrapper, .el-textarea__inner {
+  background: var(--pg-hover-surface);
+  border-radius: var(--pg-radius-sm);
+  box-shadow: none;
+  border: 1px solid transparent;
+  transition: border-color 0.2s;
+}
+.el-input__wrapper:hover, .el-input__wrapper.is-focus {
+  border-color: var(--pg-primary);
+}
+
+.el-table {
+  background: transparent;
+  --el-table-bg-color: transparent;
+  --el-table-tr-bg-color: transparent;
+  --el-table-header-bg-color: var(--pg-hover-surface);
+  --el-table-border-color: var(--pg-line);
+  --el-table-row-hover-bg-color: var(--pg-hover-surface);
+}
+
+/* 平滑过渡 */
+.el-card, .el-dialog, .el-menu, .el-input__wrapper, .el-button {
+  transition: background 0.35s ease, color 0.35s ease, border-color 0.35s ease;
+}
