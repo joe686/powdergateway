@@ -13,23 +13,37 @@ public class MenuPermission {
 
     public static final List<String> ADMIN_MENUS = Arrays.asList(
         "/dashboard",
-        "/convert/format", "/convert/field-mapping", "/convert/field-process",
-        "/convert/channel", "/convert/port-route", "/convert/template",
+        // 接口转换配置 · 基础配置
+        "/convert/template", "/convert/channel",
+        // 接口转换配置 · 转换规则
+        "/convert/field-mapping", "/convert/field-process",
+        // 接口转换配置 · 发布测试
+        "/convert/port-route", "/convert/format",
+        // 可视化接口开发
         "/interface/db", "/interface/table", "/interface/wizard", "/interface/dev",
         "/interface/insert", "/interface/update", "/interface/delete",
         "/interface/list", "/interface/shard", "/interface/formula", "/interface/cache",
+        // 系统管理
         "/system/log", "/system/stats", "/system/user", "/system/config",
+        // 辅助工具
         "/tools/debug", "/tools/swagger"
     );
 
     public static final List<String> USER_MENUS = Arrays.asList(
         "/dashboard",
-        "/convert/format", "/convert/field-mapping", "/convert/field-process",
-        "/convert/channel", "/convert/port-route", "/convert/template",
+        // 接口转换配置 · 基础配置
+        "/convert/template", "/convert/channel",
+        // 接口转换配置 · 转换规则
+        "/convert/field-mapping", "/convert/field-process",
+        // 接口转换配置 · 发布测试
+        "/convert/port-route", "/convert/format",
+        // 可视化接口开发（user 不含 delete / shard）
         "/interface/db", "/interface/table", "/interface/wizard", "/interface/dev",
         "/interface/insert", "/interface/update",
         "/interface/list", "/interface/formula", "/interface/cache",
+        // 系统管理（user 不含 user / config）
         "/system/log", "/system/stats",
+        // 辅助工具
         "/tools/debug", "/tools/swagger"
     );
 
