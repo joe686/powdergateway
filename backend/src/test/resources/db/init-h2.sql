@@ -88,6 +88,8 @@ CREATE TABLE interface_config (
   cache_enabled      TINYINT      DEFAULT 0,
   cache_ttl_seconds  INT          DEFAULT 300,
   cache_key_template VARCHAR(512) DEFAULT '',
+  response_format    VARCHAR(16)  DEFAULT 'JSON',
+  response_headers   TEXT         DEFAULT NULL,
   deleted TINYINT DEFAULT 0,
   creator VARCHAR(64),
   create_time DATETIME DEFAULT CURRENT_TIMESTAMP,

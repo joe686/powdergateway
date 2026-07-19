@@ -108,6 +108,11 @@ public class InterfaceConfigService {
         if (req.getCacheTtlSeconds() != null) entity.setCacheTtlSeconds(req.getCacheTtlSeconds());
         if (req.getCacheKeyTemplate() != null) entity.setCacheKeyTemplate(req.getCacheKeyTemplate());
         if (req.getShardConfigId() != null) entity.setShardConfigId(req.getShardConfigId());
+        // FN-06：设置默认响应格式（未指定时兜底 JSON）
+        entity.setResponseFormat(
+            req.getResponseFormat() == null || req.getResponseFormat().isEmpty()
+                ? "JSON" : req.getResponseFormat());
+        entity.setResponseHeaders(req.getResponseHeaders());
 
         if (req.getId() == null) {
             entity.setAllowBatchDelete(req.getAllowBatchDelete() != null ? req.getAllowBatchDelete() : 0);

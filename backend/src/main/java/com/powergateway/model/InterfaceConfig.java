@@ -46,6 +46,11 @@ public class InterfaceConfig {
     private Integer cacheTtlSeconds;
     private String  cacheKeyTemplate;
 
+    /** FN-06 用户默认响应格式，默认 "JSON" */
+    private String responseFormat;
+    /** FN-06 自定义响应头 JSON 字符串 */
+    private String responseHeaders;
+
     @TableLogic
     private Integer deleted;
 

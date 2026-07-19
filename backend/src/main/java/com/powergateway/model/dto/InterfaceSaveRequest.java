@@ -35,4 +35,9 @@ public class InterfaceSaveRequest {
 
     /** 关联分库分表配置 id（可选，null 表示不启用分片路由）*/
     private Long shardConfigId;
+
+    /** FN-06 默认响应格式：JSON/XML/CSV/FORM_DATA */
+    private String responseFormat;
+    /** FN-06 自定义响应头 JSON 字符串，格式 {"X-Foo":"bar"} */
+    private String responseHeaders;
 }

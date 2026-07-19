@@ -1,6 +1,7 @@
 -- PowerGateway 配置库初始化脚本
 -- 对应 P0-3 交付单元，共 8 张核心表
 -- 执行前请确保数据库已创建：CREATE DATABASE powergateway_config DEFAULT CHARACTER SET utf8mb4;
+-- 兼容旧库（CHG-020 UX-E FN-06）：如已存在 interface_config 表，请执行 migration-response-format.sql
 
 -- 1. 用户表
 CREATE TABLE IF NOT EXISTS sys_user (
@@ -72,6 +73,8 @@ CREATE TABLE IF NOT EXISTS interface_config (
   cache_enabled      TINYINT      DEFAULT 0    COMMENT '是否开启缓存：0=否，1=是',
   cache_ttl_seconds  INT          DEFAULT 300  COMMENT '缓存 TTL（秒）',
   cache_key_template VARCHAR(512) DEFAULT ''   COMMENT 'key 模板，支持 {参数名} 占位符',
+  response_format    VARCHAR(16)  DEFAULT 'JSON' COMMENT 'FN-06 用户默认响应格式：JSON/XML/CSV/FORM_DATA',
+  response_headers   TEXT         DEFAULT NULL   COMMENT 'FN-06 自定义响应头 JSON，格式 {"X-Foo":"bar"}',
   deleted TINYINT DEFAULT 0,
   creator VARCHAR(64),
   create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
