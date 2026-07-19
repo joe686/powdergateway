@@ -23,17 +23,65 @@
       </el-menu-item>
 
       <!-- 接口转换配置（模块一） -->
-      <el-sub-menu v-if="hasConvert" index="convert">
+      <el-sub-menu v-if="hasConvert" index="convert" data-ux-b-submenu="convert">
         <template #title>
           <el-icon><Switch /></el-icon>
           <span>接口转换配置</span>
         </template>
-        <el-menu-item v-if="can('/convert/format')" index="/convert/format">报文格式转换</el-menu-item>
-        <el-menu-item v-if="can('/convert/field-mapping')" index="/convert/field-mapping">字段映射配置</el-menu-item>
-        <el-menu-item v-if="can('/convert/field-process')" index="/convert/field-process">字段加工配置</el-menu-item>
-        <el-menu-item v-if="can('/convert/channel')" index="/convert/channel">渠道模板管理</el-menu-item>
-        <el-menu-item v-if="can('/convert/port-route')" index="/convert/port-route">端口分发路由</el-menu-item>
-        <el-menu-item v-if="can('/convert/template')" index="/convert/template">转换模板管理</el-menu-item>
+
+        <!-- 基础配置 -->
+        <el-menu-item-group
+          v-if="hasGroupBaseConfig"
+          title="基础配置"
+          data-ux-b-group="base"
+        >
+          <el-menu-item
+            v-if="can('/convert/template')"
+            index="/convert/template"
+            :data-ux-b-convert-path="'/convert/template'"
+          >转换模板管理</el-menu-item>
+          <el-menu-item
+            v-if="can('/convert/channel')"
+            index="/convert/channel"
+            :data-ux-b-convert-path="'/convert/channel'"
+          >渠道模板管理</el-menu-item>
+        </el-menu-item-group>
+
+        <!-- 转换规则 -->
+        <el-menu-item-group
+          v-if="hasGroupTransformRules"
+          title="转换规则"
+          data-ux-b-group="rules"
+        >
+          <el-menu-item
+            v-if="can('/convert/field-mapping')"
+            index="/convert/field-mapping"
+            :data-ux-b-convert-path="'/convert/field-mapping'"
+          >字段映射配置</el-menu-item>
+          <el-menu-item
+            v-if="can('/convert/field-process')"
+            index="/convert/field-process"
+            :data-ux-b-convert-path="'/convert/field-process'"
+          >字段加工配置</el-menu-item>
+        </el-menu-item-group>
+
+        <!-- 发布测试 -->
+        <el-menu-item-group
+          v-if="hasGroupPublishTest"
+          title="发布测试"
+          data-ux-b-group="publish"
+        >
+          <el-menu-item
+            v-if="can('/convert/port-route')"
+            index="/convert/port-route"
+            :data-ux-b-convert-path="'/convert/port-route'"
+          >端口分发路由</el-menu-item>
+          <el-menu-item
+            v-if="can('/convert/format')"
+            index="/convert/format"
+            :data-ux-b-convert-path="'/convert/format'"
+          >报文格式转换</el-menu-item>
+        </el-menu-item-group>
       </el-sub-menu>
 
       <!-- 可视化接口开发（模块二） -->
@@ -100,8 +148,9 @@ function can(path) {
   return userStore.allowedMenus.includes(path)
 }
 
-var CONVERT_PATHS  = ['/convert/format', '/convert/field-mapping', '/convert/field-process',
-                      '/convert/channel', '/convert/port-route', '/convert/template']
+var CONVERT_PATHS  = ['/convert/template', '/convert/channel',
+                      '/convert/field-mapping', '/convert/field-process',
+                      '/convert/port-route', '/convert/format']
 var INTERFACE_PATHS = ['/interface/wizard', '/interface/db', '/interface/table', '/interface/dev',
                        '/interface/insert', '/interface/update', '/interface/delete',
                        '/interface/list', '/interface/shard', '/interface/formula', '/interface/cache']
@@ -112,6 +161,10 @@ const hasConvert   = computed(function() { return CONVERT_PATHS.some(function(p)
 const hasInterface = computed(function() { return INTERFACE_PATHS.some(function(p) { return can(p) }) })
 const hasSystem    = computed(function() { return SYSTEM_PATHS.some(function(p) { return can(p) }) })
 const hasTools     = computed(function() { return TOOLS_PATHS.some(function(p) { return can(p) }) })
+
+const hasGroupBaseConfig     = computed(function() { return ['/convert/template', '/convert/channel'].some(function(p) { return can(p) }) })
+const hasGroupTransformRules = computed(function() { return ['/convert/field-mapping', '/convert/field-process'].some(function(p) { return can(p) }) })
+const hasGroupPublishTest    = computed(function() { return ['/convert/port-route', '/convert/format'].some(function(p) { return can(p) }) })
 </script>
 
 <style scoped>
