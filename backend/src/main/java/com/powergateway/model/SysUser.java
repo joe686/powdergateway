@@ -26,6 +26,9 @@ public class SysUser {
     /** 账号状态：1=启用，0=禁用 */
     private Integer status;
 
+    /** 主题偏好 JSON（UX-A） */
+    private String themePref;
+
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
 
