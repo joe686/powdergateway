@@ -35,13 +35,14 @@ public class PortRouteController {
 
     // ─────────────────── CRUD ───────────────────
 
-    @Operation(summary = "分页查询端口路由列表", description = "支持渠道编码模糊搜索")
+    @Operation(summary = "分页查询端口路由列表", description = "支持渠道编码模糊搜索 + 功能号精确过滤（UX-D）")
     @GetMapping("/api/port-route/list")
     public Result<Page<PortRoute>> list(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String channelCode) {
-        return Result.success(portRouteService.listRoutes(page, size, channelCode));
+            @RequestParam(required = false) String channelCode,
+            @RequestParam(required = false) String functionCode) {
+        return Result.success(portRouteService.listRoutes(page, size, channelCode, functionCode));
     }
 
     @Operation(summary = "新增/更新端口路由", description = "id 为空时新增，id 不为空时更新；返回路由 id")

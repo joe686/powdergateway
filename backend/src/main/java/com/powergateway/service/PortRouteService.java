@@ -80,17 +80,34 @@ public class PortRouteService {
     }
 
     /**
-     * 分页查询端口路由列表，支持渠道编码模糊搜索。
+     * 分页查询端口路由列表，支持渠道编码模糊搜索（向后兼容旧签名）。
      */
     public Page<PortRoute> listRoutes(int page, int size, String channelCode) {
+        return listRoutes(page, size, channelCode, null);
+    }
+
+    /**
+     * 分页查询端口路由列表，支持渠道编码模糊搜索 + 功能号精确过滤（UX-D）。
+     */
+    public Page<PortRoute> listRoutes(int page, int size, String channelCode, String functionCode) {
         LambdaQueryWrapper<PortRoute> wrapper = new LambdaQueryWrapper<>();
         if (channelCode != null && !channelCode.trim().isEmpty()) {
             wrapper.like(PortRoute::getChannelCode, channelCode.trim());
+        }
+        if (functionCode != null && !functionCode.trim().isEmpty()) {
+            wrapper.eq(PortRoute::getFunctionCode, functionCode.trim());
         }
         wrapper.orderByDesc(PortRoute::getCreateTime);
         Page<PortRoute> result = portRouteMapper.selectPage(new Page<>(page, size), wrapper);
         result.getRecords().forEach(r -> r.setHeaderConfig(parseHeaderConfig(r.getHeaderConfigRaw())));
         return result;
+    }
+
+    /**
+     * 按 id 查询端口路由（UX-D 测试辅助）。
+     */
+    public PortRoute getById(Long id) {
+        return portRouteMapper.selectById(id);
     }
 
     /**
@@ -120,6 +137,9 @@ public class PortRouteService {
         route.setRetryCount(req.getRetryCount() != null ? req.getRetryCount() : 3);
         route.setRequestTemplateId(req.getRequestTemplateId());
         route.setResponseTemplateId(req.getResponseTemplateId());
+        // UX-D：透传功能号
+        route.setFunctionCode(req.getFunctionCode());
+        route.setFunctionName(req.getFunctionName());
 
         if (req.getHeaderConfig() != null) {
             try {

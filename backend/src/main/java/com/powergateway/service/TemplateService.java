@@ -77,6 +77,8 @@ public class TemplateService {
             tpl.setIsLatest(1);
             tpl.setVersion(1);
             tpl.setDeleted(0);
+            // UX-D：透传功能号
+            tpl.setFunctionCode(req.getFunctionCode());
             templateMapper.insert(tpl);
             return tpl.getId();
         }
@@ -104,6 +106,10 @@ public class TemplateService {
         }
         if (StringUtils.hasText(req.getKeyword())) {
             wrapper.like(ConvertTemplate::getName, req.getKeyword());
+        }
+        // UX-D：功能号精确匹配
+        if (req.getFunctionCode() != null && !req.getFunctionCode().trim().isEmpty()) {
+            wrapper.eq(ConvertTemplate::getFunctionCode, req.getFunctionCode().trim());
         }
         wrapper.orderByDesc(ConvertTemplate::getCreateTime);
         return templateMapper.selectPage(pageParam, wrapper);

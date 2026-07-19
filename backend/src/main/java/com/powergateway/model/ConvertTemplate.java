@@ -36,6 +36,9 @@ public class ConvertTemplate {
     /** 版本号 */
     private Integer version;
 
+    /** 功能号（UX-D），可空 */
+    private String functionCode;
+
     @TableLogic
     private Integer deleted;
 

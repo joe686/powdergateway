@@ -34,4 +34,10 @@ public class PortRouteSaveRequest {
 
     /** 报文头配置（可选），序列化后存 port_route.header_config，覆盖渠道默认值 */
     private HeaderConfig headerConfig;
+
+    /** 功能号（UX-D），可空 */
+    private String functionCode;
+
+    /** 功能号中文名（UX-D），可空 */
+    private String functionName;
 }

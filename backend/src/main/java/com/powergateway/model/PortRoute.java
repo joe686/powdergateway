@@ -40,6 +40,12 @@ public class PortRoute {
     @TableField("header_config")
     private String headerConfigRaw;
 
+    /** 功能号（UX-D），软唯一（代码层校验），可空 */
+    private String functionCode;
+
+    /** 功能号中文名（UX-D），可空 */
+    private String functionName;
+
     /** 反序列化后的报文头配置对象（不映射数据库列） */
     @TableField(exist = false)
     private com.powergateway.model.dto.HeaderConfig headerConfig;

@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS convert_template (
   process_rule JSON COMMENT '字段加工规则列表',
   is_latest TINYINT DEFAULT 1,
   version INT DEFAULT 1,
+  function_code VARCHAR(64) COMMENT '功能号（UX-D），可空',
   deleted TINYINT DEFAULT 0,
   creator VARCHAR(64),
   create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -116,6 +117,8 @@ CREATE TABLE IF NOT EXISTS port_route (
   request_template_id  BIGINT       COMMENT '请求方向转换模板ID（A→B），关联 convert_template.id',
   response_template_id BIGINT       COMMENT '应答方向转换模板ID（B→A），为空则透传',
   header_config        TEXT         COMMENT '端口路由级别报文头配置（JSON），CHG-002',
+  function_code        VARCHAR(64)  COMMENT '功能号（UX-D），可空',
+  function_name        VARCHAR(128) COMMENT '功能号中文名（UX-D），可空',
   deleted              TINYINT      DEFAULT 0,
   create_time          DATETIME     DEFAULT CURRENT_TIMESTAMP
 );

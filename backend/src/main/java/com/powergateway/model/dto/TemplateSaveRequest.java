@@ -23,4 +23,7 @@ public class TemplateSaveRequest {
 
     /** 字段映射规则列表 */
     private List<FieldMappingRule> mappingRules;
+
+    /** 功能号（UX-D），可空 */
+    private String functionCode;
 }

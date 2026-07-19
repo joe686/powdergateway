@@ -40,6 +40,7 @@ CREATE TABLE convert_template (
   process_rule TEXT,
   is_latest TINYINT DEFAULT 1,
   version INT DEFAULT 1,
+  function_code VARCHAR(64) COMMENT '功能号（UX-D），可空',
   deleted TINYINT DEFAULT 0,
   creator VARCHAR(64),
   create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -132,6 +133,8 @@ CREATE TABLE port_route (
   request_template_id  BIGINT,
   response_template_id BIGINT,
   header_config        TEXT         COMMENT '端口路由级别报文头配置（JSON），CHG-002',
+  function_code        VARCHAR(64)  COMMENT '功能号（UX-D），可空',
+  function_name        VARCHAR(128) COMMENT '功能号中文名（UX-D），可空',
   deleted              TINYINT      DEFAULT 0,
   create_time          DATETIME     DEFAULT CURRENT_TIMESTAMP
 );

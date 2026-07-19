@@ -19,4 +19,7 @@ public class TemplateQueryRequest {
 
     /** 仅查最新版本（默认 true） */
     private boolean latestOnly = true;
+
+    /** 功能号精确匹配（UX-D），可空 */
+    private String functionCode;
 }
