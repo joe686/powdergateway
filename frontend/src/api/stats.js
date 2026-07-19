@@ -8,3 +8,7 @@ export const getAlerts = (page, pageSize) =>
 
 export const updateAlertConfig = (data) =>
   request.put('/stats/alert-config', data)
+
+/** FN-10 导出性能统计列表 Excel */
+export const exportPerfStatList = (params) =>
+  request.get('/stats/list/export', { params, responseType: 'blob' })

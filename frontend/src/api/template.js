@@ -61,3 +61,11 @@ export function previewMapping(id, data) {
 export function listTemplatesByFunctionCode(functionCode) {
   return request.get('/template/list', { params: { page: 1, size: 100, functionCode } })
 }
+
+/** FN-10 导出转换模板列表 Excel */
+export function exportTemplateList(keyword) {
+  return request.get('/template/list/export', {
+    params: { keyword },
+    responseType: 'blob'
+  })
+}

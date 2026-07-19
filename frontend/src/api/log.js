@@ -25,3 +25,11 @@ export function exportLogs(params) {
     URL.revokeObjectURL(url)
   })
 }
+
+/** FN-10 导出 SQL 审计日志 Excel */
+export function exportSqlAuditList(params) {
+  return request.get('/sql-audit-log/list/export', {
+    params,
+    responseType: 'blob'
+  })
+}

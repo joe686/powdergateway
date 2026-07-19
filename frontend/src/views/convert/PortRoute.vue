@@ -11,6 +11,9 @@
         @keyup.enter="fetchList"
       />
       <el-button type="primary" @click="fetchList">搜索</el-button>
+      <el-button type="default" @click="handleExportReport">
+        <el-icon><Download /></el-icon>导出报表
+      </el-button>
       <el-button type="primary" style="margin-left: auto" @click="openDialog(null)">新增路由</el-button>
     </div>
 
@@ -235,9 +238,11 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { ElMessage } from 'element-plus'
-import { listPortRoutes, savePortRoute, deletePortRoute, testPortConnectivity } from '@/api/portRoute'
+import { Download } from '@element-plus/icons-vue'
+import { listPortRoutes, savePortRoute, deletePortRoute, testPortConnectivity, exportPortRouteList } from '@/api/portRoute'
 import { listChannels } from '@/api/channel'
 import { listTemplates } from '@/api/template'
+import { downloadBlob } from '@/utils/download'
 
 // ─────────────────────── 列表数据 ───────────────────────
 const loading = ref(false)
@@ -445,6 +450,15 @@ async function handleTest(row) {
     ElMessage.error('连通测试请求失败')
   } finally {
     testingId.value = null
+  }
+}
+
+async function handleExportReport() {
+  try {
+    const blob = await exportPortRouteList(searchCode.value || undefined)
+    downloadBlob(blob, `端口路由_${Date.now()}.xlsx`)
+  } catch {
+    ElMessage.error('导出报表失败')
   }
 }
 </script>

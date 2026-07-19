@@ -78,6 +78,9 @@
           />
           <el-button type="primary" @click="loadAuditLogs">查询</el-button>
           <el-button @click="resetAuditForm">重置</el-button>
+          <el-button type="default" @click="handleExportAudit">
+            <el-icon><Download /></el-icon>导出报表
+          </el-button>
         </div>
 
         <el-table :data="auditList" stripe border v-loading="auditLoading" style="margin-top:14px">
@@ -119,7 +122,9 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { listLogs, listHistoryLogs, listAuditLogs, exportLogs } from '@/api/log'
+import { Download } from '@element-plus/icons-vue'
+import { listLogs, listHistoryLogs, listAuditLogs, exportLogs, exportSqlAuditList } from '@/api/log'
+import { downloadBlob } from '@/utils/download'
 
 // ─── Tab 状态 ──────────────────────────────
 const activeTab = ref('operation')
@@ -221,6 +226,18 @@ function resetAuditForm() {
 
 function handleTabChange(tab) {
   if (tab === 'audit' && auditList.value.length === 0) loadAuditLogs()
+}
+
+async function handleExportAudit() {
+  try {
+    const blob = await exportSqlAuditList({
+      opType: auditForm.value.opType || undefined,
+      result: auditForm.value.result || undefined
+    })
+    downloadBlob(blob, `SQL审计日志_${Date.now()}.xlsx`)
+  } catch {
+    ElMessage.error('导出报表失败')
+  }
 }
 
 onMounted(loadOpLogs)

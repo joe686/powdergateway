@@ -58,3 +58,11 @@ export function bindShardConfig(id, shardConfigId) {
 export function execInterface(id, body) {
   return request.post(`/exec/${id}`, body)
 }
+
+/** FN-10 导出接口列表 Excel */
+export function exportInterfaceList(name) {
+  return request.get('/interface/list/export', {
+    params: { name },
+    responseType: 'blob'
+  })
+}

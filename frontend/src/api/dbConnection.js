@@ -15,3 +15,11 @@ export function deleteConnection(id) {
 export function testConnection(id) {
   return request.post(`/db/${id}/test`)
 }
+
+/** FN-10 导出数据源列表 Excel（密码列脱敏） */
+export function exportDbList(keyword) {
+  return request.get('/db/list/export', {
+    params: { keyword },
+    responseType: 'blob'
+  })
+}

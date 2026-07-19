@@ -25,7 +25,12 @@
       <template #header>
         <div style="display:flex;align-items:center;justify-content:space-between">
           <span>告警记录</span>
-          <el-button type="warning" @click="configVisible = true">配置告警阈值</el-button>
+          <div style="display:flex;gap:8px">
+            <el-button type="default" @click="handleExportReport">
+              <el-icon><Download /></el-icon>导出报表
+            </el-button>
+            <el-button type="warning" @click="configVisible = true">配置告警阈值</el-button>
+          </div>
         </div>
       </template>
 
@@ -81,12 +86,14 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import { Download } from '@element-plus/icons-vue'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { LineChart, BarChart } from 'echarts/charts'
 import { GridComponent, TooltipComponent, LegendComponent } from 'echarts/components'
 import VChart from 'vue-echarts'
-import { getStatsSummary, getAlerts, updateAlertConfig } from '@/api/stats'
+import { getStatsSummary, getAlerts, updateAlertConfig, exportPerfStatList } from '@/api/stats'
+import { downloadBlob } from '@/utils/download'
 
 use([CanvasRenderer, LineChart, BarChart, GridComponent, TooltipComponent, LegendComponent])
 
@@ -159,6 +166,15 @@ async function saveConfig() {
     configVisible.value = false
   } finally {
     configSaving.value = false
+  }
+}
+
+async function handleExportReport() {
+  try {
+    const blob = await exportPerfStatList()
+    downloadBlob(blob, `性能统计_${Date.now()}.xlsx`)
+  } catch {
+    ElMessage.error('导出报表失败')
   }
 }
 

@@ -42,3 +42,11 @@ export function deleteChannel(id) {
 export function matchChannel(message, format) {
   return request.post('/channel/match', null, { params: { message, format } })
 }
+
+/** FN-10 导出渠道配置列表 Excel */
+export function exportChannelList(keyword) {
+  return request.get('/channel/list/export', {
+    params: { keyword },
+    responseType: 'blob'
+  })
+}

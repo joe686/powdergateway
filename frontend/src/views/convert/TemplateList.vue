@@ -22,6 +22,9 @@
         <el-form-item>
           <el-button type="primary" @click="handleSearch">搜索</el-button>
           <el-button @click="handleReset">重置</el-button>
+          <el-button type="default" @click="handleExportReport">
+            <el-icon><Download /></el-icon>导出报表
+          </el-button>
         </el-form-item>
       </el-form>
 
@@ -101,7 +104,9 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { listTemplates, deleteTemplate, copyTemplate } from '@/api/template'
+import { Download } from '@element-plus/icons-vue'
+import { listTemplates, deleteTemplate, copyTemplate, exportTemplateList } from '@/api/template'
+import { downloadBlob } from '@/utils/download'
 
 const router = useRouter()
 
@@ -169,6 +174,15 @@ async function handleDelete(row) {
     loadData()
   } catch {
     // 错误已由拦截器处理
+  }
+}
+
+async function handleExportReport() {
+  try {
+    const blob = await exportTemplateList(query.keyword || undefined)
+    downloadBlob(blob, `转换模板_${Date.now()}.xlsx`)
+  } catch {
+    ElMessage.error('导出报表失败')
   }
 }
 

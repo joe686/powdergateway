@@ -34,3 +34,11 @@ export function deletePortRoute(id) {
 export function testPortConnectivity(id) {
   return request.post(`/port-route/${id}/test`)
 }
+
+/** FN-10 导出端口路由列表 Excel */
+export function exportPortRouteList(channelCode) {
+  return request.get('/port-route/list/export', {
+    params: { channelCode },
+    responseType: 'blob'
+  })
+}

@@ -3,6 +3,9 @@
     <!-- 顶部操作栏 -->
     <div class="toolbar">
       <el-button type="primary" @click="openDialog(null)">新增渠道</el-button>
+      <el-button type="default" @click="handleExportReport">
+        <el-icon><Download /></el-icon>导出报表
+      </el-button>
     </div>
 
     <!-- 渠道列表 -->
@@ -134,8 +137,10 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { ElMessage } from 'element-plus'
-import { listChannels, saveChannel, deleteChannel } from '@/api/channel'
+import { Download } from '@element-plus/icons-vue'
+import { listChannels, saveChannel, deleteChannel, exportChannelList } from '@/api/channel'
 import { listTemplates } from '@/api/template'
+import { downloadBlob } from '@/utils/download'
 
 // ─────────────────────── 数据 ───────────────────────
 const loading = ref(false)
@@ -278,6 +283,15 @@ async function handleDelete(id) {
   await deleteChannel(id)
   ElMessage.success('删除成功')
   fetchChannels()
+}
+
+async function handleExportReport() {
+  try {
+    const blob = await exportChannelList()
+    downloadBlob(blob, `渠道配置_${Date.now()}.xlsx`)
+  } catch {
+    ElMessage.error('导出报表失败')
+  }
 }
 </script>
 

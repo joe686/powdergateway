@@ -3,6 +3,9 @@
     <!-- 顶部操作栏 -->
     <div class="toolbar">
       <el-button type="primary" @click="openDialog(null)">新建连接</el-button>
+      <el-button type="default" @click="handleExportReport">
+        <el-icon><Download /></el-icon>导出报表
+      </el-button>
     </div>
 
     <!-- 连接列表 -->
@@ -88,7 +91,9 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { listConnections, saveConnection, deleteConnection, testConnection } from '@/api/dbConnection'
+import { Download } from '@element-plus/icons-vue'
+import { listConnections, saveConnection, deleteConnection, testConnection, exportDbList } from '@/api/dbConnection'
+import { downloadBlob } from '@/utils/download'
 
 const list = ref([])
 const loading = ref(false)
@@ -173,6 +178,15 @@ async function handleTest(row) {
     ElMessage.success(result.message)
   } else {
     ElMessage.error('连接失败：' + result.message)
+  }
+}
+
+async function handleExportReport() {
+  try {
+    const blob = await exportDbList()
+    downloadBlob(blob, `数据源列表_${Date.now()}.xlsx`)
+  } catch {
+    ElMessage.error('导出报表失败')
   }
 }
 

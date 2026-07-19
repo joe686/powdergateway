@@ -7,6 +7,9 @@
         </template>
       </el-popconfirm>
       <el-button @click="loadList" style="margin-left: 8px">刷新统计</el-button>
+      <el-button type="default" @click="handleExportReport">
+        <el-icon><Download /></el-icon>导出报表
+      </el-button>
     </div>
 
     <el-table :data="list" stripe border v-loading="loading" style="margin-top: 16px">
@@ -79,7 +82,9 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import { Download } from '@element-plus/icons-vue'
 import { cacheApi } from '@/api/cache'
+import { downloadBlob } from '@/utils/download'
 
 const list = ref([])
 const loading = ref(false)
@@ -157,6 +162,15 @@ async function handleRefreshConfirm() {
   ElMessage.success('缓存已刷新并完成预热')
   refreshVisible.value = false
   await loadList()
+}
+
+async function handleExportReport() {
+  try {
+    const blob = await cacheApi.exportList()
+    downloadBlob(blob, `缓存统计_${Date.now()}.xlsx`)
+  } catch {
+    ElMessage.error('导出报表失败')
+  }
 }
 
 onMounted(loadList)

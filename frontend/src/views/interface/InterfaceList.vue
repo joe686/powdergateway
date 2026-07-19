@@ -11,6 +11,9 @@
       />
       <el-button type="primary" @click="loadList">查询</el-button>
       <el-button type="success" @click="goWizard">向导新建</el-button>
+      <el-button type="default" @click="handleExportReport">
+        <el-icon><Download /></el-icon>导出报表
+      </el-button>
     </div>
 
     <el-table :data="list" stripe border v-loading="loading" style="margin-top: 16px">
@@ -102,12 +105,14 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { Download } from '@element-plus/icons-vue'
 import {
   listInterfaces,
   deleteInterface,
   publishInterface,
   disableInterface,
-  bindShardConfig
+  bindShardConfig,
+  exportInterfaceList
 } from '@/api/interface'
 import { listShardConfigs } from '@/api/shardConfig'
 import { useWizardStore } from '@/store/wizard'
@@ -189,6 +194,15 @@ async function handleExportFields(row) {
     downloadBlob(blob, `${row.name}_字段清单.xlsx`)
   } catch {
     ElMessage.error('导出字段清单失败')
+  }
+}
+
+async function handleExportReport() {
+  try {
+    const blob = await exportInterfaceList(searchName.value || undefined)
+    downloadBlob(blob, `接口列表_${Date.now()}.xlsx`)
+  } catch {
+    ElMessage.error('导出报表失败')
   }
 }
 

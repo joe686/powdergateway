@@ -17,5 +17,8 @@ export const cacheApi = {
     request.delete('/cache/all'),
 
   stats: (interfaceId) =>
-    request.get(`/cache/${interfaceId}/stats`)
+    request.get(`/cache/${interfaceId}/stats`),
+
+  exportList: () =>
+    request.get('/cache/list/export', { responseType: 'blob' })
 }
