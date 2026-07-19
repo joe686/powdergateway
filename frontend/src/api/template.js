@@ -52,3 +52,12 @@ export function copyTemplate(id) {
 export function previewMapping(id, data) {
   return request.post(`/template/${id}/preview`, data)
 }
+
+/**
+ * 按功能号查询模板列表（UX-D）
+ * @param {string} functionCode 功能号
+ * @returns {Promise<{records, total}>}
+ */
+export function listTemplatesByFunctionCode(functionCode) {
+  return request.get('/template/list', { params: { page: 1, size: 100, functionCode } })
+}
