@@ -11,6 +11,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @Configuration
@@ -28,9 +29,13 @@ public class CacheConfig {
      * cacheRedisTemplate 用于 M2-10 双层缓存。
      * 之前用 @ConditionalOnBean 在 backend 启动顺序敏感时会判定 RedisConnectionFactory 还未注册，
      * 导致 Bean 不创建、QueryCacheManager.redisTemplate 注入 null、hit/miss 计数器永远是 0。
-     * 改为直接依赖注入 — Spring 容器中确实存在 RedisConnectionFactory 时才会调用本 Bean，无需条件守护。
+     * 现在加 @ConditionalOnBean(RedisConnectionFactory.class)：
+     * - 测试环境（@ActiveProfiles("test")）中 Redis 自动配置被排除，RedisConnectionFactory 不存在，此 Bean 不创建
+     * - 生产环境中 Redis 自动配置活跃，RedisConnectionFactory 存在，此 Bean 正常创建
+     * - QueryCacheManager 中 redisTemplate 用 @Autowired(required = false) 修饰，无论是否创建都不会报错
      */
     @Bean("cacheRedisTemplate")
+    @ConditionalOnBean(RedisConnectionFactory.class)
     public RedisTemplate<String, Object> cacheRedisTemplate(RedisConnectionFactory factory) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(factory);
