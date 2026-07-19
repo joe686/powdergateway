@@ -5,7 +5,7 @@
 - **前置依赖**：M1-2 字段映射、M1-3 字段加工引擎、M2-1 数据库连接、M2-2 表结构、M2-3 查询接口（复用 `ConditionBuilder.vue`）、SYS-3 菜单权限
 - **总览设计**：`docs/02-设计/详细设计/2026-07-19-visual-refresh-and-fixes-overview.md`
 - **问题清单**：`docs/03-开发/问题清单.md` § 待解决 / 2026-07-19 批次 / C 组
-- **对应 CHG 编号**（待实施后追加）：CHG-017
+- **对应 CHG 编号**（待实施后追加）：CHG-018
 
 ---
 
@@ -581,7 +581,7 @@ export const validateFormula = (data) => request.post('/field-formula/validate',
 | **FN-03 前端** | 表 6.3 中 UI1~UI7 手工用例通过；列表页 / 编辑对话框 / FormulaBuilder / OperandInput / FormulaPicker 五个新文件均创建；`fieldFormula.js` API 封装通过 `request.js` |
 | **权限** | 非 admin 用户不可删除公式（前端隐藏 + 后端 403） |
 | **数据库** | `field_formula` 表存在 `uk_field_formula_name` 唯一索引 + `scene` / `db_connection_id` 两个普通索引；`migration-field-formula.sql` 幂等可重复执行 |
-| **文档** | 变更记录 `CHG-017` 追加；`需求拆分与最小实现方案.md` 追加"字段公式管理"节；`开发计划.md` 阶段六 UX-C 行标记"已完成"；`问题清单.md` 中 FN-01/02/03 从"待解决"移至"已解决" |
+| **文档** | 变更记录 `CHG-018` 追加；`需求拆分与最小实现方案.md` 追加"字段公式管理"节；`开发计划.md` 阶段六 UX-C 行标记"已完成"；`问题清单.md` 中 FN-01/02/03 从"待解决"移至"已解决" |
 | **回归** | pg-testkit 冒烟场景（登录 → 新建公式 → 校验 → 复制 → 删除）通过 |
 
 ---
@@ -621,11 +621,11 @@ export const validateFormula = (data) => request.post('/field-formula/validate',
 
 6. **第 6 步 · 文档 + 迁移脚本 + 交付清单**（~1 小时）
    - `migration-field-formula.sql`
-   - 更新 `变更记录.md` CHG-017
+   - 更新 `变更记录.md` CHG-018
    - 更新 `需求拆分与最小实现方案.md` 追加节
    - 更新 `开发计划.md` 阶段六 UX-C 状态
    - 更新 `问题清单.md`（FN-01/02/03 移入已解决）
-   - 最终 commit：`docs(UX-C): 归档 CHG-017 + 更新问题清单/需求/开发计划`
+   - 最终 commit：`docs(UX-C): 归档 CHG-018 + 更新问题清单/需求/开发计划`
 
 **总工作量估算**：约 12.5 小时，可由 1 人 2 天完成，或分给 2 人（前端 / 后端各一人）1 天并行完成。前后端接口契约通过本文件第 5.4 节固化，允许并行。
 

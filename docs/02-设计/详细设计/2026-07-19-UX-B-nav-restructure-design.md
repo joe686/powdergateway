@@ -5,7 +5,7 @@
 **前置依赖**：SYS-3（`MenuPermission` 白名单 + `SideMenu.vue` 动态显隐）、SYS-5（`InterfaceWizard.vue`）
 **关联总览**：`docs/02-设计/详细设计/2026-07-19-visual-refresh-and-fixes-overview.md`
 **关联规划变更**：CHG-015（UX 批次归档与编号）
-**本单元完成时追加变更编号**：CHG-016（信息架构重整）
+**本单元完成时追加变更编号**：CHG-017（信息架构重整）
 
 ---
 
@@ -34,7 +34,7 @@
 - 前端 `TopBar.vue`：`handleCommand('profile')` 从空跳到 `/system/user`
 - 后端 `MenuPermission.java`：白名单顺序同步调整（不影响集合语义，但便于对齐前端顺序检查）
 - 单测：新增 Vue Test Utils 覆盖菜单渲染顺序 + TopBar 跳转 + 后端白名单顺序
-- 变更记录：`变更记录.md` 追加 CHG-016；`需求拆分与最小实现方案.md` 追加阶段六 UX-B 节；`开发计划.md` 阶段六表格 UX-B 行标记完成
+- 变更记录：`变更记录.md` 追加 CHG-017；`需求拆分与最小实现方案.md` 追加阶段六 UX-B 节；`开发计划.md` 阶段六表格 UX-B 行标记完成
 
 ### 2.3 不含（Don't）
 
@@ -420,7 +420,7 @@ class UX_B_MenuPermissionOrderTest {
 ## 十、变更记录追加内容（本单元完成时写入 `变更记录.md`）
 
 ```markdown
-### CHG-016 2026-07-19 UX-B · 信息架构重整
+### CHG-017 2026-07-19 UX-B · 信息架构重整
 
 - **日期**：2026-07-19
 - **影响单元**：SYS-3（菜单白名单顺序）、SideMenu.vue、TopBar.vue

@@ -534,7 +534,7 @@
 6. **数据库字段最小新增**：只加 3 列（`port_route.function_code` / `port_route.function_name` / `convert_template.function_code`），无索引
 7. **菜单权限就绪**：admin/user 能在 `/convert/wizard` 页面正常操作；readonly 被守卫拦截
 8. **文档 3 步齐**：
-   - `docs/03-开发/变更记录.md` 追加 `CHG-018 UX-D 接口转换向导` 条目
+   - `docs/03-开发/变更记录.md` 追加 `CHG-019 UX-D 接口转换向导` 条目
    - `docs/01-需求/需求拆分与最小实现方案.md` 阶段六 UX-D 单元描述更新
    - `docs/03-开发/开发计划.md` UX-D 行填交付时间与状态
 

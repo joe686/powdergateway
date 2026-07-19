@@ -8,7 +8,7 @@
   - `docs/01-需求/需求拆分与最小实现方案.md` 相关章节（FN-06 复用 M1-6；FN-07/10/11 复用 M2-2 Excel 导出模板；FN-09 复用 SpringDoc + `OpenApiDynamicCustomizer`）
 - **总览设计**：`docs/02-设计/详细设计/2026-07-19-visual-refresh-and-fixes-overview.md`
 - **前置依赖**：M1-1（FormatConverter）、M1-6（ConvertService）、M2-2（Excel/POI 5.2.3 已引入）、M2-3~M2-7（可视化接口 CRUD + 发布 + 执行入口）、M2-9 审计、SYS-1 操作日志
-- **变更编号（占位）**：CHG-019（本组交付时统一登记，覆盖 6 个子项）
+- **变更编号（占位）**：CHG-020（本组交付时统一登记，覆盖 6 个子项）
 - **并行边界**：与 UX-A、UX-B、UX-C、UX-D、UX-F 无 Java 文件冲突；仅 `router/index.js` 采用 append-only 策略（详见 overview）
 
 ---
@@ -153,7 +153,7 @@ ALTER TABLE interface_config
   COMMENT 'FN-06 自定义响应头 JSON，格式 {"X-Foo":"bar"}';
 ```
 
-同时更新 `init.sql` 中 `interface_config` 建表 DDL（新库直接生效），并按 CLAUDE.md 规约在 `docs/03-开发/变更记录.md` 追加 CHG-019。
+同时更新 `init.sql` 中 `interface_config` 建表 DDL（新库直接生效），并按 CLAUDE.md 规约在 `docs/03-开发/变更记录.md` 追加 CHG-020。
 
 `InterfaceConfig` 实体新增两个字段：
 
@@ -674,7 +674,7 @@ visual-config-YYYYMMDDHHmm.zip
 新增：`backend/src/main/resources/db/migration-response-format.sql`
 
 ```sql
--- CHG-019 UX-E FN-06：为 interface_config 补齐响应格式相关字段（幂等）
+-- CHG-020 UX-E FN-06：为 interface_config 补齐响应格式相关字段（幂等）
 DELIMITER $$
 
 DROP PROCEDURE IF EXISTS pg_add_response_format $$
@@ -709,7 +709,7 @@ DROP PROCEDURE pg_add_response_format;
 `interface_config` DDL 追加两列（供新库直接生效），并在文件头注释追加：
 
 ```sql
--- 兼容旧库（CHG-019 UX-E FN-06 新增字段）：请执行 migration-response-format.sql
+-- 兼容旧库（CHG-020 UX-E FN-06 新增字段）：请执行 migration-response-format.sql
 ```
 
 ### 11.3 其它子项：无表结构变更
