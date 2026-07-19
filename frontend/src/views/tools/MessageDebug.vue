@@ -60,14 +60,13 @@
       <div class="panel">
         <div class="panel-header">
           {{ mode === 'convert' ? '源报文' : '请求参数' }}
+          <el-radio-group v-model="inputLang" size="small" style="margin-left:12px">
+            <el-radio-button value="json">JSON</el-radio-button>
+            <el-radio-button value="xml">XML</el-radio-button>
+            <el-radio-button value="csv">CSV</el-radio-button>
+          </el-radio-group>
         </div>
-        <el-input
-          v-model="inputText"
-          type="textarea"
-          :placeholder="inputPlaceholder"
-          class="input-area"
-          resize="none"
-        />
+        <CodeEditor v-model="inputText" :language="inputLang" />
       </div>
 
       <!-- 右区：结果 -->
@@ -93,6 +92,7 @@ import 'highlight.js/styles/github-dark.css'
 import { listTemplates } from '@/api/template'
 import { listInterfaces, execInterface } from '@/api/interface'
 import { convertMessage } from '@/api/convert'
+import CodeEditor from '@/components/tools/CodeEditor.vue'
 
 const mode = ref('convert')
 
@@ -109,6 +109,7 @@ const publishedInterfaces = computed(() =>
 
 // 公共状态
 const inputText = ref('')
+const inputLang = ref('json')  // FN-08 CodeEditor 语言切换：json / xml / csv
 const resultHtml = ref(null)
 const costMs = ref(null)
 const executing = ref(false)
@@ -163,9 +164,11 @@ async function execute() {
 
   try {
     if (mode.value === 'convert') {
+      const srcFmt = inputLang.value === 'xml' ? 'XML' : inputLang.value === 'csv' ? 'CSV' : 'JSON'
       const res = await convertMessage({
         templateId: selectedTemplateId.value,
-        message: inputText.value
+        message: inputText.value,
+        srcFormat: srcFmt
       })
       renderResult(res.result)
       costMs.value = res.costMs
