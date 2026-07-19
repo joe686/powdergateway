@@ -48,6 +48,13 @@
           <el-empty description="暂无规则，点击「添加规则」开始配置" :image-size="80" />
         </div>
 
+        <!--
+          vue-draggable-next v2.x 强制约束（详见 frontend/CLAUDE.md）：
+          必须使用 default slot + v-for，禁止 <template #item>。
+          #item 是 vuedraggable v4 API，在 vue-draggable-next 中被忽略，
+          会导致列表 DOM 渲染为空。
+          历史事故：CHG-003 (2026-03-27) 首次修复 → 2026-07-19 FN-02 回滚复发 → CHG-018 二次修复并加此注释锁定。
+        -->
         <!-- 可拖拽规则列表 -->
         <draggable
           v-model="rules"
@@ -56,128 +63,101 @@
           animation="200"
           @end="runPreview"
         >
-          <template #item="{ element, index }">
-            <div class="rule-item">
-              <!-- 拖拽手柄 -->
-              <div class="drag-handle">
-                <el-icon><Rank /></el-icon>
-              </div>
-
-              <!-- 步骤序号 -->
-              <div class="rule-step">
-                <el-tag size="small" type="info">步骤 {{ index + 1 }}</el-tag>
-              </div>
-
-              <!-- 规则标识（唯一编号，供其他配置引用） -->
-              <el-input
-                v-model="element.ruleName"
-                placeholder="规则标识"
-                size="small"
-                style="width: 120px; flex-shrink: 0"
-              />
-
-              <!-- 规则类型选择 -->
-              <el-select
-                v-model="element.type"
-                placeholder="选择规则类型"
-                style="width: 160px"
-                @change="onRuleTypeChange(element)"
-              >
-                <el-option
-                  v-for="rt in ruleTypes"
-                  :key="rt.type"
-                  :label="rt.label"
-                  :value="rt.type"
-                />
-              </el-select>
-
-              <!-- 动态参数表单 -->
-              <div class="rule-params" v-if="element.type">
-                <!-- TRIM 参数 -->
-                <template v-if="element.type === 'TRIM'">
-                  <el-select v-model="element.params.mode" style="width: 140px" @change="runPreview">
-                    <el-option label="首尾去空格" value="BOTH" />
-                    <el-option label="左侧去空格" value="LEFT" />
-                    <el-option label="右侧去空格" value="RIGHT" />
-                    <el-option label="去除所有空格" value="ALL" />
-                  </el-select>
-                </template>
-
-                <!-- SUBSTRING 参数 -->
-                <template v-else-if="element.type === 'SUBSTRING'">
-                  <el-input-number
-                    v-model="element.params.start"
-                    :min="0"
-                    placeholder="起始位(0)"
-                    style="width: 130px"
-                    @change="runPreview"
-                  />
-                  <el-input-number
-                    v-model="element.params.length"
-                    :min="1"
-                    placeholder="截取长度"
-                    style="width: 130px; margin-left: 8px"
-                    @change="runPreview"
-                  />
-                </template>
-
-                <!-- PAD 参数 -->
-                <template v-else-if="element.type === 'PAD'">
-                  <el-select v-model="element.params.direction" style="width: 100px" @change="runPreview">
-                    <el-option label="左补" value="LEFT" />
-                    <el-option label="右补" value="RIGHT" />
-                  </el-select>
-                  <el-input
-                    v-model="element.params.char"
-                    placeholder="填充字符"
-                    maxlength="1"
-                    style="width: 80px; margin: 0 8px"
-                    @input="runPreview"
-                  />
-                  <el-input-number
-                    v-model="element.params.length"
-                    :min="1"
-                    placeholder="目标长度"
-                    style="width: 110px"
-                    @change="runPreview"
-                  />
-                </template>
-
-                <!-- CASE 参数 -->
-                <template v-else-if="element.type === 'CASE'">
-                  <el-select v-model="element.params.mode" style="width: 160px" @change="runPreview">
-                    <el-option label="全部大写" value="UPPER" />
-                    <el-option label="全部小写" value="LOWER" />
-                    <el-option label="首字母大写" value="CAPITALIZE" />
-                  </el-select>
-                </template>
-
-                <!-- TYPE_CAST 参数 -->
-                <template v-else-if="element.type === 'TYPE_CAST'">
-                  <el-select v-model="element.params.targetType" style="width: 140px" @change="runPreview">
-                    <el-option label="字符串" value="STRING" />
-                    <el-option label="整数" value="INTEGER" />
-                    <el-option label="小数" value="DECIMAL" />
-                    <el-option label="布尔值" value="BOOLEAN" />
-                  </el-select>
-                </template>
-              </div>
-
-              <!-- 该步骤输出预览 -->
-              <div class="rule-preview" v-if="previewSteps[index + 1] !== undefined">
-                <el-tag size="small" type="success">
-                  → {{ previewSteps[index + 1]?.output }}
-                </el-tag>
-              </div>
-
-              <!-- 删除按钮 -->
-              <el-popconfirm title="确认删除此规则？" @confirm="removeRule(index)">
-                <template #reference>
-                  <el-button type="danger" :icon="Delete" circle size="small" class="delete-btn" />
-                </template>
-              </el-popconfirm>
+          <div
+            v-for="(element, index) in rules"
+            :key="element.id"
+            class="rule-item"
+          >
+            <!-- 拖拽手柄 -->
+            <div class="drag-handle">
+              <el-icon><Rank /></el-icon>
             </div>
-          </template>
+
+            <!-- 步骤序号 -->
+            <div class="rule-step">
+              <el-tag size="small" type="info">步骤 {{ index + 1 }}</el-tag>
+            </div>
+
+            <!-- 规则标识 -->
+            <el-input
+              v-model="element.ruleName"
+              placeholder="规则标识"
+              size="small"
+              style="width: 120px; flex-shrink: 0"
+            />
+
+            <!-- 规则类型选择 -->
+            <el-select
+              v-model="element.type"
+              placeholder="选择规则类型"
+              style="width: 160px"
+              @change="onRuleTypeChange(element)"
+            >
+              <el-option
+                v-for="rt in ruleTypes"
+                :key="rt.type"
+                :label="rt.label"
+                :value="rt.type"
+              />
+            </el-select>
+
+            <!-- 动态参数表单 -->
+            <div class="rule-params" v-if="element.type">
+              <template v-if="element.type === 'TRIM'">
+                <el-select v-model="element.params.mode" style="width: 140px" @change="runPreview">
+                  <el-option label="首尾去空格" value="BOTH" />
+                  <el-option label="左侧去空格" value="LEFT" />
+                  <el-option label="右侧去空格" value="RIGHT" />
+                  <el-option label="去除所有空格" value="ALL" />
+                </el-select>
+              </template>
+
+              <template v-else-if="element.type === 'SUBSTRING'">
+                <el-input-number v-model="element.params.start" :min="0" placeholder="起始位(0)" style="width: 130px" @change="runPreview" />
+                <el-input-number v-model="element.params.length" :min="1" placeholder="截取长度" style="width: 130px; margin-left: 8px" @change="runPreview" />
+              </template>
+
+              <template v-else-if="element.type === 'PAD'">
+                <el-select v-model="element.params.direction" style="width: 100px" @change="runPreview">
+                  <el-option label="左补" value="LEFT" />
+                  <el-option label="右补" value="RIGHT" />
+                </el-select>
+                <el-input v-model="element.params.char" placeholder="填充字符" maxlength="1" style="width: 80px; margin: 0 8px" @input="runPreview" />
+                <el-input-number v-model="element.params.length" :min="1" placeholder="目标长度" style="width: 110px" @change="runPreview" />
+              </template>
+
+              <template v-else-if="element.type === 'CASE'">
+                <el-select v-model="element.params.mode" style="width: 160px" @change="runPreview">
+                  <el-option label="全部大写" value="UPPER" />
+                  <el-option label="全部小写" value="LOWER" />
+                  <el-option label="首字母大写" value="CAPITALIZE" />
+                </el-select>
+              </template>
+
+              <template v-else-if="element.type === 'TYPE_CAST'">
+                <el-select v-model="element.params.targetType" style="width: 140px" @change="runPreview">
+                  <el-option label="字符串" value="STRING" />
+                  <el-option label="整数" value="INTEGER" />
+                  <el-option label="小数" value="DECIMAL" />
+                  <el-option label="布尔值" value="BOOLEAN" />
+                </el-select>
+              </template>
+            </div>
+
+            <!-- 该步骤输出预览 -->
+            <div class="rule-preview" v-if="previewSteps[index + 1] !== undefined">
+              <el-tag size="small" type="success">
+                → {{ previewSteps[index + 1]?.output }}
+              </el-tag>
+            </div>
+
+            <!-- 删除按钮 -->
+            <el-popconfirm title="确认删除此规则？" @confirm="removeRule(index)">
+              <template #reference>
+                <el-button type="danger" :icon="Delete" circle size="small" class="delete-btn" />
+              </template>
+            </el-popconfirm>
+          </div>
         </draggable>
       </div>
 
