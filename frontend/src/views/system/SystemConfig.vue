@@ -41,7 +41,9 @@
             v-model="form[item.configKey]"
             style="width: 240px"
           />
-          <span class="desc">{{ item.description }}</span>
+          <span :class="['desc', { 'pg-garbled': isGarbled(item.description) }]">
+            {{ sanitize(item.description, '（编码异常，请联系管理员）') }}
+          </span>
         </el-form-item>
       </el-form>
     </el-card>
@@ -53,6 +55,7 @@ import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/store/user'
 import { getAllConfig, updateConfig } from '@/api/sysConfig'
+import { sanitize, isGarbled } from '@/utils/textSanitizer'
 
 const userStore = useUserStore()
 const isAdmin = computed(() => userStore.role === 'admin')
@@ -103,4 +106,8 @@ async function handleSave() {
 .title { font-size: 18px; font-weight: 600; }
 .group-card { margin-bottom: 16px; }
 .desc { margin-left: 12px; color: #909399; font-size: 12px; }
+.pg-garbled {
+  color: var(--pg-warning, #F59E0B);
+  font-style: italic;
+}
 </style>
