@@ -104,6 +104,8 @@
         <el-menu-item v-if="can('/interface/shard')" index="/interface/shard">分库分表配置</el-menu-item>
         <el-menu-item v-if="can('/interface/formula')" index="/interface/formula">字段公式管理</el-menu-item>
         <el-menu-item v-if="can('/interface/cache')" index="/interface/cache">缓存查询管理</el-menu-item>
+        <!-- FN-09 接口文档（UX-E） -->
+        <el-menu-item v-if="can('/interface/doc')" index="/interface/doc">接口文档</el-menu-item>
       </el-sub-menu>
 
       <!-- 系统管理 -->
@@ -156,7 +158,8 @@ var CONVERT_PATHS  = ['/convert/wizard', '/convert/template', '/convert/channel'
                       '/convert/port-route', '/convert/format']
 var INTERFACE_PATHS = ['/interface/wizard', '/interface/db', '/interface/table', '/interface/dev',
                        '/interface/insert', '/interface/update', '/interface/delete',
-                       '/interface/list', '/interface/shard', '/interface/formula', '/interface/cache']
+                       '/interface/list', '/interface/shard', '/interface/formula', '/interface/cache',
+                       '/interface/doc']
 var SYSTEM_PATHS   = ['/system/log', '/system/stats', '/system/user', '/system/config']
 var TOOLS_PATHS    = ['/tools/debug', '/tools/swagger']
 

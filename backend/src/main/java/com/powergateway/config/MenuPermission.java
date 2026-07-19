@@ -25,6 +25,7 @@ public class MenuPermission {
         "/interface/db", "/interface/table", "/interface/wizard", "/interface/dev",
         "/interface/insert", "/interface/update", "/interface/delete",
         "/interface/list", "/interface/shard", "/interface/formula", "/interface/cache",
+        "/interface/doc",
         // 系统管理
         "/system/log", "/system/stats", "/system/user", "/system/config",
         // 辅助工具
@@ -45,6 +46,7 @@ public class MenuPermission {
         "/interface/db", "/interface/table", "/interface/wizard", "/interface/dev",
         "/interface/insert", "/interface/update",
         "/interface/list", "/interface/formula", "/interface/cache",
+        "/interface/doc",
         // 系统管理（user 不含 user / config）
         "/system/log", "/system/stats",
         // 辅助工具

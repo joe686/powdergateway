@@ -172,6 +172,13 @@ const router = createRouter({
           name: 'SwaggerDoc',
           component: () => import('@/views/placeholder/PlaceholderView.vue'),
           meta: { title: '接口文档' }
+        },
+        // FN-09 接口文档（UX-E）
+        {
+          path: 'interface/doc',
+          name: 'InterfaceDocument',
+          component: () => import('@/views/interface/InterfaceDocument.vue'),
+          meta: { title: '接口文档' }
         }
       ]
     },
