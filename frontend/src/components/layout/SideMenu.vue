@@ -106,6 +106,8 @@
         <el-menu-item v-if="can('/interface/cache')" index="/interface/cache">缓存查询管理</el-menu-item>
         <!-- FN-09 接口文档（UX-E） -->
         <el-menu-item v-if="can('/interface/doc')" index="/interface/doc">接口文档</el-menu-item>
+        <!-- FN-11 配置导入/导出（UX-E） -->
+        <el-menu-item v-if="can('/interface/import-export')" index="/interface/import-export">配置导入/导出</el-menu-item>
       </el-sub-menu>
 
       <!-- 系统管理 -->
@@ -159,7 +161,7 @@ var CONVERT_PATHS  = ['/convert/wizard', '/convert/template', '/convert/channel'
 var INTERFACE_PATHS = ['/interface/wizard', '/interface/db', '/interface/table', '/interface/dev',
                        '/interface/insert', '/interface/update', '/interface/delete',
                        '/interface/list', '/interface/shard', '/interface/formula', '/interface/cache',
-                       '/interface/doc']
+                       '/interface/doc', '/interface/import-export']
 var SYSTEM_PATHS   = ['/system/log', '/system/stats', '/system/user', '/system/config']
 var TOOLS_PATHS    = ['/tools/debug', '/tools/swagger']
 

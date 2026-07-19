@@ -179,6 +179,13 @@ const router = createRouter({
           name: 'InterfaceDocument',
           component: () => import('@/views/interface/InterfaceDocument.vue'),
           meta: { title: '接口文档' }
+        },
+        // FN-11 配置导入/导出（UX-E）
+        {
+          path: 'interface/import-export',
+          name: 'InterfaceImportExport',
+          component: () => import('@/views/interface/InterfaceImportExport.vue'),
+          meta: { title: '配置导入/导出' }
         }
       ]
     },
