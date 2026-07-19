@@ -115,7 +115,8 @@ CREATE TABLE field_formula (
   remark VARCHAR(512),
   deleted TINYINT DEFAULT 0,
   creator VARCHAR(64),
-  create_time DATETIME DEFAULT CURRENT_TIMESTAMP
+  create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+  update_time DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 9. 端口分发路由表（M1-7）
