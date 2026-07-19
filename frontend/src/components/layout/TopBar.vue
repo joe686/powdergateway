@@ -27,7 +27,7 @@
         </div>
         <template #dropdown>
           <el-dropdown-menu>
-            <el-dropdown-item command="profile">
+            <el-dropdown-item v-if="canProfile" command="profile">
               <el-icon><User /></el-icon>个人信息
             </el-dropdown-item>
             <el-dropdown-item divided command="logout">
@@ -44,7 +44,7 @@
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
-import { UserFilled } from '@element-plus/icons-vue'
+import { UserFilled, User, SwitchButton, Fold, Expand, ArrowDown } from '@element-plus/icons-vue'
 import { useUserStore } from '@/store/user'
 import { logout as logoutApi } from '@/api/auth'
 import ThemeToggle from '@/components/theme/ThemeToggle.vue'
@@ -66,18 +66,27 @@ const userStore = useUserStore()
 
 const username = computed(() => userStore.username || '管理员')
 const currentTitle = computed(() => route.meta?.title || '')
+const canProfile = computed(() => userStore.allowedMenus.includes('/system/user'))
 
 function toggleCollapse() {
   emit('update:collapsed', !props.collapsed)
 }
 
 async function handleCommand(command) {
+  if (command === 'profile') {
+    router.push('/system/user')
+    return
+  }
   if (command === 'logout') {
-    await ElMessageBox.confirm('确定要退出登录吗？', '提示', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    })
+    try {
+      await ElMessageBox.confirm('确定要退出登录吗？', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      })
+    } catch {
+      return // 用户取消
+    }
     try {
       await logoutApi()
     } catch (e) {
@@ -87,6 +96,8 @@ async function handleCommand(command) {
     router.push('/login')
   }
 }
+
+defineExpose({ handleCommand, canProfile })
 </script>
 
 <style scoped>
