@@ -31,7 +31,12 @@
           <span v-else style="color:var(--pg-text-secondary)">—</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="240" fixed="right">
+      <el-table-column label="响应格式" width="110">
+        <template #default="{ row }">
+          <el-tag size="small">{{ row.responseFormat || 'JSON' }}</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="操作" width="320" fixed="right">
         <template #default="{ row }">
           <el-button
             v-if="row.status !== 'published'"

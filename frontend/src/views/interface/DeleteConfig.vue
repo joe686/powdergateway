@@ -38,6 +38,20 @@
               ⚠ 已开启批量删除，请谨慎操作
             </el-text>
           </el-form-item>
+          <el-form-item label="默认响应格式">
+            <el-select v-model="form.responseFormat" style="width:180px">
+              <el-option label="JSON" value="JSON" />
+              <el-option label="XML" value="XML" />
+              <el-option label="CSV" value="CSV" />
+              <el-option label="FormData" value="FORM_DATA" />
+            </el-select>
+            <el-tooltip content="调用方可通过 Accept 头或 ?format= 覆盖此默认值">
+              <el-icon style="margin-left:6px"><QuestionFilled /></el-icon>
+            </el-tooltip>
+          </el-form-item>
+          <el-form-item label="自定义响应头">
+            <ResponseHeadersEditor v-model="form.responseHeaders" />
+          </el-form-item>
         </el-form>
         <div class="step-footer">
           <el-button
@@ -171,10 +185,12 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { QuestionFilled } from '@element-plus/icons-vue'
 import ConditionBuilder from '@/components/ConditionBuilder.vue'
 import { listConnections } from '@/api/dbConnection'
 import { getTableStructure } from '@/api/tableStructure'
 import { saveInterface, deletePreview } from '@/api/interface'
+import ResponseHeadersEditor from '@/components/interface/ResponseHeadersEditor.vue'
 
 const router = useRouter()
 const step = ref(0)
@@ -183,7 +199,7 @@ const dbList       = ref([])
 const tableList    = ref([])
 const tableColumns = ref({})
 
-const form   = ref({ name: '', dbConnectionId: null, allowBatchDelete: 0 })
+const form   = ref({ name: '', dbConnectionId: null, allowBatchDelete: 0, responseFormat: 'JSON', responseHeaders: '' })
 const tables = ref([{ tableName: '', conditions: [] }])
 
 const saving         = ref(false)
@@ -246,7 +262,9 @@ async function saveConfig() {
       dbConnectionId: form.value.dbConnectionId,
       type: 'DELETE',
       allowBatchDelete: form.value.allowBatchDelete,
-      configJson: JSON.stringify(buildConfigJson())
+      configJson: JSON.stringify(buildConfigJson()),
+      responseFormat: form.value.responseFormat,
+      responseHeaders: form.value.responseHeaders
     })
     savedId.value = id
     ElMessage.success('保存成功，可点击「预览待删数据」测试')

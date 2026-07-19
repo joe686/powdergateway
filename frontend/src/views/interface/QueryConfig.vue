@@ -39,6 +39,21 @@
             </el-select>
           </el-form-item>
 
+          <el-form-item label="默认响应格式">
+            <el-select v-model="form.responseFormat" style="width:180px">
+              <el-option label="JSON" value="JSON" />
+              <el-option label="XML" value="XML" />
+              <el-option label="CSV" value="CSV" />
+              <el-option label="FormData" value="FORM_DATA" />
+            </el-select>
+            <el-tooltip content="调用方可通过 Accept 头或 ?format= 覆盖此默认值">
+              <el-icon style="margin-left:6px"><QuestionFilled /></el-icon>
+            </el-tooltip>
+          </el-form-item>
+          <el-form-item label="自定义响应头">
+            <ResponseHeadersEditor v-model="form.responseHeaders" />
+          </el-form-item>
+
           <el-form-item label="主表" required>
             <el-select
               v-model="mainTable.name"
@@ -222,10 +237,12 @@
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { QuestionFilled } from '@element-plus/icons-vue'
 import { listConnections } from '@/api/dbConnection'
 import { getTableStructure } from '@/api/tableStructure'
 import { saveInterface, previewInterface } from '@/api/interface'
 import ConditionBuilder from '@/components/ConditionBuilder.vue'
+import ResponseHeadersEditor from '@/components/interface/ResponseHeadersEditor.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -236,7 +253,7 @@ const step = ref(0)
 // ─── 表单数据（持久化到 localStorage 防丢失） ──────────────────────────────────
 const STORAGE_KEY = 'query_config_draft'
 
-const form = reactive({ name: '', dbConnectionId: null })
+const form = reactive({ name: '', dbConnectionId: null, responseFormat: 'JSON', responseHeaders: '' })
 const mainTable = reactive({ name: '', alias: 'a' })
 const joinConfigs = ref([])  // [{ rightTableName, rightAlias, type, leftCol, rightCol }]
 const conditions = ref([])
@@ -477,7 +494,9 @@ function buildPayload() {
     name: form.name,
     dbConnectionId: form.dbConnectionId,
     type: 'SELECT',
-    configJson
+    configJson,
+    responseFormat: form.responseFormat,
+    responseHeaders: form.responseHeaders
   }
 }
 
