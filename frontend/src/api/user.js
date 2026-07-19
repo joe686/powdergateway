@@ -11,3 +11,14 @@ export function saveUser(data) {
 export function deleteUser(id) {
   return request.delete('/user/' + id)
 }
+
+// UX-A 主题偏好
+export const getUserThemePref = async () => {
+  const raw = await request.get('/user/theme-pref')
+  return raw ? JSON.parse(raw) : null
+}
+
+export const setUserThemePref = (pref) =>
+  request.put('/user/theme-pref', JSON.stringify(pref), {
+    headers: { 'Content-Type': 'application/json' }
+  })
