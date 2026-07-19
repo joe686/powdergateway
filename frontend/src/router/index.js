@@ -120,7 +120,7 @@ const router = createRouter({
         {
           path: 'interface/formula',
           name: 'FieldFormula',
-          component: () => import('@/views/placeholder/PlaceholderView.vue'),
+          component: () => import('@/views/interface/FieldFormula.vue'),
           meta: { title: '字段公式管理' }
         },
         {
