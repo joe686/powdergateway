@@ -33,14 +33,16 @@ class UxBMenuPermissionOrderTest {
             "/dashboard",
             "/convert/format", "/convert/field-mapping", "/convert/field-process",
             "/convert/channel", "/convert/port-route", "/convert/template",
+            "/convert/wizard",                              // UX-D append
             "/interface/db", "/interface/table", "/interface/wizard", "/interface/dev",
             "/interface/insert", "/interface/update", "/interface/delete",
             "/interface/list", "/interface/shard", "/interface/formula", "/interface/cache",
+            "/interface/doc", "/interface/import-export",   // UX-E append
             "/system/log", "/system/stats", "/system/user", "/system/config",
             "/tools/debug", "/tools/swagger"
         ));
         assertEquals(expected, new HashSet<>(MenuPermission.ADMIN_MENUS));
-        assertEquals(24, MenuPermission.ADMIN_MENUS.size(), "ADMIN 白名单元素个数不能变");
+        assertEquals(27, MenuPermission.ADMIN_MENUS.size(), "ADMIN 白名单元素个数 = 24 SYS-3 基线 + 3 UX-D/E 新增");
     }
 
     @Test
@@ -61,9 +63,11 @@ class UxBMenuPermissionOrderTest {
             "/dashboard",
             "/convert/format", "/convert/field-mapping", "/convert/field-process",
             "/convert/channel", "/convert/port-route", "/convert/template",
+            "/convert/wizard",                              // UX-D append
             "/interface/db", "/interface/table", "/interface/wizard", "/interface/dev",
             "/interface/insert", "/interface/update",
             "/interface/list", "/interface/formula", "/interface/cache",
+            "/interface/doc", "/interface/import-export",   // UX-E append
             "/system/log", "/system/stats",
             "/tools/debug", "/tools/swagger"
         ));
