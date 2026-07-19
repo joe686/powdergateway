@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -51,6 +52,13 @@ public class ChannelConfigController {
     public Result<Void> delete(@PathVariable Long id) {
         channelConfigService.deleteChannel(id);
         return Result.success();
+    }
+
+    @GetMapping("/list/export")
+    @Operation(summary = "FN-10 导出渠道配置列表 Excel")
+    public ResponseEntity<byte[]> exportList(@RequestParam(required = false) String keyword) throws Exception {
+        byte[] data = channelConfigService.exportList(keyword);
+        return InterfaceConfigController.excelResponse(data, "渠道配置_" + InterfaceConfigController.tsSuffix() + ".xlsx");
     }
 
     @Operation(summary = "渠道自动路由（运行时匹配）",

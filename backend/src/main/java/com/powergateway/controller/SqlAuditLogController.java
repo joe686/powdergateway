@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -35,5 +36,14 @@ public class SqlAuditLogController {
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size) {
         return Result.success(sysLogService.listAuditLogs(opType, result, startTime, endTime, page, size));
+    }
+
+    @GetMapping("/list/export")
+    @Operation(summary = "FN-10 导出 SQL 审计日志 Excel")
+    public ResponseEntity<byte[]> exportList(
+            @RequestParam(required = false) String opType,
+            @RequestParam(required = false) String result) throws Exception {
+        byte[] data = sysLogService.exportAuditList(opType, result);
+        return InterfaceConfigController.excelResponse(data, "SQL审计日志_" + InterfaceConfigController.tsSuffix() + ".xlsx");
     }
 }

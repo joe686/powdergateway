@@ -11,6 +11,7 @@ import com.powergateway.service.TemplateService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -63,6 +64,13 @@ public class TemplateController {
     @PostMapping("/{id}/copy")
     public Result<Long> copy(@PathVariable Long id) {
         return Result.success(templateService.copyTemplate(id));
+    }
+
+    @GetMapping("/list/export")
+    @Operation(summary = "FN-10 导出转换模板列表 Excel")
+    public ResponseEntity<byte[]> exportList(@RequestParam(required = false) String keyword) throws Exception {
+        byte[] data = templateService.exportList(keyword);
+        return InterfaceConfigController.excelResponse(data, "转换模板_" + InterfaceConfigController.tsSuffix() + ".xlsx");
     }
 
     @Operation(summary = "映射预览",

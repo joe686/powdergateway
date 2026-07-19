@@ -10,6 +10,7 @@ import com.powergateway.service.PerfStatService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -40,5 +41,14 @@ public class StatsController {
     public Result<Void> updateAlertConfig(@RequestBody AlertConfigRequest req) {
         perfStatService.updateAlertConfig(req);
         return Result.success();
+    }
+
+    @GetMapping("/list/export")
+    @Operation(summary = "FN-10 导出性能统计列表 Excel")
+    public ResponseEntity<byte[]> exportList(
+            @RequestParam(required = false) Long interfaceId,
+            @RequestParam(required = false) String opType) throws Exception {
+        byte[] data = perfStatService.exportList(interfaceId, opType);
+        return InterfaceConfigController.excelResponse(data, "性能统计_" + InterfaceConfigController.tsSuffix() + ".xlsx");
     }
 }

@@ -12,6 +12,7 @@ import com.powergateway.service.QueryCacheManager;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -105,5 +106,21 @@ public class CacheController {
         stats.setCacheTtlSeconds(config.getCacheTtlSeconds());
         stats.setCacheKeyTemplate(config.getCacheKeyTemplate());
         return Result.success(stats);
+    }
+
+    @GetMapping("/list/export")
+    @Operation(summary = "FN-10 导出缓存统计列表 Excel")
+    public ResponseEntity<byte[]> exportList() throws Exception {
+        List<InterfaceConfig> interfaces = interfaceConfigService.listSelectInterfaces();
+        List<CacheStatDTO> statsList = interfaces.stream().map(config -> {
+            CacheStatDTO stats = cacheManager.getStats(config.getId());
+            stats.setInterfaceName(config.getName());
+            stats.setCacheEnabled(config.getCacheEnabled() != null ? config.getCacheEnabled() : 0);
+            stats.setCacheTtlSeconds(config.getCacheTtlSeconds() != null ? config.getCacheTtlSeconds() : 300);
+            stats.setCacheKeyTemplate(config.getCacheKeyTemplate() != null ? config.getCacheKeyTemplate() : "");
+            return stats;
+        }).collect(Collectors.toList());
+        byte[] data = cacheManager.exportList(statsList);
+        return InterfaceConfigController.excelResponse(data, "缓存统计_" + InterfaceConfigController.tsSuffix() + ".xlsx");
     }
 }

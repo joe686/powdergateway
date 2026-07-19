@@ -13,8 +13,15 @@ import com.powergateway.service.InterfaceConfigService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -119,6 +126,29 @@ public class InterfaceConfigController {
         } else {
             throw new BusinessException(400, "不支持的接口类型: " + type);
         }
+    }
+
+    @GetMapping("/list/export")
+    @Operation(summary = "FN-10 导出接口列表 Excel")
+    public ResponseEntity<byte[]> exportList(@RequestParam(required = false) String name) throws Exception {
+        byte[] data = service.exportList(name);
+        return excelResponse(data, "接口列表_" + tsSuffix() + ".xlsx");
+    }
+
+    // ─── 公共辅助方法 ───────────────────────────────────────────────────────────
+
+    static ResponseEntity<byte[]> excelResponse(byte[] data, String rawName) throws Exception {
+        String encoded = URLEncoder.encode(rawName, StandardCharsets.UTF_8.name());
+        HttpHeaders h = new HttpHeaders();
+        h.setContentType(MediaType.parseMediaType(
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+        h.set(HttpHeaders.CONTENT_DISPOSITION,
+            "attachment; filename=\"" + encoded + "\"; filename*=UTF-8''" + encoded);
+        return ResponseEntity.ok().headers(h).body(data);
+    }
+
+    static String tsSuffix() {
+        return new SimpleDateFormat("yyyyMMddHHmm").format(new Date());
     }
 
     @PatchMapping("/{id}/shard-config")

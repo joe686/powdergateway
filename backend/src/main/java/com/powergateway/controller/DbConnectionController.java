@@ -9,6 +9,7 @@ import com.powergateway.service.DbConnectionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -47,5 +48,12 @@ public class DbConnectionController {
     @PostMapping("/{id}/test")
     public Result<TestConnectionResult> test(@PathVariable Long id) {
         return Result.success(dbConnectionService.testConnection(id));
+    }
+
+    @GetMapping("/list/export")
+    @Operation(summary = "FN-10 导出数据源列表 Excel（密码列脱敏）")
+    public ResponseEntity<byte[]> exportList(@RequestParam(required = false) String keyword) throws Exception {
+        byte[] data = dbConnectionService.exportList(keyword);
+        return InterfaceConfigController.excelResponse(data, "数据源列表_" + InterfaceConfigController.tsSuffix() + ".xlsx");
     }
 }

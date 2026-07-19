@@ -10,6 +10,7 @@ import com.powergateway.service.PortRouteService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -50,6 +51,13 @@ public class PortRouteController {
     @PostMapping("/api/port-route/save")
     public Result<Long> save(@RequestBody PortRouteSaveRequest req) {
         return Result.success(portRouteService.saveRoute(req));
+    }
+
+    @GetMapping("/api/port-route/list/export")
+    @Operation(summary = "FN-10 导出端口路由列表 Excel")
+    public ResponseEntity<byte[]> exportList(@RequestParam(required = false) String channelCode) throws Exception {
+        byte[] data = portRouteService.exportList(channelCode);
+        return InterfaceConfigController.excelResponse(data, "端口路由_" + InterfaceConfigController.tsSuffix() + ".xlsx");
     }
 
     @Operation(summary = "删除端口路由", description = "逻辑删除")
