@@ -9,22 +9,18 @@
       </el-radio-group>
     </div>
 
-    <!-- 5 张数字卡片 -->
-    <el-row :gutter="16" class="stat-row">
-      <el-col :span="5" v-for="card in statCards" :key="card.title">
-        <el-card shadow="never" class="stat-card">
-          <div class="stat-content">
-            <div>
-              <div class="stat-value">{{ card.value }}</div>
-              <div class="stat-title">{{ card.title }}</div>
-            </div>
-            <el-icon class="stat-icon" :style="{ color: card.color }">
-              <component :is="card.icon" />
-            </el-icon>
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
+    <!-- UX-A UI-03: KPI 5 卡改 grid 均分，与下方模块最右像素严格对齐 -->
+    <div class="kpi-grid">
+      <div v-for="card in statCards" :key="card.title" class="kpi-card">
+        <div>
+          <div class="stat-value">{{ card.value }}</div>
+          <div class="stat-title">{{ card.title }}</div>
+        </div>
+        <el-icon class="stat-icon" :style="{ color: card.color }">
+          <component :is="card.icon" />
+        </el-icon>
+      </div>
+    </div>
 
     <!-- 调用趋势折线图（全宽） -->
     <el-card shadow="never" class="chart-card">
@@ -231,27 +227,25 @@ function formatTime(t) {
   display: flex;
   justify-content: flex-end;
 }
-.stat-row {
-  flex-wrap: nowrap;
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
 }
-.stat-card {
-  border-radius: 8px;
+.kpi-card {
+  background: var(--pg-glass-bg);
+  backdrop-filter: blur(var(--pg-glass-blur));
+  border: 1px solid var(--pg-glass-border);
+  border-radius: var(--pg-radius-md);
+  box-shadow: var(--pg-glass-shadow);
+  padding: 18px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
-.stat-content {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.stat-value {
-  font-size: 26px;
-  font-weight: 700;
-  color: #303133;
-}
-.stat-title {
-  font-size: 13px;
-  color: #909399;
-  margin-top: 4px;
-}
+.kpi-card:hover { transform: translateY(-2px); }
+.stat-value { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; color: var(--pg-text-white); }
+.stat-title { font-size: 12.5px; color: var(--pg-text-secondary); margin-top: 6px; }
 .stat-icon {
   font-size: 44px;
   opacity: 0.2;
