@@ -28,7 +28,7 @@
       <el-table-column label="访问路径" min-width="200">
         <template #default="{ row }">
           <span v-if="row.status === 'published'" class="path-text">{{ row.path }}</span>
-          <span v-else style="color:#999">—</span>
+          <span v-else style="color:var(--pg-text-secondary)">—</span>
         </template>
       </el-table-column>
       <el-table-column label="操作" width="240" fixed="right">
@@ -214,5 +214,5 @@ onMounted(loadList)
 <style scoped>
 .interface-list { padding: 16px; }
 .toolbar { display: flex; gap: 8px; align-items: center; }
-.path-text { font-family: monospace; font-size: 12px; color: #409eff; }
+.path-text { font-family: monospace; font-size: 12px; color: var(--pg-primary); }
 </style>

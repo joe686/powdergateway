@@ -105,7 +105,7 @@ async function handleSave() {
 }
 .title { font-size: 18px; font-weight: 600; }
 .group-card { margin-bottom: 16px; }
-.desc { margin-left: 12px; color: #909399; font-size: 12px; }
+.desc { margin-left: 12px; color: var(--pg-text-secondary); font-size: 12px; }
 .pg-garbled {
   color: var(--pg-warning, #F59E0B);
   font-style: italic;

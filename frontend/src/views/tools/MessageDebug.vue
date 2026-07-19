@@ -186,7 +186,7 @@ async function execute() {
   } catch (e) {
     const msg = e?.message || '执行失败'
     const escaped = msg.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    resultHtml.value = `<span style="color:#f38ba8">${escaped}</span>`
+    resultHtml.value = `<span style="color:var(--pg-danger)">${escaped}</span>`
   } finally {
     executing.value = false
   }
@@ -219,7 +219,7 @@ onMounted(() => {
 
 .config-label {
   margin-right: 8px;
-  color: #606266;
+  color: var(--pg-text-regular);
   font-size: 14px;
 }
 
@@ -241,11 +241,11 @@ onMounted(() => {
 
 .panel-header {
   padding: 8px 12px;
-  background: #f5f7fa;
-  border-bottom: 1px solid #dcdfe6;
+  background: var(--pg-track-bg);
+  border-bottom: 1px solid var(--pg-line-strong);
   font-size: 13px;
   font-weight: 500;
-  color: #303133;
+  color: var(--pg-text-primary);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -254,7 +254,7 @@ onMounted(() => {
 
 .cost-tag {
   font-size: 12px;
-  color: #67c23a;
+  color: var(--pg-success);
   font-weight: normal;
 }
 
@@ -282,7 +282,7 @@ onMounted(() => {
 .result-area {
   flex: 1;
   overflow: auto;
-  background: #0d1117;
+  background: var(--pg-bg-base);
 }
 
 .result-pre {
@@ -296,7 +296,7 @@ onMounted(() => {
 
 .result-empty {
   padding: 24px;
-  color: #909399;
+  color: var(--pg-text-secondary);
   font-size: 13px;
 }
 </style>

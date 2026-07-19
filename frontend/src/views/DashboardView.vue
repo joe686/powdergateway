@@ -261,7 +261,7 @@ function formatTime(t) {
 }
 .shortcut-title {
   font-weight: 600;
-  color: #303133;
+  color: var(--pg-text-primary);
   margin-right: 8px;
 }
 .alert-badge {
@@ -279,18 +279,18 @@ function formatTime(t) {
   align-items: center;
   gap: 8px;
   padding: 6px 8px;
-  background: #fff1f0;
+  background: rgba(245, 85, 107, 0.1);
   border-radius: 4px;
-  border-left: 3px solid #ff4d4f;
+  border-left: 3px solid var(--pg-danger);
 }
 .alert-msg {
   flex: 1;
   font-size: 13px;
-  color: #cf1322;
+  color: var(--pg-danger);
 }
 .alert-time {
   font-size: 12px;
-  color: #999;
+  color: var(--pg-text-secondary);
   white-space: nowrap;
 }
 </style>

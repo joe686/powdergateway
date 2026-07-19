@@ -572,7 +572,7 @@ async function doPreview() {
 
 .card-header { display: flex; align-items: center; gap: 8px; }
 .card-title { font-size: 16px; font-weight: 600; }
-.help-icon { color: #909399; cursor: help; }
+.help-icon { color: var(--pg-text-secondary); cursor: help; }
 
 .template-form { margin-bottom: 16px; }
 .mapping-body { margin-top: 4px; }
@@ -593,16 +593,16 @@ async function doPreview() {
   gap: 8px;
   padding: 7px 10px;
   margin-bottom: 6px;
-  background: #f5f7fa;
-  border: 1px solid #e4e7ed;
+  background: var(--pg-track-bg);
+  border: 1px solid var(--pg-line-strong);
   border-radius: 4px;
   cursor: grab;
   user-select: none;
   transition: background 0.15s;
 }
-.field-tag:hover { background: #ecf5ff; border-color: #b3d8ff; }
+.field-tag:hover { background: var(--pg-primary-soft); border-color: var(--pg-primary); }
 .field-tag:active { cursor: grabbing; }
-.drag-icon { color: #c0c4cc; flex-shrink: 0; }
+.drag-icon { color: var(--pg-text-placeholder); flex-shrink: 0; }
 .field-name { flex: 1; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .remove-btn { flex-shrink: 0; }
 
@@ -613,16 +613,16 @@ async function doPreview() {
   align-items: center;
   gap: 8px;
   padding: 5px 4px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--pg-line);
 }
 .mapping-table-header {
   font-size: 12px;
-  color: #909399;
+  color: var(--pg-text-secondary);
   font-weight: 600;
-  border-bottom: 2px solid #e4e7ed;
+  border-bottom: 2px solid var(--pg-line-strong);
   margin-bottom: 2px;
 }
-.mapping-row:hover { background: #fafafa; }
+.mapping-row:hover { background: var(--pg-hover-surface); }
 .mapping-rule-list { min-height: 160px; }
 
 .col-drag   { width: 22px; flex-shrink: 0; text-align: center; }
@@ -631,7 +631,7 @@ async function doPreview() {
 .col-fixed  { flex: 4; min-width: 0; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .col-op     { width: 40px; flex-shrink: 0; text-align: center; }
 
-.row-drag-handle { cursor: grab; color: #c0c4cc; }
+.row-drag-handle { cursor: grab; color: var(--pg-text-placeholder); }
 .row-drag-handle:active { cursor: grabbing; }
 .fixed-input { flex: 1; min-width: 80px; }
 
@@ -642,7 +642,7 @@ async function doPreview() {
   align-items: center;
   gap: 12px;
 }
-.save-tip { color: #67c23a; font-size: 13px; }
+.save-tip { color: var(--pg-success); font-size: 13px; }
 
 /* ── 预览弹窗 ── */
 .preview-form { padding-top: 8px; }
