@@ -40,6 +40,22 @@ public class DbConnectionService {
         ).stream().map(DbConnectionVO::from).collect(Collectors.toList());
     }
 
+    /** FN-10 导出数据源列表 Excel（密码固定输出 ***，不导出明文） */
+    public byte[] exportList(String keyword) {
+        LambdaQueryWrapper<DbConnection> wrapper = new LambdaQueryWrapper<>();
+        if (keyword != null && !keyword.trim().isEmpty()) wrapper.like(DbConnection::getName, keyword.trim());
+        wrapper.orderByDesc(DbConnection::getId);
+        List<DbConnection> rows = dbConnectionMapper.selectList(wrapper);
+        return com.powergateway.utils.ExcelExportUtil.export("数据源列表", java.util.Arrays.asList(
+            new com.powergateway.utils.ExcelExportUtil.Column<>("名称",  DbConnection::getName),
+            new com.powergateway.utils.ExcelExportUtil.Column<>("类型",  DbConnection::getDbType),
+            new com.powergateway.utils.ExcelExportUtil.Column<>("URL",   DbConnection::getUrl),
+            new com.powergateway.utils.ExcelExportUtil.Column<>("账号",  DbConnection::getUsername),
+            new com.powergateway.utils.ExcelExportUtil.Column<>("密码",  r -> "***"),
+            new com.powergateway.utils.ExcelExportUtil.Column<>("环境",  DbConnection::getEnv)
+        ), rows);
+    }
+
     public Long save(DbConnectionSaveRequest req) {
         DbConnection conn;
         if (req.getId() != null) {

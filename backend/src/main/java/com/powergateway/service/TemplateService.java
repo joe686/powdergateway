@@ -182,6 +182,22 @@ public class TemplateService {
         return tpl;
     }
 
+    /** FN-10 导出模板列表 Excel */
+    public byte[] exportList(String keyword) {
+        LambdaQueryWrapper<ConvertTemplate> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(ConvertTemplate::getIsLatest, 1);
+        if (StringUtils.hasText(keyword)) wrapper.like(ConvertTemplate::getName, keyword);
+        wrapper.orderByDesc(ConvertTemplate::getCreateTime);
+        List<ConvertTemplate> rows = templateMapper.selectList(wrapper);
+        return com.powergateway.utils.ExcelExportUtil.export("转换模板", java.util.Arrays.asList(
+            new com.powergateway.utils.ExcelExportUtil.Column<>("模板名称", ConvertTemplate::getName),
+            new com.powergateway.utils.ExcelExportUtil.Column<>("源格式",   ConvertTemplate::getSrcFormat),
+            new com.powergateway.utils.ExcelExportUtil.Column<>("目标格式", ConvertTemplate::getTargetFormat),
+            new com.powergateway.utils.ExcelExportUtil.Column<>("版本",     ConvertTemplate::getVersion),
+            new com.powergateway.utils.ExcelExportUtil.Column<>("是否最新", r -> r.getIsLatest() != null && r.getIsLatest() == 1 ? "Y" : "N")
+        ), rows);
+    }
+
     private String serializeMappingRules(List<FieldMappingRule> rules) {
         try {
             return objectMapper.writeValueAsString(rules != null ? rules : Collections.emptyList());

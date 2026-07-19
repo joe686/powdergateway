@@ -49,6 +49,20 @@ public class ChannelConfigService {
 
     // ────────────────────────── CRUD ──────────────────────────────
 
+    /** FN-10 导出渠道列表 Excel */
+    public byte[] exportList(String keyword) {
+        LambdaQueryWrapper<ChannelConfig> wrapper = new LambdaQueryWrapper<>();
+        if (keyword != null && !keyword.isEmpty()) wrapper.like(ChannelConfig::getChannelName, keyword);
+        wrapper.orderByDesc(ChannelConfig::getCreateTime);
+        List<ChannelConfig> rows = channelConfigMapper.selectList(wrapper);
+        return com.powergateway.utils.ExcelExportUtil.export("渠道配置", java.util.Arrays.asList(
+            new com.powergateway.utils.ExcelExportUtil.Column<>("渠道编码",   ChannelConfig::getChannelCode),
+            new com.powergateway.utils.ExcelExportUtil.Column<>("渠道名称",   ChannelConfig::getChannelName),
+            new com.powergateway.utils.ExcelExportUtil.Column<>("识别字段",   ChannelConfig::getIdentifyField),
+            new com.powergateway.utils.ExcelExportUtil.Column<>("关联模板ID", ChannelConfig::getTemplateId)
+        ), rows);
+    }
+
     /**
      * 查询所有有效渠道配置列表（按 create_time 倒序）。
      */

@@ -62,6 +62,23 @@ public class PortRouteService {
 
     // ────────────────────────── CRUD ──────────────────────────────
 
+    /** FN-10 导出端口路由列表 Excel */
+    public byte[] exportList(String channelCode) {
+        LambdaQueryWrapper<PortRoute> wrapper = new LambdaQueryWrapper<>();
+        if (channelCode != null && !channelCode.trim().isEmpty()) {
+            wrapper.like(PortRoute::getChannelCode, channelCode.trim());
+        }
+        wrapper.orderByDesc(PortRoute::getCreateTime);
+        java.util.List<PortRoute> rows = portRouteMapper.selectList(wrapper);
+        return com.powergateway.utils.ExcelExportUtil.export("端口路由", java.util.Arrays.asList(
+            new com.powergateway.utils.ExcelExportUtil.Column<>("渠道编码",   PortRoute::getChannelCode),
+            new com.powergateway.utils.ExcelExportUtil.Column<>("目标地址",   PortRoute::getPortAddress),
+            new com.powergateway.utils.ExcelExportUtil.Column<>("请求方法",   PortRoute::getPortMethod),
+            new com.powergateway.utils.ExcelExportUtil.Column<>("超时(ms)",   PortRoute::getTimeout),
+            new com.powergateway.utils.ExcelExportUtil.Column<>("重试次数",   PortRoute::getRetryCount)
+        ), rows);
+    }
+
     /**
      * 分页查询端口路由列表，支持渠道编码模糊搜索。
      */

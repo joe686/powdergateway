@@ -163,4 +163,16 @@ public class QueryCacheManager {
             redisTemplate.opsForValue().increment(MISS_PREFIX + interfaceId);
         }
     }
+
+    /** FN-10 导出缓存统计列表 Excel */
+    public byte[] exportList(java.util.List<CacheStatDTO> stats) {
+        return com.powergateway.utils.ExcelExportUtil.export("缓存统计", java.util.Arrays.asList(
+            new com.powergateway.utils.ExcelExportUtil.Column<>("接口ID",   CacheStatDTO::getInterfaceId),
+            new com.powergateway.utils.ExcelExportUtil.Column<>("接口名称", CacheStatDTO::getInterfaceName),
+            new com.powergateway.utils.ExcelExportUtil.Column<>("启用缓存", r -> r.getCacheEnabled() != null && r.getCacheEnabled() == 1 ? "Y" : "N"),
+            new com.powergateway.utils.ExcelExportUtil.Column<>("TTL(秒)", CacheStatDTO::getCacheTtlSeconds),
+            new com.powergateway.utils.ExcelExportUtil.Column<>("命中次数", CacheStatDTO::getHitCount),
+            new com.powergateway.utils.ExcelExportUtil.Column<>("未命中次数", CacheStatDTO::getMissCount)
+        ), stats);
+    }
 }

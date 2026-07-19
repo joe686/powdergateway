@@ -127,6 +127,24 @@ public class SysLogService {
         return auditLogMapper.selectPage(new Page<>(page, size), w);
     }
 
+    /** FN-10 导出 SQL 审计日志列表 Excel（新增，不改动现有 exportExcel） */
+    public byte[] exportAuditList(String opType, String result) {
+        LambdaQueryWrapper<SqlAuditLog> w = new LambdaQueryWrapper<>();
+        if (StringUtils.hasText(opType)) w.eq(SqlAuditLog::getOpType, opType);
+        if (StringUtils.hasText(result)) w.eq(SqlAuditLog::getResult, result);
+        w.orderByDesc(SqlAuditLog::getOpTime);
+        List<SqlAuditLog> rows = auditLogMapper.selectList(w);
+        return com.powergateway.utils.ExcelExportUtil.export("SQL审计日志", java.util.Arrays.asList(
+            new com.powergateway.utils.ExcelExportUtil.Column<>("接口ID",   SqlAuditLog::getInterfaceId),
+            new com.powergateway.utils.ExcelExportUtil.Column<>("操作类型", SqlAuditLog::getOpType),
+            new com.powergateway.utils.ExcelExportUtil.Column<>("操作人",   SqlAuditLog::getOperator),
+            new com.powergateway.utils.ExcelExportUtil.Column<>("目标库",   SqlAuditLog::getTargetDb),
+            new com.powergateway.utils.ExcelExportUtil.Column<>("目标表",   SqlAuditLog::getTargetTable),
+            new com.powergateway.utils.ExcelExportUtil.Column<>("结果",     SqlAuditLog::getResult),
+            new com.powergateway.utils.ExcelExportUtil.Column<>("时间",     r -> r.getOpTime() != null ? r.getOpTime().format(FMT) : "")
+        ), rows);
+    }
+
     /**
      * 导出操作日志为 Excel（支持同 list 的过滤条件）
      */

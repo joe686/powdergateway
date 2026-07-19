@@ -205,6 +205,34 @@ public class InterfaceConfigService {
         return interfaceConfigMapper.selectList(wrapper);
     }
 
+    /** FN-10 导出接口列表 Excel */
+    public byte[] exportList(String name) {
+        List<InterfaceConfig> rows = list(name, 1, 10000);
+        List<com.powergateway.utils.ExcelExportUtil.Column<InterfaceConfig>> cols = java.util.Arrays.asList(
+            new com.powergateway.utils.ExcelExportUtil.Column<>("接口名称",   InterfaceConfig::getName),
+            new com.powergateway.utils.ExcelExportUtil.Column<>("类型",       InterfaceConfig::getType),
+            new com.powergateway.utils.ExcelExportUtil.Column<>("状态",       r -> statusLabel(r.getStatus())),
+            new com.powergateway.utils.ExcelExportUtil.Column<>("访问路径",   InterfaceConfig::getPath),
+            new com.powergateway.utils.ExcelExportUtil.Column<>("响应格式",   InterfaceConfig::getResponseFormat),
+            new com.powergateway.utils.ExcelExportUtil.Column<>("创建时间",   r -> fmtDt(r.getCreateTime()))
+        );
+        return com.powergateway.utils.ExcelExportUtil.export("接口列表", cols, rows);
+    }
+
+    private String statusLabel(String s) {
+        if (s == null) return "";
+        switch (s) {
+            case "published": return "已发布";
+            case "draft":     return "草稿";
+            case "disabled":  return "已禁用";
+            default: return s;
+        }
+    }
+
+    private String fmtDt(java.time.LocalDateTime d) {
+        return d == null ? "" : d.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+    }
+
     /** 查询所有 SELECT 类型接口（M2-10 缓存管理列表用） */
     public List<InterfaceConfig> listSelectInterfaces() {
         LambdaQueryWrapper<InterfaceConfig> wrapper = new LambdaQueryWrapper<>();

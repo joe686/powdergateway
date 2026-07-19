@@ -181,6 +181,22 @@ public class PerfStatService {
         }
     }
 
+    /** FN-10 导出性能统计列表 Excel */
+    public byte[] exportList(Long interfaceId, String opType) {
+        LambdaQueryWrapper<PerfStatRecord> w = new LambdaQueryWrapper<>();
+        if (interfaceId != null) w.eq(PerfStatRecord::getInterfaceId, interfaceId);
+        if (StringUtils.hasText(opType)) w.eq(PerfStatRecord::getOpType, opType);
+        w.orderByDesc(PerfStatRecord::getStatTime);
+        List<PerfStatRecord> rows = perfStatMapper.selectList(w);
+        return com.powergateway.utils.ExcelExportUtil.export("性能统计", java.util.Arrays.asList(
+            new com.powergateway.utils.ExcelExportUtil.Column<>("接口ID",   PerfStatRecord::getInterfaceId),
+            new com.powergateway.utils.ExcelExportUtil.Column<>("操作类型", PerfStatRecord::getOpType),
+            new com.powergateway.utils.ExcelExportUtil.Column<>("耗时(ms)", PerfStatRecord::getCostMs),
+            new com.powergateway.utils.ExcelExportUtil.Column<>("结果",     r -> r.getSuccess() != null && r.getSuccess() == 1 ? "成功" : "失败"),
+            new com.powergateway.utils.ExcelExportUtil.Column<>("时间",     r -> r.getStatTime() != null ? r.getStatTime().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) : "")
+        ), rows);
+    }
+
     /** 大小写兼容的 Map 字符串读取（H2 返回大写别名，MySQL 返回小写） */
     private String getStr(Map<String, Object> row, String alias) {
         for (Map.Entry<String, Object> e : row.entrySet()) {
