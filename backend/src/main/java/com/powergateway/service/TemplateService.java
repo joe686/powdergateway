@@ -204,6 +204,34 @@ public class TemplateService {
         ), rows);
     }
 
+    /** FN-09 获取所有最新模板的摘要列表（{id, name, srcFormat, targetFormat}） */
+    public List<Map<String, Object>> listAllSummary() {
+        LambdaQueryWrapper<ConvertTemplate> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(ConvertTemplate::getIsLatest, 1);
+        wrapper.orderByDesc(ConvertTemplate::getCreateTime);
+        List<ConvertTemplate> all = templateMapper.selectList(wrapper);
+        List<Map<String, Object>> result = new java.util.ArrayList<>();
+        for (ConvertTemplate t : all) {
+            Map<String, Object> m = new java.util.LinkedHashMap<>();
+            m.put("id", t.getId());
+            m.put("name", t.getName());
+            m.put("srcFormat", t.getSrcFormat());
+            m.put("targetFormat", t.getTargetFormat());
+            result.add(m);
+        }
+        return result;
+    }
+
+    /** FN-11 按主键三元组（name + srcFormat + targetFormat）查询模板 */
+    public ConvertTemplate findByPrimary(String name, String srcFormat, String targetFormat) {
+        LambdaQueryWrapper<ConvertTemplate> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(ConvertTemplate::getName, name)
+               .eq(ConvertTemplate::getSrcFormat, srcFormat)
+               .eq(ConvertTemplate::getTargetFormat, targetFormat)
+               .eq(ConvertTemplate::getIsLatest, 1);
+        return templateMapper.selectOne(wrapper);
+    }
+
     private String serializeMappingRules(List<FieldMappingRule> rules) {
         try {
             return objectMapper.writeValueAsString(rules != null ? rules : Collections.emptyList());

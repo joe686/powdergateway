@@ -233,6 +233,30 @@ public class InterfaceConfigService {
         return d == null ? "" : d.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
     }
 
+    /** FN-09 获取所有接口的摘要列表（{id, name, type, status}） */
+    public List<Map<String, Object>> listAllSummary() {
+        LambdaQueryWrapper<InterfaceConfig> wrapper = new LambdaQueryWrapper<>();
+        wrapper.orderByDesc(InterfaceConfig::getCreateTime);
+        List<InterfaceConfig> all = interfaceConfigMapper.selectList(wrapper);
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (InterfaceConfig c : all) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id", c.getId());
+            m.put("name", c.getName());
+            m.put("type", c.getType());
+            m.put("status", c.getStatus());
+            result.add(m);
+        }
+        return result;
+    }
+
+    /** FN-11 按名称查询接口 */
+    public InterfaceConfig findByName(String name) {
+        LambdaQueryWrapper<InterfaceConfig> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(InterfaceConfig::getName, name);
+        return interfaceConfigMapper.selectOne(wrapper);
+    }
+
     /** 查询所有 SELECT 类型接口（M2-10 缓存管理列表用） */
     public List<InterfaceConfig> listSelectInterfaces() {
         LambdaQueryWrapper<InterfaceConfig> wrapper = new LambdaQueryWrapper<>();
