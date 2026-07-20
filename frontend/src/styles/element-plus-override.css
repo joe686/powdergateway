@@ -69,7 +69,8 @@
 }
 
 /* SideMenu 折叠时 sub-menu 会弹出 popup 面板（脱离侧栏浮在 body 上），
-   面板不能透明否则背后主内容文字混叠。给它强毛玻璃底 + 边框。 */
+   面板不能透明否则背后主内容文字混叠。给它强毛玻璃底 + 边框。
+   Wave7：项多时改用 grid 自适应多列布局（min-col 160px），一屏能看全。 */
 .el-menu--popup, .el-menu--popup-container .el-menu {
   background: var(--pg-glass-bg-strong) !important;
   backdrop-filter: blur(var(--pg-glass-blur));
@@ -77,11 +78,40 @@
   border: 1px solid var(--pg-glass-border) !important;
   border-radius: var(--pg-radius-md);
   box-shadow: var(--pg-glass-shadow);
-  padding: 6px !important;
+  padding: 8px !important;
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 4px 12px;
+  max-width: min(92vw, 680px);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+/* 独立菜单项（如"接口转换配置向导"）占满整行，group 自动分列 */
+.el-menu--popup > li.el-menu-item,
+.el-menu--popup-container .el-menu > li.el-menu-item {
+  flex: 1 1 100%;
+}
+.el-menu--popup > li.el-menu-item-group,
+.el-menu--popup-container .el-menu > li.el-menu-item-group {
+  flex: 1 1 160px;
+  min-width: 140px;
+}
+.el-menu--popup .el-menu-item-group__list,
+.el-menu--popup-container .el-menu-item-group__list {
+  padding: 0;
+}
+.el-menu--popup .el-menu-item-group__title,
+.el-menu--popup-container .el-menu-item-group__title {
+  padding: 6px 8px 4px !important;
 }
 .el-menu--popup .el-menu-item {
   color: var(--pg-text-primary) !important;
   border-radius: var(--pg-radius-sm);
+  height: 34px !important;
+  line-height: 34px !important;
+  padding: 0 10px !important;
+  margin: 2px 0 !important;
 }
 .el-menu--popup .el-menu-item.is-active {
   color: var(--pg-primary) !important;

@@ -87,3 +87,29 @@ html, body {
   color: var(--pg-text-primary);
   transition: background 0.35s ease, color 0.35s ease;
 }
+
+/* Wave7 · 全站细滚动条（6px + 主题色 thumb），
+   覆盖 window/main/aside/drawer/dialog/table 等所有出现滚动条的地方。
+   Firefox 用 scrollbar-width/color；Webkit 系走 ::-webkit-scrollbar。 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--pg-line-strong) transparent;
+}
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--pg-line-strong);
+  border-radius: 3px;
+  transition: background 0.2s;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--pg-primary-soft);
+}
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
