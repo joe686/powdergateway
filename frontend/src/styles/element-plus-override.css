@@ -87,15 +87,18 @@
   max-height: 90vh;
   overflow-y: auto;
 }
-/* 独立菜单项（如"接口转换配置向导"）占满整行，group 自动分列 */
-.el-menu--popup > li.el-menu-item,
-.el-menu--popup-container .el-menu > li.el-menu-item {
-  flex: 1 1 100%;
+/* 默认所有直接子项（独立菜单项/group）按最小宽度分列自适应；
+   适用"可视化接口开发"这种全是独立项、无 group 的情形，多项自动横排 */
+.el-menu--popup > li,
+.el-menu--popup-container .el-menu > li {
+  flex: 1 1 180px;
+  min-width: 150px;
 }
-.el-menu--popup > li.el-menu-item-group,
-.el-menu--popup-container .el-menu > li.el-menu-item-group {
-  flex: 1 1 160px;
-  min-width: 140px;
+/* 例外：当 popup 中同时含 group 时，独立项占整行（保留"接口转换配置向导"整行主入口的语义），
+   group 按上面默认 flex:1 1 180px 分列 */
+.el-menu--popup:has(.el-menu-item-group) > li.el-menu-item,
+.el-menu--popup-container .el-menu:has(.el-menu-item-group) > li.el-menu-item {
+  flex: 1 1 100%;
 }
 .el-menu--popup .el-menu-item-group__list,
 .el-menu--popup-container .el-menu-item-group__list {
