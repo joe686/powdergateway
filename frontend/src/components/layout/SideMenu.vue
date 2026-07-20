@@ -186,6 +186,7 @@ const hasGroupPublishTest    = computed(function() { return ['/convert/port-rout
   height: 100%;
   display: flex;
   flex-direction: column;
+  min-height: 0; /* Wave6 修：允许 flex 子项收缩，配合 .menu min-height:0 使菜单能独立滚动 */
 }
 .logo {
   height: 56px;
@@ -214,10 +215,21 @@ const hasGroupPublishTest    = computed(function() { return ['/convert/port-rout
 }
 .menu {
   flex: 1;
+  min-height: 0; /* Wave6 修：默认 min-height:auto 会撑破父高度，导致 overflow-y:auto 失效 */
   border-right: none;
   overflow-y: auto;
   overflow-x: hidden;
 }
+/* Wave6 修：菜单独立滚动条美化 + 一屏放不下时可拖动 */
+.menu::-webkit-scrollbar { width: 6px; }
+.menu::-webkit-scrollbar-thumb {
+  background: var(--pg-line-strong);
+  border-radius: 3px;
+}
+.menu::-webkit-scrollbar-thumb:hover {
+  background: var(--pg-primary-soft);
+}
+.menu::-webkit-scrollbar-track { background: transparent; }
 .menu:not(.el-menu--collapse) {
   width: 220px;
 }
