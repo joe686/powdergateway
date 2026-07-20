@@ -46,28 +46,30 @@
 
   --pg-glass-bg: rgba(20, 25, 45, 0.55);
   --pg-glass-bg-strong: rgba(20, 25, 45, 0.75);
-  --pg-glass-border: rgba(255, 255, 255, 0.10);
+  --pg-glass-border: rgba(255, 255, 255, 0.08);
   --pg-glass-blur: 28px;
   --pg-glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
-  --pg-glow: 0 0 20px rgba(109, 160, 255, 0.15);
+  --pg-glow: 0 0 20px rgba(123, 148, 214, 0.12);
 
-  --pg-primary: #6DA0FF;
-  --pg-primary-soft: rgba(109, 160, 255, 0.14);
-  --pg-primary-grad: linear-gradient(135deg, #6DA0FF 0%, #A879FF 100%);
-  --pg-success: #22D3AA;
-  --pg-warning: #FBBF24;
-  --pg-danger:  #FF6B85;
-  --pg-purple:  #A879FF;
+  /* Wave10 · 暗色降饱和：原 #6DA0FF/#22D3AA 等纯亮色在深底 blob 上刺眼、
+     长时间看眼疲劳。改用蓝灰紫低饱和色阶，跟深色底更协调。 */
+  --pg-primary: #7B94D6;
+  --pg-primary-soft: rgba(123, 148, 214, 0.16);
+  --pg-primary-grad: linear-gradient(135deg, #7B94D6 0%, #9484BE 100%);
+  --pg-success: #5DBFA0;
+  --pg-warning: #D9AC5C;
+  --pg-danger:  #D97086;
+  --pg-purple:  #9484BE;
 
-  --pg-text-primary:   #F1F5F9;
-  --pg-text-white:     #FFFFFF;
-  --pg-text-regular:   #CBD5E1;
-  --pg-text-secondary: #94A3C4;
-  --pg-text-placeholder: #64748B;
+  --pg-text-primary:   #DDE3EE;
+  --pg-text-white:     #E5E9F1;
+  --pg-text-regular:   #B8C1D1;
+  --pg-text-secondary: #8B95AA;
+  --pg-text-placeholder: #5E6779;
 
-  --pg-line: rgba(255, 255, 255, 0.06);
-  --pg-line-strong: rgba(255, 255, 255, 0.10);
-  --pg-hover-surface: rgba(109, 160, 255, 0.10);
+  --pg-line: rgba(255, 255, 255, 0.05);
+  --pg-line-strong: rgba(255, 255, 255, 0.09);
+  --pg-hover-surface: rgba(123, 148, 214, 0.10);
   --pg-track-bg: rgba(255, 255, 255, 0.06);
 
   --pg-blob-blur: 120px;
