@@ -132,10 +132,8 @@
           data-ux-b-group="interface-ops"
         >
           <el-menu-item v-if="can('/interface/list')" index="/interface/list">接口管理</el-menu-item>
-          <el-menu-item v-if="can('/interface/doc')" index="/interface/doc">接口文档</el-menu-item>
-          <el-menu-item v-if="can('/interface/import-export')" index="/interface/import-export">配置导入/导出</el-menu-item>
         </el-menu-item-group>
-        <!-- /interface/formula 已移到"接口转换 → 转换规则"分组下 -->
+        <!-- Wave11：接口文档、配置导入/导出 移到「辅助工具」分组下（用户反馈：共用型功能归为工具） -->
       </el-sub-menu>
 
       <!-- 系统管理 -->
@@ -150,14 +148,16 @@
         <el-menu-item v-if="can('/system/config')" index="/system/config">系统配置</el-menu-item>
       </el-sub-menu>
 
-      <!-- 辅助工具 -->
+      <!-- 辅助工具 · Wave11：接口文档、配置导入/导出 从"可视化接口开发"迁入 -->
       <el-sub-menu v-if="hasTools" index="tools">
         <template #title>
           <el-icon><Tools /></el-icon>
           <span>辅助工具</span>
         </template>
         <el-menu-item v-if="can('/tools/debug')" index="/tools/debug">报文调试</el-menu-item>
-        <el-menu-item v-if="can('/tools/swagger')" index="/tools/swagger">接口文档</el-menu-item>
+        <el-menu-item v-if="can('/interface/doc')" index="/interface/doc">接口文档</el-menu-item>
+        <el-menu-item v-if="can('/interface/import-export')" index="/interface/import-export">配置导入/导出</el-menu-item>
+        <el-menu-item v-if="can('/tools/swagger')" index="/tools/swagger">Swagger 文档</el-menu-item>
       </el-sub-menu>
     </el-menu>
   </div>
@@ -188,12 +188,12 @@ var CONVERT_PATHS  = ['/convert/wizard', '/convert/template', '/convert/channel'
                       '/convert/field-mapping', '/convert/field-process',
                       '/interface/formula',
                       '/convert/port-route', '/convert/format']
+// Wave11：/interface/doc、/interface/import-export 从「接口开发」路径组挪到「辅助工具」组
 var INTERFACE_PATHS = ['/interface/wizard', '/interface/db', '/interface/table', '/interface/dev',
                        '/interface/insert', '/interface/update', '/interface/delete',
-                       '/interface/list', '/interface/shard', '/interface/cache',
-                       '/interface/doc', '/interface/import-export']
+                       '/interface/list', '/interface/shard', '/interface/cache']
 var SYSTEM_PATHS   = ['/system/log', '/system/stats', '/system/user', '/system/config']
-var TOOLS_PATHS    = ['/tools/debug', '/tools/swagger']
+var TOOLS_PATHS    = ['/tools/debug', '/tools/swagger', '/interface/doc', '/interface/import-export']
 
 const hasConvert   = computed(function() { return CONVERT_PATHS.some(function(p) { return can(p) }) })
 const hasInterface = computed(function() { return INTERFACE_PATHS.some(function(p) { return can(p) }) })
@@ -207,7 +207,7 @@ const hasGroupPublishTest    = computed(function() { return ['/convert/port-rout
 // Wave8：可视化接口开发的 3 小节（数据源 / 接口定义 / 发布运维）
 const hasGroupInterfaceDataSource = computed(function() { return ['/interface/db', '/interface/table'].some(function(p) { return can(p) }) })
 const hasGroupInterfaceDefine     = computed(function() { return ['/interface/dev', '/interface/insert', '/interface/update', '/interface/delete', '/interface/shard', '/interface/cache'].some(function(p) { return can(p) }) })
-const hasGroupInterfaceOps        = computed(function() { return ['/interface/list', '/interface/doc', '/interface/import-export'].some(function(p) { return can(p) }) })
+const hasGroupInterfaceOps        = computed(function() { return ['/interface/list'].some(function(p) { return can(p) }) })
 </script>
 
 <style scoped>
