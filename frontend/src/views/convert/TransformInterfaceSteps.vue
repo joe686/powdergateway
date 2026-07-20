@@ -17,19 +17,19 @@
         </el-form-item>
         <el-form-item label="来源报文格式" required>
           <el-radio-group v-model="s.sourceFormat">
-            <el-radio-button value="JSON" />
-            <el-radio-button value="XML" />
-            <el-radio-button value="CSV" />
-            <el-radio-button value="FormData" />
+            <el-tooltip v-for="f in FORMAT_OPTIONS" :key="f.value" :content="f.desc" placement="top">
+              <el-radio-button :value="f.value">{{ f.label }}</el-radio-button>
+            </el-tooltip>
           </el-radio-group>
+          <div class="field-tip" v-if="s.sourceFormat">{{ formatDescOf(s.sourceFormat) }}</div>
         </el-form-item>
         <el-form-item label="目标报文格式" required>
           <el-radio-group v-model="s.targetFormat">
-            <el-radio-button value="JSON" />
-            <el-radio-button value="XML" />
-            <el-radio-button value="CSV" />
-            <el-radio-button value="FormData" />
+            <el-tooltip v-for="f in FORMAT_OPTIONS" :key="f.value" :content="f.desc" placement="top">
+              <el-radio-button :value="f.value">{{ f.label }}</el-radio-button>
+            </el-tooltip>
           </el-radio-group>
+          <div class="field-tip" v-if="s.targetFormat">{{ formatDescOf(s.targetFormat) }}</div>
         </el-form-item>
         <el-form-item label="转换复杂度">
           <el-radio-group v-model="s.complexity">
@@ -243,6 +243,15 @@ const newChannel = ref({ channelCode: '', channelName: '', identifyField: '' })
 const fcTemplates = ref([])
 const testing = ref(false)
 
+// Wave11 · #6 报文格式说明（用户反馈：只有格式名，看不懂选择差异）
+const FORMAT_OPTIONS = [
+  { value: 'JSON',     label: 'JSON',      desc: 'JavaScript 对象表示，键值对结构，Web API 最常用' },
+  { value: 'XML',      label: 'XML',       desc: '可扩展标记语言，标签嵌套，常见于银行/政务/SOAP 报文' },
+  { value: 'CSV',      label: 'CSV',       desc: '逗号分隔的表格数据，一行一条记录，适合批量数据交换' },
+  { value: 'FormData', label: 'FormData',  desc: '表单编码（key=val&key=val），HTTP 表单/URL 参数常用' }
+]
+function formatDescOf(v) { return (FORMAT_OPTIONS.find(f => f.value === v) || {}).desc || '' }
+
 onMounted(async () => {
   try {
     const list = await listChannels()
@@ -439,3 +448,12 @@ async function onSubmit() {
 
 defineExpose({ validateStep, savePortRouteIfNeeded, buildPortRoutePayload, onSubmit })
 </script>
+
+<style scoped>
+.field-tip {
+  color: var(--pg-text-secondary);
+  font-size: 12px;
+  margin-top: 4px;
+  line-height: 1.5;
+}
+</style>
