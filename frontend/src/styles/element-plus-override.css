@@ -187,6 +187,63 @@
   --el-table-row-hover-bg-color: var(--pg-hover-surface);
 }
 
+/* Wave11 · 暗色下取消表格斑马纹（用户反馈：明暗行区分刺眼） */
+[data-theme="dark"] .el-table {
+  --el-fill-color-lighter: transparent;
+}
+[data-theme="dark"] .el-table--striped .el-table__body tr.el-table__row--striped td.el-table__cell,
+[data-theme="dark"] .el-table__row--striped > td.el-table__cell {
+  background: transparent !important;
+}
+
+/* Wave11 · 表格 fixed 列（左右固定列）需要不透明底盖住底下滚动内容
+   否则半透明的 tr-bg 让操作按钮和下方文字混叠不可读 */
+.el-table .el-table__cell.is-hidden > * { visibility: visible; }
+.el-table .el-table-fixed-column--left,
+.el-table .el-table-fixed-column--right {
+  background: var(--pg-glass-bg-strong) !important;
+  backdrop-filter: blur(var(--pg-glass-blur));
+  -webkit-backdrop-filter: blur(var(--pg-glass-blur));
+}
+.el-table th.el-table-fixed-column--left,
+.el-table th.el-table-fixed-column--right {
+  background: var(--pg-glass-bg-strong) !important;
+}
+.el-table__body tr:hover > td.el-table-fixed-column--left,
+.el-table__body tr:hover > td.el-table-fixed-column--right {
+  background: var(--pg-hover-surface) !important;
+}
+
+/* Wave11 · el-tooltip 文字色修正（用户反馈：小问号 hover 后文字和背景同色不可读）
+   Element Plus 默认 tooltip 用 .el-popper.is-dark 呈现深底白字；
+   我们的 tokens 覆盖 --el-text-color-primary 到主题文字色，
+   在亮色主题下会变成深色文字叠深色背景。 */
+.el-popper.is-dark {
+  background: rgba(30, 34, 48, 0.95) !important;
+  color: #ffffff !important;
+  --el-text-color-primary: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+.el-popper.is-dark .el-popper__arrow::before {
+  background: rgba(30, 34, 48, 0.95) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+.el-popper.is-light {
+  background: var(--pg-glass-bg-strong) !important;
+  color: var(--pg-text-primary) !important;
+  border: 1px solid var(--pg-glass-border) !important;
+}
+.el-popper.is-light .el-popper__arrow::before {
+  background: var(--pg-glass-bg-strong) !important;
+  border-color: var(--pg-glass-border) !important;
+}
+
+/* Wave11 · el-drawer body 无 header 时保底撑满（配合 ThemeDrawer 里的 flex 布局） */
+.el-drawer__body {
+  display: flex;
+  flex-direction: column;
+}
+
 /* 平滑过渡 */
 .el-card, .el-dialog, .el-menu, .el-input__wrapper, .el-button {
   transition: background 0.35s ease, color 0.35s ease, border-color 0.35s ease;
