@@ -68,6 +68,72 @@
   letter-spacing: 1px;
 }
 
+/* SideMenu 折叠时 sub-menu 会弹出 popup 面板（脱离侧栏浮在 body 上），
+   面板不能透明否则背后主内容文字混叠。给它强毛玻璃底 + 边框。 */
+.el-menu--popup, .el-menu--popup-container .el-menu {
+  background: var(--pg-glass-bg-strong) !important;
+  backdrop-filter: blur(var(--pg-glass-blur));
+  -webkit-backdrop-filter: blur(var(--pg-glass-blur));
+  border: 1px solid var(--pg-glass-border) !important;
+  border-radius: var(--pg-radius-md);
+  box-shadow: var(--pg-glass-shadow);
+  padding: 6px !important;
+}
+.el-menu--popup .el-menu-item {
+  color: var(--pg-text-primary) !important;
+  border-radius: var(--pg-radius-sm);
+}
+.el-menu--popup .el-menu-item.is-active {
+  color: var(--pg-primary) !important;
+  background: var(--pg-primary-soft) !important;
+}
+
+/* el-steps 步骤条统一到 tokens 主题，非默认灰黑 */
+.el-steps {
+  --el-color-primary-light-9: var(--pg-hover-surface);
+}
+.el-step__head.is-process,
+.el-step__head.is-finish {
+  color: var(--pg-primary);
+  border-color: var(--pg-primary);
+}
+.el-step__head.is-wait {
+  color: var(--pg-text-placeholder);
+  border-color: var(--pg-line-strong);
+}
+.el-step__icon.is-text {
+  background: transparent;
+  border-radius: 50%;
+}
+.el-step__head.is-process .el-step__icon.is-text {
+  background: var(--pg-primary-grad);
+  border: none;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(91, 124, 250, 0.35);
+}
+.el-step__head.is-finish .el-step__icon.is-text {
+  background: var(--pg-primary-soft);
+  border: 1.5px solid var(--pg-primary);
+  color: var(--pg-primary);
+}
+.el-step__title.is-process {
+  color: var(--pg-primary) !important;
+  font-weight: 600;
+}
+.el-step__title.is-finish {
+  color: var(--pg-text-regular) !important;
+}
+.el-step__title.is-wait {
+  color: var(--pg-text-secondary) !important;
+  font-weight: 400;
+}
+.el-step__line {
+  background-color: var(--pg-line-strong);
+}
+.el-step__line-inner {
+  background-color: var(--pg-primary);
+}
+
 .el-input__wrapper, .el-select__wrapper, .el-textarea__inner {
   background: var(--pg-hover-surface);
   border-radius: var(--pg-radius-sm);
