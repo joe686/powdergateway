@@ -115,15 +115,16 @@ defineExpose({ handleCommand, canProfile })
   gap: 16px;
 }
 
+/* Wave6 修：TopBar 硬编码色 → tokens，暗色下不再灰不清 */
 .collapse-btn {
   font-size: 20px;
   cursor: pointer;
-  color: #606266;
+  color: var(--pg-text-regular);
   transition: color 0.2s;
 }
 
 .collapse-btn:hover {
-  color: #409eff;
+  color: var(--pg-primary);
 }
 
 .top-right {
@@ -137,16 +138,17 @@ defineExpose({ handleCommand, canProfile })
   gap: 8px;
   cursor: pointer;
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: var(--pg-radius-sm);
   transition: background-color 0.2s;
+  color: var(--pg-text-primary);
 }
 
 .user-info:hover {
-  background-color: #f5f7fa;
+  background-color: var(--pg-hover-surface);
 }
 
 .username {
   font-size: 14px;
-  color: #303133;
+  color: var(--pg-text-primary);
 }
 </style>
