@@ -6,13 +6,10 @@
       <span v-if="!collapsed" class="logo-text">PowerGateway</span>
     </div>
 
-    <!-- 菜单 -->
+    <!-- 菜单 · UX-A Wave6：去除三个硬编码 color prop 让 tokens 生效 -->
     <el-menu
       :default-active="activeMenu"
       :collapse="collapsed"
-      background-color="#001529"
-      text-color="#ffffffa6"
-      active-text-color="#ffffff"
       class="menu"
       router
     >
@@ -66,6 +63,13 @@
             index="/convert/field-process"
             :data-ux-b-convert-path="'/convert/field-process'"
           >字段加工配置</el-menu-item>
+          <!-- UX-C FN-03 · Wave6 修：字段公式管理归属"接口转换 / 转换规则"分组
+               路由保留 /interface/formula（Sub-C2 复用历史 placeholder，不破坏兼容） -->
+          <el-menu-item
+            v-if="can('/interface/formula')"
+            index="/interface/formula"
+            data-ux-c-formula
+          >字段公式管理</el-menu-item>
         </el-menu-item-group>
 
         <!-- 发布测试 -->
@@ -102,7 +106,7 @@
         <el-menu-item v-if="can('/interface/delete')" index="/interface/delete">删除接口配置</el-menu-item>
         <el-menu-item v-if="can('/interface/list')" index="/interface/list">接口管理</el-menu-item>
         <el-menu-item v-if="can('/interface/shard')" index="/interface/shard">分库分表配置</el-menu-item>
-        <el-menu-item v-if="can('/interface/formula')" index="/interface/formula">字段公式管理</el-menu-item>
+        <!-- /interface/formula 已移到"接口转换 → 转换规则"分组下（Wave6 修，UX-C 语义归位） -->
         <el-menu-item v-if="can('/interface/cache')" index="/interface/cache">缓存查询管理</el-menu-item>
         <!-- FN-09 接口文档（UX-E） -->
         <el-menu-item v-if="can('/interface/doc')" index="/interface/doc">接口文档</el-menu-item>
@@ -155,12 +159,14 @@ function can(path) {
   return userStore.allowedMenus.includes(path)
 }
 
+// Wave6 修：/interface/formula 归属接口转换分组下的"转换规则"小节（UX-C 语义归位）
 var CONVERT_PATHS  = ['/convert/wizard', '/convert/template', '/convert/channel',
                       '/convert/field-mapping', '/convert/field-process',
+                      '/interface/formula',
                       '/convert/port-route', '/convert/format']
 var INTERFACE_PATHS = ['/interface/wizard', '/interface/db', '/interface/table', '/interface/dev',
                        '/interface/insert', '/interface/update', '/interface/delete',
-                       '/interface/list', '/interface/shard', '/interface/formula', '/interface/cache',
+                       '/interface/list', '/interface/shard', '/interface/cache',
                        '/interface/doc', '/interface/import-export']
 var SYSTEM_PATHS   = ['/system/log', '/system/stats', '/system/user', '/system/config']
 var TOOLS_PATHS    = ['/tools/debug', '/tools/swagger']
@@ -171,7 +177,7 @@ const hasSystem    = computed(function() { return SYSTEM_PATHS.some(function(p) 
 const hasTools     = computed(function() { return TOOLS_PATHS.some(function(p) { return can(p) }) })
 
 const hasGroupBaseConfig     = computed(function() { return ['/convert/template', '/convert/channel'].some(function(p) { return can(p) }) })
-const hasGroupTransformRules = computed(function() { return ['/convert/field-mapping', '/convert/field-process'].some(function(p) { return can(p) }) })
+const hasGroupTransformRules = computed(function() { return ['/convert/field-mapping', '/convert/field-process', '/interface/formula'].some(function(p) { return can(p) }) })
 const hasGroupPublishTest    = computed(function() { return ['/convert/port-route', '/convert/format'].some(function(p) { return can(p) }) })
 </script>
 

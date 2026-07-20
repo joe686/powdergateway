@@ -17,25 +17,25 @@
         </el-form-item>
         <el-form-item label="来源报文格式" required>
           <el-radio-group v-model="s.sourceFormat">
-            <el-radio-button label="JSON" />
-            <el-radio-button label="XML" />
-            <el-radio-button label="CSV" />
-            <el-radio-button label="FormData" />
+            <el-radio-button value="JSON" />
+            <el-radio-button value="XML" />
+            <el-radio-button value="CSV" />
+            <el-radio-button value="FormData" />
           </el-radio-group>
         </el-form-item>
         <el-form-item label="目标报文格式" required>
           <el-radio-group v-model="s.targetFormat">
-            <el-radio-button label="JSON" />
-            <el-radio-button label="XML" />
-            <el-radio-button label="CSV" />
-            <el-radio-button label="FormData" />
+            <el-radio-button value="JSON" />
+            <el-radio-button value="XML" />
+            <el-radio-button value="CSV" />
+            <el-radio-button value="FormData" />
           </el-radio-group>
         </el-form-item>
         <el-form-item label="转换复杂度">
           <el-radio-group v-model="s.complexity">
-            <el-radio label="HEADER_ONLY">仅换报文头</el-radio>
-            <el-radio label="BODY_FIELDS">换报文体字段</el-radio>
-            <el-radio label="FORMAT_AND_PROCESS">换格式+字段+加工</el-radio>
+            <el-radio value="HEADER_ONLY">仅换报文头</el-radio>
+            <el-radio value="BODY_FIELDS">换报文体字段</el-radio>
+            <el-radio value="FORMAT_AND_PROCESS">换格式+字段+加工</el-radio>
           </el-radio-group>
         </el-form-item>
       </el-form>
@@ -131,8 +131,8 @@
     <!-- Step 5 · 转换模板 -->
     <div v-show="props.isActive('template')">
       <el-radio-group v-model="s.templateMode">
-        <el-radio-button label="EXISTING">选择已有模板</el-radio-button>
-        <el-radio-button label="NEW">新建模板</el-radio-button>
+        <el-radio-button value="EXISTING">选择已有模板</el-radio-button>
+        <el-radio-button value="NEW">新建模板</el-radio-button>
       </el-radio-group>
       <div v-if="s.templateMode === 'EXISTING'" style="margin-top:16px">
         <el-select v-model="s.savedTemplateId" placeholder="选择模板" filterable style="width:360px" @change="onExistingTemplatePicked">
@@ -184,8 +184,8 @@
       <el-form label-width="120px">
         <el-form-item label="测试模式">
           <el-radio-group v-model="s.testMode">
-            <el-radio label="SIMULATE">模拟调用（/api/convert）</el-radio>
-            <el-radio label="LIVE">实际调用（/api/dispatch）</el-radio>
+            <el-radio value="SIMULATE">模拟调用（/api/convert）</el-radio>
+            <el-radio value="LIVE">实际调用（/api/dispatch）</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="输入报文">

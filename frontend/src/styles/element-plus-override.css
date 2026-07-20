@@ -36,6 +36,38 @@
   box-shadow: var(--pg-glass-shadow);
 }
 
+/* UX-A Wave6 补：Element Plus 容器/菜单变量强覆盖（避免 el-menu 深色主题、el-aside/el-main 硬底色）
+   MainLayout.vue 已把 side-aside / main-content 改为 transparent，
+   这里同步 el-menu 相关变量，确保 SideMenu 无论亮/暗主题都跟随 tokens 而非固化深色。 */
+.el-container, .el-aside, .el-main, .el-header {
+  background: transparent !important;
+}
+.el-menu {
+  --el-menu-bg-color: transparent;
+  --el-menu-hover-bg-color: var(--pg-hover-surface);
+  --el-menu-active-color: var(--pg-primary);
+  --el-menu-text-color: var(--pg-text-regular);
+  --el-menu-border-color: transparent;
+  background: transparent !important;
+  border-right: none !important;
+}
+.el-menu--collapse, .el-sub-menu__title, .el-menu-item {
+  background: transparent !important;
+}
+.el-menu-item.is-active {
+  color: var(--pg-primary) !important;
+  background: var(--pg-primary-soft) !important;
+}
+.el-menu-item:hover, .el-sub-menu__title:hover {
+  background: var(--pg-hover-surface) !important;
+  color: var(--pg-primary) !important;
+}
+.el-menu-item-group__title {
+  color: var(--pg-text-placeholder) !important;
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+
 .el-input__wrapper, .el-select__wrapper, .el-textarea__inner {
   background: var(--pg-hover-surface);
   border-radius: var(--pg-radius-sm);
