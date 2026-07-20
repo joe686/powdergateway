@@ -1,5 +1,11 @@
 <template>
-  <el-drawer v-model="innerVisible" size="380px" :with-header="false" direction="rtl">
+  <el-drawer
+    v-model="innerVisible"
+    size="380px"
+    :with-header="false"
+    direction="rtl"
+    :append-to-body="true"
+  >
     <div class="pg-drawer">
       <div class="pg-drawer-head">
         <h2>主题设置</h2>
