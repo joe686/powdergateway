@@ -219,9 +219,16 @@ public class TableMetaService {
      * 会回退到 SHOW FULL COLUMNS，其字符集协商不走 URL 的 characterEncoding，导致 utf8mb4 中
      * 文注释被按 latin1/GBK 解析后乱码（如"渠道编码"→"娓犻亾缂栫爜"）。
      * 此方法在不修改用户原始 URL 的前提下，临时为元数据查询会话补齐 utf-8 协议参数。
+     *
+     * Wave6 回归修复：这些参数仅对 MySQL 有意义；H2 (jdbc:h2:...) 会把 `?useInformation...`
+     * 拼进 SET MODE 语句报语法错，Oracle / PostgreSQL 也不识别，故仅对 jdbc:mysql:// 生效。
      */
     private String normalizeUrlForMetaQuery(String url) {
         if (url == null || url.isEmpty()) return url;
+        String lower = url.toLowerCase();
+        if (!lower.startsWith("jdbc:mysql:") && !lower.startsWith("jdbc:mariadb:")) {
+            return url;
+        }
         StringBuilder sb = new StringBuilder(url);
         char sep = url.contains("?") ? '&' : '?';
         if (!url.contains("useInformationSchema=")) {
