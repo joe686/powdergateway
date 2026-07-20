@@ -21,7 +21,24 @@ request.interceptors.request.use(
 
 // 响应拦截器：统一处理错误
 request.interceptors.response.use(
-  response => {
+  async response => {
+    // Blob 响应（下载/导出）绕过 Result<T> 解包 —— #8/#9 修复：
+    // 之前直接返回 response.data.data → 对 Blob 而言 undefined，导致导出报表/导出 zip 报错
+    if (response.config?.responseType === 'blob' || response.data instanceof Blob) {
+      // 后端在下载接口上报错时，仍可能以 application/json 返回错误体，此时需解码识别
+      const blob = response.data
+      if (blob && blob.type === 'application/json') {
+        try {
+          const text = await blob.text()
+          const json = JSON.parse(text)
+          if (json && json.code !== undefined && json.code !== 200) {
+            ElMessage.error(json.message || '下载失败')
+            return Promise.reject(new Error(json.message || '下载失败'))
+          }
+        } catch { /* 非 JSON，按二进制返回 */ }
+      }
+      return blob
+    }
     const res = response.data
     // 后端统一响应体 Result<T>，code !== 200 视为业务错误
     if (res.code !== undefined && res.code !== 200) {
