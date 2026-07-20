@@ -84,13 +84,14 @@ const innerVisible = computed({
 
 const { pref, setMode: apiSetMode, setSchedule } = useTheme()
 
-// 时间 picker 需要 Date 对象
-const lightAt = ref(strToDate(pref.value.schedule.lightAt))
-const darkAt = ref(strToDate(pref.value.schedule.darkAt))
+// 时间 picker 需要 Date 对象；防守：schedule 可能为 undefined 或字段缺失
+const lightAt = ref(strToDate(pref.value?.schedule?.lightAt))
+const darkAt = ref(strToDate(pref.value?.schedule?.darkAt))
 
 function strToDate(hhmm) {
-  const [h, m] = hhmm.split(':').map(Number)
-  const d = new Date(); d.setHours(h, m, 0, 0); return d
+  const s = (typeof hhmm === 'string' && hhmm.includes(':')) ? hhmm : '07:00'
+  const [h, m] = s.split(':').map(Number)
+  const d = new Date(); d.setHours(h || 0, m || 0, 0, 0); return d
 }
 function dateToStr(d) {
   return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`

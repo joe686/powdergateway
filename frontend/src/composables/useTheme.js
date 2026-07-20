@@ -19,11 +19,16 @@ export function useTheme() {
   let sunTimer = null
   let mql = null
 
+  function mergePref(raw) {
+    const base = { ...DEFAULT_PREF, ...(raw || {}) }
+    base.schedule = { ...DEFAULT_PREF.schedule, ...(raw && raw.schedule || {}) }
+    return base
+  }
   function loadFromLocal() {
     try {
       const s = localStorage.getItem(LS_KEY)
-      return s ? { ...DEFAULT_PREF, ...JSON.parse(s) } : { ...DEFAULT_PREF }
-    } catch { return { ...DEFAULT_PREF } }
+      return s ? mergePref(JSON.parse(s)) : { ...DEFAULT_PREF, schedule: { ...DEFAULT_PREF.schedule } }
+    } catch { return { ...DEFAULT_PREF, schedule: { ...DEFAULT_PREF.schedule } } }
   }
   function saveToLocal() { localStorage.setItem(LS_KEY, JSON.stringify(pref.value)) }
 
@@ -32,7 +37,7 @@ export function useTheme() {
     if (!user.isLoggedIn) return
     try {
       const remote = await getUserThemePref()
-      if (remote) { pref.value = { ...DEFAULT_PREF, ...remote }; saveToLocal(); apply() }
+      if (remote) { pref.value = mergePref(remote); saveToLocal(); apply() }
     } catch {}
   }
   async function saveToServer() {
