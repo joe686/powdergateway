@@ -91,27 +91,51 @@
         </el-menu-item-group>
       </el-sub-menu>
 
-      <!-- 可视化接口开发（模块二） -->
+      <!-- 可视化接口开发（模块二）· Wave8：拆 3 小节与接口转换 popup 布局对齐 -->
       <el-sub-menu v-if="hasInterface" index="interface">
         <template #title>
           <el-icon><Monitor /></el-icon>
           <span>可视化接口开发</span>
         </template>
+
+        <!-- 主入口 · 向导 -->
         <el-menu-item v-if="can('/interface/wizard')" index="/interface/wizard">接口配置向导</el-menu-item>
-        <el-menu-item v-if="can('/interface/db')" index="/interface/db">数据库连接管理</el-menu-item>
-        <el-menu-item v-if="can('/interface/table')" index="/interface/table">表结构管理</el-menu-item>
-        <el-menu-item v-if="can('/interface/dev')" index="/interface/dev">查询接口配置</el-menu-item>
-        <el-menu-item v-if="can('/interface/insert')" index="/interface/insert">插入接口配置</el-menu-item>
-        <el-menu-item v-if="can('/interface/update')" index="/interface/update">修改接口配置</el-menu-item>
-        <el-menu-item v-if="can('/interface/delete')" index="/interface/delete">删除接口配置</el-menu-item>
-        <el-menu-item v-if="can('/interface/list')" index="/interface/list">接口管理</el-menu-item>
-        <el-menu-item v-if="can('/interface/shard')" index="/interface/shard">分库分表配置</el-menu-item>
-        <!-- /interface/formula 已移到"接口转换 → 转换规则"分组下（Wave6 修，UX-C 语义归位） -->
-        <el-menu-item v-if="can('/interface/cache')" index="/interface/cache">缓存查询管理</el-menu-item>
-        <!-- FN-09 接口文档（UX-E） -->
-        <el-menu-item v-if="can('/interface/doc')" index="/interface/doc">接口文档</el-menu-item>
-        <!-- FN-11 配置导入/导出（UX-E） -->
-        <el-menu-item v-if="can('/interface/import-export')" index="/interface/import-export">配置导入/导出</el-menu-item>
+
+        <!-- 数据源 -->
+        <el-menu-item-group
+          v-if="hasGroupInterfaceDataSource"
+          title="数据源"
+          data-ux-b-group="interface-data-source"
+        >
+          <el-menu-item v-if="can('/interface/db')" index="/interface/db">数据库连接管理</el-menu-item>
+          <el-menu-item v-if="can('/interface/table')" index="/interface/table">表结构管理</el-menu-item>
+        </el-menu-item-group>
+
+        <!-- 接口定义 -->
+        <el-menu-item-group
+          v-if="hasGroupInterfaceDefine"
+          title="接口定义"
+          data-ux-b-group="interface-define"
+        >
+          <el-menu-item v-if="can('/interface/dev')" index="/interface/dev">查询接口配置</el-menu-item>
+          <el-menu-item v-if="can('/interface/insert')" index="/interface/insert">插入接口配置</el-menu-item>
+          <el-menu-item v-if="can('/interface/update')" index="/interface/update">修改接口配置</el-menu-item>
+          <el-menu-item v-if="can('/interface/delete')" index="/interface/delete">删除接口配置</el-menu-item>
+          <el-menu-item v-if="can('/interface/shard')" index="/interface/shard">分库分表配置</el-menu-item>
+          <el-menu-item v-if="can('/interface/cache')" index="/interface/cache">缓存查询管理</el-menu-item>
+        </el-menu-item-group>
+
+        <!-- 发布运维 -->
+        <el-menu-item-group
+          v-if="hasGroupInterfaceOps"
+          title="发布运维"
+          data-ux-b-group="interface-ops"
+        >
+          <el-menu-item v-if="can('/interface/list')" index="/interface/list">接口管理</el-menu-item>
+          <el-menu-item v-if="can('/interface/doc')" index="/interface/doc">接口文档</el-menu-item>
+          <el-menu-item v-if="can('/interface/import-export')" index="/interface/import-export">配置导入/导出</el-menu-item>
+        </el-menu-item-group>
+        <!-- /interface/formula 已移到"接口转换 → 转换规则"分组下 -->
       </el-sub-menu>
 
       <!-- 系统管理 -->
@@ -179,6 +203,11 @@ const hasTools     = computed(function() { return TOOLS_PATHS.some(function(p) {
 const hasGroupBaseConfig     = computed(function() { return ['/convert/template', '/convert/channel'].some(function(p) { return can(p) }) })
 const hasGroupTransformRules = computed(function() { return ['/convert/field-mapping', '/convert/field-process', '/interface/formula'].some(function(p) { return can(p) }) })
 const hasGroupPublishTest    = computed(function() { return ['/convert/port-route', '/convert/format'].some(function(p) { return can(p) }) })
+
+// Wave8：可视化接口开发的 3 小节（数据源 / 接口定义 / 发布运维）
+const hasGroupInterfaceDataSource = computed(function() { return ['/interface/db', '/interface/table'].some(function(p) { return can(p) }) })
+const hasGroupInterfaceDefine     = computed(function() { return ['/interface/dev', '/interface/insert', '/interface/update', '/interface/delete', '/interface/shard', '/interface/cache'].some(function(p) { return can(p) }) })
+const hasGroupInterfaceOps        = computed(function() { return ['/interface/list', '/interface/doc', '/interface/import-export'].some(function(p) { return can(p) }) })
 </script>
 
 <style scoped>
