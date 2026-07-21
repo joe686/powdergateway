@@ -24,8 +24,9 @@ PowerGateway 是一个低代码/零代码可视化接口开发平台，核心价
   - ✅ **REG-1**（注册中心 Nacos+Eureka + service:// 协议 + 心跳告警）· CHG-023
   - ✅ **TEST-1**（TESTER 角色 + PG 前端嵌入 modules/testkit + pg-testkit DemoDbController 骨架）· CHG-024
         · v1.1 增量：Faker 10 万条数据 + 完整 10 表 DDL + Mock 规则持久化
-  - ✅ **REL-1**（Maven profile + Caffeine 降级 + build-portable/standard.sh + jlink + release.yml + verify-artifacts.sh）· CHG-025
-        · v1.1 增量：SQLite CI job + Oracle 驱动预置 + Docker
+  - ✅ **REL-1**（Maven profile + Caffeine 降级 + build-portable/standard.sh + jlink + verify-artifacts.sh 本地冒烟）· CHG-025 + CHG-027（去 CI 化）
+        · v1.1 增量：Oracle 驱动预置 + Docker（SQLite CI job 已裁）
+        · **版本管理**：从 **v0.1.0** 起用 `git tag` 手动打版本，不走 GitHub Actions，发布走本地脚本
   - **测试规模**：完整回归 555 用例全绿（后端全阶段）+ 前端 build 通过 + pg-testkit compile 通过
 
 > `backend/CLAUDE.md` 包含后端实现细节（测试配置、Schema 约定、依赖版本）；`frontend/CLAUDE.md` 包含前端路由约定、请求链路和新增页面步骤。

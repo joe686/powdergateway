@@ -7,7 +7,7 @@
 | [产品说明书.md](./产品说明书.md) | 各 SKU 定位/规格/资源要求/功能裁剪矩阵/中间件与数据库支持（含常见问题 + 变更历史 + 版本升级） |
 
 **打包脚本源码**：见 [`scripts/build/`](../../scripts/build/)（`build-portable.sh` / `build-standard.sh` / `jlink-jre.sh` + `package-templates/`）
-**CI 发布流水线**：见 [`.github/workflows/release.yml`](../../.github/workflows/release.yml)
+**发布方式（CHG-027 起）**：单人开发模式，不使用 GitHub Actions；本地跑打包脚本 → 本地跑 [`scripts/ci/verify-artifacts.sh`](../../scripts/ci/verify-artifacts.sh) 冒烟 → `git tag v*.*.*` 标记版本（首版 v0.1.0）→ 本地分发 zip
 **打包便携版部署使用手册**：见便携版 zip 解压后的 `README.txt`
 **标准版部署手册**：见标准版 zip 解压后的 `README.md`（同源自 `scripts/build/package-templates/README-standard.md`）
 
