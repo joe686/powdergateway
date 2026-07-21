@@ -41,7 +41,8 @@ PowerGateway 是一个低代码/零代码可视化接口开发平台，核心价
 | `frontend/` | PG 前端（Vue 3 + Vite） | 5173 |
 | `pg-testkit/` | 独立测试工具，含内嵌 Mock 服务器与 `/test/*` API，供端到端链路测试和 AI 控制测试环境，详见 `pg-testkit/README.md` | 8081 / 9999 |
 
-**参考文档**（文档按需求/设计/开发/测试归到 `docs/` 子目录）：
+**参考文档**（**优先读 [`docs/README.md`](docs/README.md) 顶层索引**，按需下探）：
+- **顶层索引**（一页覆盖全景）：[`docs/README.md`](docs/README.md)
 - 详细产品需求：`docs/01-需求/可视化接口程序产品需求说明书.md`
 - 需求最小化拆分（28个交付单元）：`docs/01-需求/需求拆分与最小实现方案.md`
 - 分阶段开发计划：`docs/03-开发/开发计划.md`
@@ -52,7 +53,10 @@ PowerGateway 是一个低代码/零代码可视化接口开发平台，核心价
 - 各单元详细设计：`docs/02-设计/详细设计/`；各单元任务计划：`docs/03-开发/任务计划/`
 - **项目管理**（v0.1.0 起启用）：`docs/06-项目管理/`
   - [v0.1.0 基线](docs/06-项目管理/v0.1.0-基线.md) · [路线图](docs/06-项目管理/路线图.md) · [待办与缺陷池](docs/06-项目管理/待办与缺陷池.md)
+  - **反馈唯一入口**：[`docs/06-项目管理/反馈簿.md`](docs/06-项目管理/反馈簿.md) —— 用户追加 FB-XXX 条目，Claude 走 `pg-feedback-flow` skill 6 步流程处理
   - 版本管理：`git tag -a vX.Y.Z -m "..."` → `git push origin master vX.Y.Z`，不走 GitHub Actions（CHG-027）
+
+**用户反馈自动化流程**：当用户在会话里给出反馈（Bug / 新需求 / 视觉调整），Claude **必须**调用 `pg-feedback-flow` skill 走固定 6 步（Ingest → Triage → Plan → Execute → Archive → Release）。用户在 [反馈簿.md § 三 活跃反馈区](docs/06-项目管理/反馈簿.md#三活跃反馈区) 追加最简格式即可，其余字段由 Claude 补齐并回写状态。
 
 ## 技术栈
 
