@@ -279,10 +279,17 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
+                    <!-- REL-1 · 默认排除 nacos/eureka/sqlite（provided scope 依赖，Spring Boot 2.7 repackage
+                         默认会打包 provided scope）；profile registry-nacos/registry-full/db-sqlite 里覆盖 -->
+                    <excludeGroupIds>com.alibaba.nacos,com.netflix.eureka,com.netflix.archaius,com.netflix.servo,com.netflix.governator</excludeGroupIds>
                     <excludes>
                         <exclude>
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
+                        </exclude>
+                        <exclude>
+                            <groupId>org.xerial</groupId>
+                            <artifactId>sqlite-jdbc</artifactId>
                         </exclude>
                     </excludes>
                 </configuration>

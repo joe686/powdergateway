@@ -86,12 +86,27 @@ cp "$ROOT/backend/src/main/resources/db/init-audit.sql" "$STAGE/backend/init-sql
 
 # ── 打 zip ────────────────────────────────────────────
 echo "==== [4/4] 打 zip ===="
-cd "$DIST/staging"
 ZIP_NAME="powergateway-standard-${VERSION}.zip"
-python3 -c "
+# 优先探测真实 python（避开 Windows Store 的 stub）
+choose_python() {
+    for candidate in python python3; do
+        local path
+        path=$(command -v "$candidate" 2>/dev/null) || continue
+        if [[ "$path" == *"WindowsApps"* ]]; then continue; fi
+        if "$path" --version >/dev/null 2>&1; then echo "$path"; return 0; fi
+    done
+    return 1
+}
+PYTHON=$(choose_python) || { echo "错误：未找到可用的 python 解释器"; exit 1; }
+to_native_path() {
+    if command -v cygpath >/dev/null 2>&1; then cygpath -w "$1"; else echo "$1"; fi
+}
+DIST_NATIVE=$(to_native_path "$DIST")
+STAGE_ROOT_NATIVE=$(to_native_path "$DIST/staging")
+"$PYTHON" -c "
 import shutil
-shutil.make_archive('$DIST/${ZIP_NAME%.zip}', 'zip', '$DIST/staging', 'standard-$VERSION')
-print('产物: $DIST/$ZIP_NAME')
+shutil.make_archive(r'${DIST_NATIVE}\\${ZIP_NAME%.zip}', 'zip', r'${STAGE_ROOT_NATIVE}', r'standard-$VERSION')
+print('产物: ${DIST_NATIVE}\\${ZIP_NAME}')
 "
 
 if command -v shasum &>/dev/null; then

@@ -107,20 +107,43 @@ fi
 
 # ── 6. 打 zip ─────────────────────────────────────────
 echo "==== [5/5] 打 zip ===="
-cd "$DIST/staging"
 NAME_PREFIX=$([[ "$WITH_TESTKIT" == true ]] && echo "INTERNAL-powergateway-portable" || echo "powergateway-portable")
 ZIP_NAME="${NAME_PREFIX}-${PLATFORM}-${VERSION}.zip"
-FINAL_DIR="portable-$PLATFORM-$VERSION"
 
-# rename staging dir to match zip name convention
-if [[ -d "$FINAL_DIR" ]]; then rm -rf "$FINAL_DIR"; fi
-mv "portable-$PLATFORM-$VERSION" "$FINAL_DIR"
+# 选 python 解释器 —— Windows Store 的 python3 stub 会跳到应用商店无法用，
+# 优先探测真实 python 命令：先 python，后 python3；且验证 --version 是否是可用的解释器
+choose_python() {
+    for candidate in python python3; do
+        local path
+        path=$(command -v "$candidate" 2>/dev/null) || continue
+        # 排除 Windows Store 的 stub（位于 WindowsApps 且执行会跳应用商店）
+        if [[ "$path" == *"WindowsApps"* ]]; then continue; fi
+        # 验证是可用的 python
+        if "$path" --version >/dev/null 2>&1; then
+            echo "$path"; return 0
+        fi
+    done
+    return 1
+}
+PYTHON=$(choose_python) || { echo "错误：未找到可用的 python 解释器"; exit 1; }
 
-# 用 python 生成 zip（跨平台可用，避免依赖 zip 命令）
-python3 -c "
-import shutil, os
-shutil.make_archive('$DIST/${ZIP_NAME%.zip}', 'zip', '$DIST/staging', '$FINAL_DIR')
-print('产物: $DIST/$ZIP_NAME')
+# Git Bash 上把 POSIX 路径转 Windows 风格，供 Windows Python 识别
+to_native_path() {
+    if command -v cygpath >/dev/null 2>&1; then
+        cygpath -w "$1"
+    else
+        echo "$1"
+    fi
+}
+DIST_NATIVE=$(to_native_path "$DIST")
+STAGE_ROOT_NATIVE=$(to_native_path "$DIST/staging")
+
+# 直接用 stage 目录名打包
+STAGE_NAME="portable-$PLATFORM-$VERSION"
+"$PYTHON" -c "
+import shutil
+shutil.make_archive(r'${DIST_NATIVE}\\${ZIP_NAME%.zip}', 'zip', r'${STAGE_ROOT_NATIVE}', r'${STAGE_NAME}')
+print('产物: ${DIST_NATIVE}\\${ZIP_NAME}')
 "
 
 # 计算 sha256
