@@ -2,7 +2,10 @@ package com.powergateway;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powergateway.model.InterfaceConfig;
+import com.powergateway.model.dto.DeleteConfigJson;
+import com.powergateway.model.dto.InsertConfigJson;
 import com.powergateway.model.dto.QueryConfigJson;
+import com.powergateway.model.dto.UpdateConfigJson;
 import com.powergateway.service.codec.ExcelConfigCodec;
 import com.powergateway.service.codec.IncompatibleSchemaException;
 import com.powergateway.service.codec.InvalidExcelStructureException;
@@ -150,6 +153,98 @@ class FN11ExcelConfigCodecTest {
         assertThat(back.getCacheKeyTemplate()).isEqualTo("query:{id}");
     }
 
+    // ============ INSERT 往返 ============
+
+    @Test
+    void encode_decode_INSERT_三种数据来源_往返一致() throws Exception {
+        InterfaceConfig cfg = buildInsertConfig();
+        byte[] bytes = codec.encode(cfg);
+        InterfaceConfig back = codec.decode(new ByteArrayInputStream(bytes));
+
+        assertThat(back.getType()).isEqualTo("INSERT");
+        InsertConfigJson orig = objectMapper.readValue(cfg.getConfigJson(), InsertConfigJson.class);
+        InsertConfigJson roundTrip = objectMapper.readValue(back.getConfigJson(), InsertConfigJson.class);
+        assertThat(roundTrip.getTables()).hasSize(1);
+        assertThat(roundTrip.getTables().get(0).getTableName()).isEqualTo("m24_order");
+        assertThat(roundTrip.getTables().get(0).getFields()).hasSize(3);
+
+        InsertConfigJson.FieldInsertConfig f1 = roundTrip.getTables().get(0).getFields().get(0);
+        assertThat(f1.getColumn()).isEqualTo("user_id");
+        assertThat(f1.getSourceType()).isEqualTo("REQUEST");
+        assertThat(f1.getParamKey()).isEqualTo("userId");
+
+        InsertConfigJson.FieldInsertConfig f2 = roundTrip.getTables().get(0).getFields().get(1);
+        assertThat(f2.getColumn()).isEqualTo("status");
+        assertThat(f2.getSourceType()).isEqualTo("CONST");
+        assertThat(f2.getConstValue()).isEqualTo("PENDING");
+
+        InsertConfigJson.FieldInsertConfig f3 = roundTrip.getTables().get(0).getFields().get(2);
+        assertThat(f3.getColumn()).isEqualTo("total_price");
+        assertThat(f3.getSourceType()).isEqualTo("CALC");
+        assertThat(f3.getExpression()).isEqualTo("price*quantity");
+    }
+
+    @Test
+    void encode_INSERT_数据来源sheet存在_元数据sheet无cache字段() throws Exception {
+        byte[] bytes = codec.encode(buildInsertConfig());
+        try (Workbook wb = new XSSFWorkbook(new ByteArrayInputStream(bytes))) {
+            assertThat(wb.getSheet("数据来源")).isNotNull();
+            assertThat(wb.getSheet("字段列表")).as("INSERT 不用字段列表 sheet").isNull();
+        }
+    }
+
+    // ============ UPDATE 往返 ============
+
+    @Test
+    void encode_decode_UPDATE_多表条件_往返一致() throws Exception {
+        InterfaceConfig cfg = buildUpdateConfig();
+        byte[] bytes = codec.encode(cfg);
+        InterfaceConfig back = codec.decode(new ByteArrayInputStream(bytes));
+
+        assertThat(back.getType()).isEqualTo("UPDATE");
+        UpdateConfigJson roundTrip = objectMapper.readValue(back.getConfigJson(), UpdateConfigJson.class);
+        assertThat(roundTrip.getTables()).hasSize(1);
+        assertThat(roundTrip.getTables().get(0).getTableName()).isEqualTo("m25_product");
+        assertThat(roundTrip.getTables().get(0).getFields()).hasSize(1);
+        assertThat(roundTrip.getTables().get(0).getFields().get(0).getColumn()).isEqualTo("category");
+
+        assertThat(roundTrip.getConditions()).hasSize(1);
+        assertThat(roundTrip.getConditions().get(0).getTableName()).isEqualTo("m25_product");
+        assertThat(roundTrip.getConditions().get(0).getField()).isEqualTo("id");
+        assertThat(roundTrip.getConditions().get(0).getOp()).isEqualTo("EQ");
+        assertThat(roundTrip.getConditions().get(0).getParamKey()).isEqualTo("productId");
+    }
+
+    // ============ DELETE 往返 ============
+
+    @Test
+    void encode_decode_DELETE_每表独立条件_往返一致() throws Exception {
+        InterfaceConfig cfg = buildDeleteConfig();
+        byte[] bytes = codec.encode(cfg);
+        InterfaceConfig back = codec.decode(new ByteArrayInputStream(bytes));
+
+        assertThat(back.getType()).isEqualTo("DELETE");
+        assertThat(back.getAllowBatchDelete()).isEqualTo(1);
+        DeleteConfigJson roundTrip = objectMapper.readValue(back.getConfigJson(), DeleteConfigJson.class);
+        assertThat(roundTrip.getTables()).hasSize(1);
+        assertThat(roundTrip.getTables().get(0).getTableName()).isEqualTo("m26_log");
+        assertThat(roundTrip.getTables().get(0).getConditions()).hasSize(1);
+        DeleteConfigJson.ConditionItem c = roundTrip.getTables().get(0).getConditions().get(0);
+        assertThat(c.getField()).isEqualTo("created_at");
+        assertThat(c.getOp()).isEqualTo("LT");
+        assertThat(c.getParamKey()).isEqualTo("cutoffDate");
+    }
+
+    @Test
+    void encode_DELETE_无数据来源sheet_有条件配置sheet() throws Exception {
+        byte[] bytes = codec.encode(buildDeleteConfig());
+        try (Workbook wb = new XSSFWorkbook(new ByteArrayInputStream(bytes))) {
+            assertThat(wb.getSheet("条件配置")).isNotNull();
+            assertThat(wb.getSheet("数据来源")).as("DELETE 不用数据来源 sheet").isNull();
+            assertThat(wb.getSheet("字段列表")).as("DELETE 不用字段列表 sheet").isNull();
+        }
+    }
+
     // ============ 校验异常 ============
 
     @Test
@@ -230,6 +325,90 @@ class FN11ExcelConfigCodecTest {
         cfg.setDbConnectionId(1L);
         cfg.setStatus("draft");
         cfg.setConfigJson(objectMapper.writeValueAsString(q));
+        return cfg;
+    }
+
+    private InterfaceConfig buildInsertConfig() throws Exception {
+        InsertConfigJson insertConfig = new InsertConfigJson();
+        InsertConfigJson.TableInsertConfig t = new InsertConfigJson.TableInsertConfig();
+        t.setTableName("m24_order");
+
+        InsertConfigJson.FieldInsertConfig f1 = new InsertConfigJson.FieldInsertConfig();
+        f1.setColumn("user_id");
+        f1.setSourceType("REQUEST");
+        f1.setParamKey("userId");
+
+        InsertConfigJson.FieldInsertConfig f2 = new InsertConfigJson.FieldInsertConfig();
+        f2.setColumn("status");
+        f2.setSourceType("CONST");
+        f2.setConstValue("PENDING");
+
+        InsertConfigJson.FieldInsertConfig f3 = new InsertConfigJson.FieldInsertConfig();
+        f3.setColumn("total_price");
+        f3.setSourceType("CALC");
+        f3.setExpression("price*quantity");
+
+        t.setFields(new ArrayList<>(Arrays.asList(f1, f2, f3)));
+        insertConfig.setTables(new ArrayList<>(Collections.singletonList(t)));
+
+        InterfaceConfig cfg = new InterfaceConfig();
+        cfg.setName("新增订单");
+        cfg.setType("INSERT");
+        cfg.setDbConnectionId(1L);
+        cfg.setStatus("draft");
+        cfg.setConfigJson(objectMapper.writeValueAsString(insertConfig));
+        return cfg;
+    }
+
+    private InterfaceConfig buildUpdateConfig() throws Exception {
+        UpdateConfigJson updateConfig = new UpdateConfigJson();
+        UpdateConfigJson.TableUpdateConfig t = new UpdateConfigJson.TableUpdateConfig();
+        t.setTableName("m25_product");
+
+        InsertConfigJson.FieldInsertConfig f = new InsertConfigJson.FieldInsertConfig();
+        f.setColumn("category");
+        f.setSourceType("REQUEST");
+        f.setParamKey("category");
+        t.setFields(new ArrayList<>(Collections.singletonList(f)));
+
+        UpdateConfigJson.ConditionConfig c = new UpdateConfigJson.ConditionConfig();
+        c.setTableName("m25_product");
+        c.setField("id");
+        c.setOp("EQ");
+        c.setParamKey("productId");
+
+        updateConfig.setTables(new ArrayList<>(Collections.singletonList(t)));
+        updateConfig.setConditions(new ArrayList<>(Collections.singletonList(c)));
+
+        InterfaceConfig cfg = new InterfaceConfig();
+        cfg.setName("改商品分类");
+        cfg.setType("UPDATE");
+        cfg.setDbConnectionId(1L);
+        cfg.setStatus("draft");
+        cfg.setConfigJson(objectMapper.writeValueAsString(updateConfig));
+        return cfg;
+    }
+
+    private InterfaceConfig buildDeleteConfig() throws Exception {
+        DeleteConfigJson deleteConfig = new DeleteConfigJson();
+        DeleteConfigJson.TableDeleteConfig t = new DeleteConfigJson.TableDeleteConfig();
+        t.setTableName("m26_log");
+
+        DeleteConfigJson.ConditionItem c = new DeleteConfigJson.ConditionItem();
+        c.setField("created_at");
+        c.setOp("LT");
+        c.setParamKey("cutoffDate");
+        t.setConditions(new ArrayList<>(Collections.singletonList(c)));
+
+        deleteConfig.setTables(new ArrayList<>(Collections.singletonList(t)));
+
+        InterfaceConfig cfg = new InterfaceConfig();
+        cfg.setName("清理日志");
+        cfg.setType("DELETE");
+        cfg.setDbConnectionId(1L);
+        cfg.setStatus("draft");
+        cfg.setAllowBatchDelete(1);
+        cfg.setConfigJson(objectMapper.writeValueAsString(deleteConfig));
         return cfg;
     }
 
