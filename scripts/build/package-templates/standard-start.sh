@@ -15,6 +15,12 @@ JVM_OPTS="${JVM_OPTS:--Xms512m -Xmx2g -Dfile.encoding=UTF-8}"
 LOG_DIR="${LOG_DIR:-$BASE/logs}"
 mkdir -p "$LOG_DIR"
 
+# Git Bash 场景下把 POSIX 路径转 Windows 风格，让 Windows JVM 识别
+to_native() {
+    if command -v cygpath >/dev/null 2>&1; then cygpath -w "$1"; else echo "$1"; fi
+}
+BASE_NATIVE=$(to_native "$BASE")
+
 echo "================================================"
 echo " PowerGateway 标准版启动中..."
 echo " 配置文件: $BASE/config/application-prod.yml"
@@ -23,8 +29,8 @@ echo "================================================"
 
 nohup java $JVM_OPTS \
     -Dspring.profiles.active=prod \
-    -Dspring.config.location="file:$BASE/config/application-prod.yml" \
-    -Dloader.path="$BASE/lib" \
+    -Dspring.config.location="file:$BASE_NATIVE/config/application-prod.yml" \
+    -Dloader.path="$BASE_NATIVE/lib" \
     -jar "$BASE/powergateway-backend.jar" \
     > "$LOG_DIR/powergateway.log" 2>&1 &
 

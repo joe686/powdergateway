@@ -1,9 +1,8 @@
 -- PowerGateway 审计库初始化脚本（BUG-007/BUG-008 修复）
 -- 对应 M2-9 SQL 审计日志模块
 -- 执行前请确保数据库已创建：CREATE DATABASE IF NOT EXISTS powergateway_audit DEFAULT CHARACTER SET utf8mb4;
--- 使用方法：在审计库 powergateway_audit 中执行本脚本
-
-USE powergateway_audit;
+-- 使用方法：mysql -u root -p -D <你的审计库名> < init-audit.sql
+--        （由命令行 -D 参数指定库，本脚本不硬编码 USE 语句，便于客户自定义库名）
 
 -- SQL 审计日志表（M2-9）
 CREATE TABLE IF NOT EXISTS sql_audit_log (
