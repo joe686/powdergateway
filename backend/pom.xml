@@ -166,6 +166,20 @@
             <version>2.2.4</version>
             <scope>provided</scope>
         </dependency>
+
+        <!-- REG-1 · Eureka SDK 默认 provided scope；profile registry-full 覆盖为 compile -->
+        <dependency>
+            <groupId>com.netflix.eureka</groupId>
+            <artifactId>eureka-client</artifactId>
+            <version>1.10.18</version>
+            <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.google.inject</groupId>
+                    <artifactId>guice</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
     </dependencies>
 
     <profiles>
@@ -198,7 +212,17 @@
                     <artifactId>nacos-client</artifactId>
                     <version>2.2.4</version>
                 </dependency>
-                <!-- Eureka 依赖将在 REG-1 Task 4 补充 -->
+                <dependency>
+                    <groupId>com.netflix.eureka</groupId>
+                    <artifactId>eureka-client</artifactId>
+                    <version>1.10.18</version>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>com.google.inject</groupId>
+                            <artifactId>guice</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
             </dependencies>
         </profile>
     </profiles>
