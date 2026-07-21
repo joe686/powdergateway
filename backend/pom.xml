@@ -157,7 +157,51 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-aop</artifactId>
         </dependency>
+
+        <!-- REG-1 · Nacos SDK 默认 provided scope：main/test 都可编译引用；fat-jar 默认不带 -->
+        <!-- 打包时激活 profile registry-nacos / registry-full，scope 会被覆盖为 compile 打进 fat-jar -->
+        <dependency>
+            <groupId>com.alibaba.nacos</groupId>
+            <artifactId>nacos-client</artifactId>
+            <version>2.2.4</version>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
+
+    <profiles>
+        <!-- REG-1 · 注册中心裁剪：默认不带 SDK，最小 fat-jar -->
+        <profile>
+            <id>registry-none</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+        </profile>
+
+        <!-- 打包时带 Nacos SDK：mvn package -Pregistry-nacos -->
+        <profile>
+            <id>registry-nacos</id>
+            <dependencies>
+                <dependency>
+                    <groupId>com.alibaba.nacos</groupId>
+                    <artifactId>nacos-client</artifactId>
+                    <version>2.2.4</version>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <!-- 打包时带 Nacos + Eureka：mvn package -Pregistry-full -->
+        <profile>
+            <id>registry-full</id>
+            <dependencies>
+                <dependency>
+                    <groupId>com.alibaba.nacos</groupId>
+                    <artifactId>nacos-client</artifactId>
+                    <version>2.2.4</version>
+                </dependency>
+                <!-- Eureka 依赖将在 REG-1 Task 4 补充 -->
+            </dependencies>
+        </profile>
+    </profiles>
 
     <build>
         <plugins>
