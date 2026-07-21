@@ -70,20 +70,20 @@ class UxBMenuPermissionOrderTest {
             "/interface/list", "/interface/formula", "/interface/cache",
             "/interface/doc", "/interface/import-export",   // UX-E append
             "/system/log", "/system/stats",
-            "/tools/debug", "/tools/swagger"
+            "/tools/debug"                                   // CHG-026: /tools/swagger 收归 admin 独有
         ));
         assertEquals(expected, new HashSet<>(MenuPermission.USER_MENUS));
     }
 
     @Test
-    @DisplayName("READONLY_MENUS: 5 项集合原样保留")
-    void readonlyMenus_只含5项() {
+    @DisplayName("READONLY_MENUS: 4 项集合（CHG-026 后移除 /tools/swagger）")
+    void readonlyMenus_只含4项() {
         Set<String> expected = new HashSet<>(Arrays.asList(
             "/dashboard",
             "/interface/list", "/interface/cache",
-            "/tools/debug", "/tools/swagger"
+            "/tools/debug"                                   // CHG-026: /tools/swagger 收归 admin 独有
         ));
         assertEquals(expected, new HashSet<>(MenuPermission.READONLY_MENUS));
-        assertEquals(5, MenuPermission.READONLY_MENUS.size());
+        assertEquals(4, MenuPermission.READONLY_MENUS.size());
     }
 }

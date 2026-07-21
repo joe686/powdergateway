@@ -49,14 +49,15 @@ public class MenuPermission {
         "/interface/doc", "/interface/import-export",
         // 系统管理（user 不含 user / config）
         "/system/log", "/system/stats",
-        // 辅助工具
-        "/tools/debug", "/tools/swagger"
+        // 辅助工具（CHG-026：/tools/swagger 收归 admin 独有，此处移除）
+        "/tools/debug"
     );
 
     public static final List<String> READONLY_MENUS = Arrays.asList(
         "/dashboard",
         "/interface/list", "/interface/cache",
-        "/tools/debug", "/tools/swagger"
+        // CHG-026：/tools/swagger 收归 admin 独有，此处移除
+        "/tools/debug"
     );
 
     /**

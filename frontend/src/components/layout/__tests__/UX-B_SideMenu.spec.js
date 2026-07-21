@@ -17,6 +17,7 @@ const ADMIN_MENUS = [
   '/system/log', '/system/stats', '/system/user', '/system/config',
   '/tools/debug', '/tools/swagger'
 ]
+// CHG-026：/tools/swagger 收归 admin 独有，user / readonly 不再包含
 const USER_MENUS = [
   '/dashboard',
   '/convert/template', '/convert/channel',
@@ -26,12 +27,12 @@ const USER_MENUS = [
   '/interface/insert', '/interface/update',
   '/interface/list', '/interface/formula', '/interface/cache',
   '/system/log', '/system/stats',
-  '/tools/debug', '/tools/swagger'
+  '/tools/debug'
 ]
 const READONLY_MENUS = [
   '/dashboard',
   '/interface/list', '/interface/cache',
-  '/tools/debug', '/tools/swagger'
+  '/tools/debug'
 ]
 
 function makeRouter() {

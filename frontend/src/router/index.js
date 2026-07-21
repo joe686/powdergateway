@@ -169,10 +169,11 @@ const router = createRouter({
           meta: { title: '报文调试' }
         },
         {
+          // CHG-026：Swagger UI 走外链，页面仅做转跳提示；权限收归 admin（后端 MenuPermission）
           path: 'tools/swagger',
           name: 'SwaggerDoc',
-          component: () => import('@/views/placeholder/PlaceholderView.vue'),
-          meta: { title: '接口文档' }
+          component: () => import('@/views/tools/SwaggerRedirect.vue'),
+          meta: { title: 'Swagger 文档' }
         },
         // REG-1 注册中心管理（阶段七）
         {
