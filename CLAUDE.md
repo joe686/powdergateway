@@ -19,12 +19,14 @@ PowerGateway 是一个低代码/零代码可视化接口开发平台，核心价
 - ✅ 阶段四（M2-10、M2-8、SYS-1、SYS-2、SYS-3、SYS-4）
 - ✅ 阶段五（SYS-5 九步向导、AUX-1 报文调试、AUX-2 首页概览）
 - ✅ 阶段六（UX-A/B/C/D/E/F 全站体验重塑，2026-07-20 交付，CHG-016 ～ CHG-020）
-- 🔵 阶段七（平台支撑能力）**2026-07-22 立项 · 部分交付**：
-  - ✅ **FN-11 扩展**（导入导出 Excel/MD/PathExpression）· 2026-07-22 交付，CHG-022
-  - ✅ **REG-1**（注册中心 Nacos+Eureka + service:// 协议 + 心跳告警）· 2026-07-22 交付，CHG-023
-  - 🟡 **TEST-1**（测试工具改造）· 详细开发计划待用户批准（`docs/02-设计/详细设计/2026-07-22-TEST-1-testkit-enhance-design.md`）
-  - 🟡 **REL-1**（打包发布 · 便携版 + 标准版 + 自动 CI）· 详细开发计划待用户批准（`docs/02-设计/详细设计/2026-07-22-REL-1-release-packaging-design.md`）
-  - **测试规模**：完整回归 555 用例全绿（从阶段一至阶段七全部）
+- 🔵 阶段七（平台支撑能力）**2026-07-22 全部交付（部分 v1.1 增量）**：
+  - ✅ **FN-11 扩展**（导入导出 Excel/MD/PathExpression）· CHG-022
+  - ✅ **REG-1**（注册中心 Nacos+Eureka + service:// 协议 + 心跳告警）· CHG-023
+  - ✅ **TEST-1**（TESTER 角色 + PG 前端嵌入 modules/testkit + pg-testkit DemoDbController 骨架）· CHG-024
+        · v1.1 增量：Faker 10 万条数据 + 完整 10 表 DDL + Mock 规则持久化
+  - ✅ **REL-1**（Maven profile + Caffeine 降级 + build-portable/standard.sh + jlink + release.yml + verify-artifacts.sh）· CHG-025
+        · v1.1 增量：SQLite CI job + Oracle 驱动预置 + Docker
+  - **测试规模**：完整回归 555 用例全绿（后端全阶段）+ 前端 build 通过 + pg-testkit compile 通过
 
 > `backend/CLAUDE.md` 包含后端实现细节（测试配置、Schema 约定、依赖版本）；`frontend/CLAUDE.md` 包含前端路由约定、请求链路和新增页面步骤。
 
