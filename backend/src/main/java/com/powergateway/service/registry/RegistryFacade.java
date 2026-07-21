@@ -101,6 +101,14 @@ public class RegistryFacade {
         }
     }
 
+    /** 是否至少有一个已配置的 client。ServiceUrlResolver 用于判断"注册中心是否启用"。 */
+    public boolean hasAnyConfiguredClient() {
+        for (RegistryClient c : clients) {
+            if (c.isConfigured()) return true;
+        }
+        return false;
+    }
+
     public List<ClientStatus> statusAll() {
         List<ClientStatus> list = new ArrayList<>(clients.size());
         for (RegistryClient c : clients) {

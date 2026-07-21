@@ -11,6 +11,9 @@ import com.powergateway.model.dto.ConvertRequest;
 import com.powergateway.model.dto.DispatchRequest;
 import com.powergateway.model.dto.HeaderConfig;
 import com.powergateway.model.dto.PortRouteSaveRequest;
+import com.powergateway.service.registry.RegistryNotEnabledException;
+import com.powergateway.service.registry.ServiceInstanceNotFoundException;
+import com.powergateway.service.registry.ServiceUrlResolver;
 import com.powergateway.utils.FormatType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -56,6 +59,8 @@ public class PortRouteService {
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
     private final ObjectProvider<StringRedisTemplate> redisProvider;
+    /** REG-1 · 解析 service:// 协议为具体 http://ip:port 地址；对 http/https 直连 URL 是 no-op */
+    private final ServiceUrlResolver serviceUrlResolver;
 
     private static final String CACHE_PREFIX = "portRoute:";
     private static final long CACHE_TTL_SECONDS = 600;
@@ -297,12 +302,20 @@ public class PortRouteService {
         int maxAttempts = route.getRetryCount() != null && route.getRetryCount() > 0
                 ? route.getRetryCount() : 1;
 
+        // REG-1：service:// 协议 → 通过注册中心解析为具体 URL；http/https 直连原样返回
+        String resolvedUrl;
+        try {
+            resolvedUrl = serviceUrlResolver.resolve(route.getPortAddress());
+        } catch (RegistryNotEnabledException | ServiceInstanceNotFoundException e) {
+            throw new BusinessException(502, "服务发现失败：" + e.getMessage());
+        }
+
         HttpEntity<byte[]> entity = new HttpEntity<>(requestBytes, headers);
         Exception lastException = null;
         for (int attempt = 1; attempt <= maxAttempts; attempt++) {
             try {
                 ResponseEntity<byte[]> response = restTemplate.exchange(
-                        route.getPortAddress(),
+                        resolvedUrl,
                         HttpMethod.valueOf(method),
                         entity,
                         byte[].class);
@@ -310,9 +323,9 @@ public class PortRouteService {
             } catch (Exception e) {
                 lastException = e;
                 if (attempt < maxAttempts) {
-                    log.warn("转发第{}次失败，准备重试，url={}, error={}", attempt, route.getPortAddress(), e.getMessage());
+                    log.warn("转发第{}次失败，准备重试，url={}, error={}", attempt, resolvedUrl, e.getMessage());
                 } else {
-                    log.error("转发失败（已重试{}次），url={}, error={}", maxAttempts, route.getPortAddress(), e.getMessage());
+                    log.error("转发失败（已重试{}次），url={}, error={}", maxAttempts, resolvedUrl, e.getMessage());
                 }
             }
         }
@@ -416,6 +429,12 @@ public class PortRouteService {
         }
         if (req.getPortAddress() == null || req.getPortAddress().trim().isEmpty()) {
             throw new BusinessException(400, "目标端口地址 portAddress 不能为空");
+        }
+        // REG-1：service:// 协议要求服务名能被至少一个已配置的注册中心发现
+        String addr = req.getPortAddress().trim();
+        if (addr.startsWith("service://") && !serviceUrlResolver.canResolve(addr)) {
+            throw new BusinessException(400,
+                    "指定的服务名在已配置的注册中心中无法发现，请先到「辅助工具 → 注册中心管理」添加注册中心并确认对方服务名。地址：" + addr);
         }
     }
 
