@@ -160,6 +160,17 @@
         <el-menu-item v-if="can('/tools/registry')" index="/tools/registry">注册中心管理</el-menu-item>
         <el-menu-item v-if="can('/tools/swagger')" index="/tools/swagger">Swagger 文档</el-menu-item>
       </el-sub-menu>
+
+      <!-- TEST-1 测试环境（仅 TESTER 角色可见） -->
+      <el-sub-menu v-if="hasTestkit" index="testkit">
+        <template #title>
+          <el-icon><Tools /></el-icon>
+          <span>测试环境</span>
+        </template>
+        <el-menu-item v-if="can('/testkit/demo-db')" index="/testkit/demo-db">样例数据库管理</el-menu-item>
+        <el-menu-item v-if="can('/testkit/mock-rules')" index="/testkit/mock-rules">Mock 后端规则</el-menu-item>
+        <el-menu-item v-if="can('/testkit/mock-history')" index="/testkit/mock-history">Mock 请求历史</el-menu-item>
+      </el-sub-menu>
     </el-menu>
   </div>
 </template>
@@ -195,11 +206,13 @@ var INTERFACE_PATHS = ['/interface/wizard', '/interface/db', '/interface/table',
                        '/interface/list', '/interface/shard', '/interface/cache']
 var SYSTEM_PATHS   = ['/system/log', '/system/stats', '/system/user', '/system/config']
 var TOOLS_PATHS    = ['/tools/debug', '/tools/swagger', '/interface/doc', '/interface/import-export', '/tools/registry']
+var TESTKIT_PATHS  = ['/testkit/demo-db', '/testkit/mock-rules', '/testkit/mock-history']
 
 const hasConvert   = computed(function() { return CONVERT_PATHS.some(function(p) { return can(p) }) })
 const hasInterface = computed(function() { return INTERFACE_PATHS.some(function(p) { return can(p) }) })
 const hasSystem    = computed(function() { return SYSTEM_PATHS.some(function(p) { return can(p) }) })
 const hasTools     = computed(function() { return TOOLS_PATHS.some(function(p) { return can(p) }) })
+const hasTestkit   = computed(function() { return TESTKIT_PATHS.some(function(p) { return can(p) }) })
 
 const hasGroupBaseConfig     = computed(function() { return ['/convert/template', '/convert/channel'].some(function(p) { return can(p) }) })
 const hasGroupTransformRules = computed(function() { return ['/convert/field-mapping', '/convert/field-process', '/interface/formula'].some(function(p) { return can(p) }) })

@@ -80,6 +80,7 @@ public class AuthService {
             case "admin":    menus = new ArrayList<>(MenuPermission.ADMIN_MENUS); break;
             case "user":     menus = new ArrayList<>(MenuPermission.USER_MENUS);  break;
             case "readonly": menus = new ArrayList<>(MenuPermission.READONLY_MENUS); break;
+            case "tester":   menus = new ArrayList<>(MenuPermission.TESTER_MENUS); break;
             default:         menus = new ArrayList<>(MenuPermission.READONLY_MENUS); break;
         }
 

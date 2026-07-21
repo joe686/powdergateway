@@ -59,6 +59,16 @@ public class MenuPermission {
         "/tools/debug", "/tools/swagger"
     );
 
+    /**
+     * TEST-1 · TESTER 角色专属菜单（独立于 ADMIN/USER/READONLY）
+     * 仅内含测试模块相关路由，生产环境不预置 tester 用户则完全不可达
+     */
+    public static final List<String> TESTER_MENUS = Arrays.asList(
+        "/dashboard",
+        "/testkit/demo-db", "/testkit/mock-rules", "/testkit/mock-history",
+        "/interface/list", "/tools/debug"
+    );
+
     /** sys_config 日志菜单开关的 key */
     public static final String LOG_MENU_CONFIG_KEY = "log_menu_enabled";
     /** 受开关控制的菜单路由 */

@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useUserStore } from '@/store/user'
+import testkitRoutes from '@/modules/testkit/router.js'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -180,6 +181,8 @@ const router = createRouter({
           component: () => import('@/views/tools/RegistryManagement.vue'),
           meta: { title: '注册中心管理' }
         },
+        // TEST-1 测试模块（阶段七，仅 TESTER 角色可见；生产不预置 tester 用户则不可达）
+        ...testkitRoutes,
         // FN-09 接口文档（UX-E）
         {
           path: 'interface/doc',
