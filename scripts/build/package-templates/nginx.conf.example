@@ -1,0 +1,40 @@
+# PowerGateway 标准版 Nginx 反代配置模板
+# 用途：Nginx 部署 frontend/dist 静态资源 + 反代 /api/* 到后端 Spring Boot 8080
+
+server {
+    listen 80;
+    server_name powergateway.example.com;
+
+    # 前端静态资源根目录
+    root /opt/powergateway/frontend/dist;
+    index index.html;
+
+    # 客户端最大上传体积（导入 excel/zip 用）
+    client_max_body_size 100M;
+
+    # SPA fallback
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # API 反代到 backend
+    location /api {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # Blob 下载/大文件超时
+        proxy_read_timeout 300s;
+        proxy_send_timeout 300s;
+    }
+
+    # Swagger 文档（若生产开启则同样反代）
+    location /swagger-ui/ {
+        proxy_pass http://127.0.0.1:8080;
+    }
+    location /v3/api-docs {
+        proxy_pass http://127.0.0.1:8080;
+    }
+}

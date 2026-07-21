@@ -1,0 +1,60 @@
+# PowerGateway 标准版生产配置模板
+# 复制本文件为 application-prod.yml 并填写实际连接信息
+
+server:
+  port: 8080
+
+spring:
+  application:
+    name: powergateway
+  datasource:
+    dynamic:
+      primary: master
+      strict: false
+      datasource:
+        master:
+          # MySQL 示例（Oracle/OceanBase 修改 url 和 driver-class-name）
+          url: jdbc:mysql://YOUR_MYSQL_HOST:3306/powergateway_config?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf8
+          username: YOUR_USER
+          password: YOUR_PASSWORD
+          driver-class-name: com.mysql.cj.jdbc.Driver
+        audit:
+          url: jdbc:mysql://YOUR_MYSQL_HOST:3306/powergateway_audit?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf8
+          username: YOUR_USER
+          password: YOUR_PASSWORD
+          driver-class-name: com.mysql.cj.jdbc.Driver
+  redis:
+    host: YOUR_REDIS_HOST
+    port: 6379
+    timeout: 3000ms
+
+# 若无 Redis 环境，改为 false 即可降级到 Caffeine-only 单层缓存
+pg:
+  cache:
+    redis:
+      enabled: true
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+powergateway:
+  aes:
+    key: PleaseChangeThisKey!  # 建议改成 16 位随机字符串；改动前的历史密文需重新加密
+
+sa-token:
+  token-name: satoken
+  timeout: 86400
+  is-concurrent: true
+  is-share: true
+  token-style: uuid
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: false             # 生产环境建议关闭 Swagger 页面

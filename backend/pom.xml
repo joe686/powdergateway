@@ -138,11 +138,19 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
-        <!-- H2 内存库（测试专用，避免测试依赖外部 MySQL/Redis） -->
+        <!-- H2 内存库（测试专用；REL-1 便携版 db-h2 profile 打包时覆盖为 compile scope） -->
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
             <scope>test</scope>
+        </dependency>
+
+        <!-- REL-1 · SQLite 驱动，默认 provided；db-sqlite profile 打包时覆盖为 compile -->
+        <dependency>
+            <groupId>org.xerial</groupId>
+            <artifactId>sqlite-jdbc</artifactId>
+            <version>3.44.0.0</version>
+            <scope>provided</scope>
         </dependency>
 
         <!-- Apache POI（M2-2 Excel 导出） -->
@@ -199,6 +207,44 @@
                     <groupId>com.alibaba.nacos</groupId>
                     <artifactId>nacos-client</artifactId>
                     <version>2.2.4</version>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <!-- REL-1 · 便携版内嵌数据库：默认 db-h2（H2 已内建），可切 db-sqlite -->
+        <profile>
+            <id>db-h2</id>
+            <dependencies>
+                <!-- 覆盖默认 test scope 为 compile，打包时进 fat-jar -->
+                <dependency>
+                    <groupId>com.h2database</groupId>
+                    <artifactId>h2</artifactId>
+                    <scope>compile</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>db-sqlite</id>
+            <dependencies>
+                <!-- 覆盖默认 provided 为 compile -->
+                <dependency>
+                    <groupId>org.xerial</groupId>
+                    <artifactId>sqlite-jdbc</artifactId>
+                    <version>3.44.0.0</version>
+                    <scope>compile</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <!-- REL-1 · 便携版组合打包套件：H2 + Caffeine-only + 前端合体 -->
+        <profile>
+            <id>portable</id>
+            <dependencies>
+                <dependency>
+                    <groupId>com.h2database</groupId>
+                    <artifactId>h2</artifactId>
+                    <scope>compile</scope>
                 </dependency>
             </dependencies>
         </profile>

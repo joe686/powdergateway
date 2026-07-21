@@ -35,6 +35,8 @@ public class CacheConfig {
      */
     @Bean("cacheRedisTemplate")
     @Profile("!test")
+    @org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(
+            name = "pg.cache.redis.enabled", havingValue = "true", matchIfMissing = true)
     public RedisTemplate<String, Object> cacheRedisTemplate(RedisConnectionFactory factory) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(factory);
