@@ -123,6 +123,25 @@ CREATE TABLE IF NOT EXISTS port_route (
   create_time          DATETIME     DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 10. 注册中心配置表（REG-1）
+CREATE TABLE IF NOT EXISTS registry_config (
+  id             BIGINT PRIMARY KEY AUTO_INCREMENT,
+  type           VARCHAR(32)  NOT NULL COMMENT 'nacos/eureka',
+  name           VARCHAR(64)  NOT NULL COMMENT '用户起的别名',
+  server_addr    VARCHAR(512) NOT NULL COMMENT 'nacos: host:port,host:port；eureka: http://host:port/eureka/',
+  namespace      VARCHAR(64)  COMMENT 'nacos 命名空间（可空）',
+  group_name     VARCHAR(64)  DEFAULT 'DEFAULT_GROUP' COMMENT 'nacos 分组',
+  username       VARCHAR(64),
+  password       VARCHAR(512) COMMENT 'AES 加密',
+  enabled        TINYINT      DEFAULT 1 COMMENT '是否启用',
+  register_self  TINYINT      DEFAULT 1 COMMENT '是否把 PG 自身注册进去',
+  service_name   VARCHAR(64)  DEFAULT 'POWERGATEWAY' COMMENT '自注册服务名，可覆盖 sys_config.registry.self.service_name',
+  extra_metadata TEXT         COMMENT '注册携带的额外元数据 JSON',
+  deleted        TINYINT      DEFAULT 0,
+  create_time    DATETIME     DEFAULT CURRENT_TIMESTAMP,
+  update_time    DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
 -- 8. 系统配置表（KV）
 CREATE TABLE IF NOT EXISTS sys_config (
   config_key VARCHAR(128) PRIMARY KEY,
@@ -149,7 +168,11 @@ INSERT IGNORE INTO sys_config (config_key, config_value, description, value_type
 ('sql.log.retention.days',  '90',   'SQL 日志保留天数',             'number',  '日志配置'),
 ('log_menu_enabled',        'true', '日志管理菜单显示开关',         'boolean', '日志配置'),
 ('alert_fail_rate',         '5',    '告警失败率阈值（%）',          'number',  '告警配置'),
-('alert_response_ms',       '1000', '告警响应时间阈值（ms）',       'number',  '告警配置');
+('alert_response_ms',       '1000', '告警响应时间阈值（ms）',       'number',  '告警配置'),
+('registry.self.service_name',         'POWERGATEWAY', '本机注册到注册中心时使用的服务名（REG-1）', 'string',  '注册中心'),
+('registry.self.ip.override',          '',             '注册时上报的 IP，空则自动探测（REG-1）',   'string',  '注册中心'),
+('registry.heartbeat.interval.seconds','5',            '注册中心心跳间隔（秒，REG-1）',              'number',  '注册中心'),
+('registry.heartbeat.fail.threshold',  '3',            '连续心跳失败多少次触发告警（REG-1）',       'number',  '注册中心');
 
 -- ========== 审计库表（M2-9）：在独立 powergateway_audit 库中建表 ==========
 -- 注意：审计表 DDL 已拆分到独立文件 init-audit.sql（BUG-007/BUG-008 修复）
