@@ -22,7 +22,7 @@ public class UserService {
     private SysUserMapper sysUserMapper;
 
     private static final BCryptPasswordEncoder PASSWORD_ENCODER = new BCryptPasswordEncoder();
-    private static final List<String> VALID_ROLES = Arrays.asList("admin", "user", "readonly");
+    private static final List<String> VALID_ROLES = Arrays.asList("admin", "user", "readonly", "tester");
 
     /** page/size 参数预留给将来分页，当前返回全量（与项目其他 list 接口一致）。 */
     public List<UserVO> list(String username, int page, int size) {
@@ -38,7 +38,7 @@ public class UserService {
 
     public Long save(UserSaveRequest req) {
         if (req.getRole() != null && !VALID_ROLES.contains(req.getRole())) {
-            throw new BusinessException(400, "角色无效，只允许：admin、user、readonly");
+            throw new BusinessException(400, "角色无效，只允许：admin、user、readonly、tester");
         }
 
         if (req.getId() == null) {
