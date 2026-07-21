@@ -2,14 +2,25 @@
   <div class="sys-config-page">
     <div class="page-header">
       <span class="title">系统配置</span>
-      <el-button
-        type="primary"
-        :loading="saving"
-        :disabled="!isAdmin"
-        @click="handleSave"
-      >
-        保存
-      </el-button>
+      <div>
+        <!-- REG-1 · 手动重新注册本机到所有已启用注册中心 -->
+        <el-button
+          :loading="reregistering"
+          :disabled="!isAdmin"
+          @click="confirmReregister"
+          style="margin-right: 8px"
+        >
+          重新注册本机
+        </el-button>
+        <el-button
+          type="primary"
+          :loading="saving"
+          :disabled="!isAdmin"
+          @click="handleSave"
+        >
+          保存
+        </el-button>
+      </div>
     </div>
 
     <el-card
@@ -52,10 +63,35 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { useUserStore } from '@/store/user'
 import { getAllConfig, updateConfig } from '@/api/sysConfig'
 import { sanitize, isGarbled } from '@/utils/textSanitizer'
+import { reregisterSelf } from '@/api/registry'
+
+const reregistering = ref(false)
+async function confirmReregister() {
+  try {
+    await ElMessageBox.confirm(
+      '确定重新注册本机到所有已启用的注册中心？该操作会向注册中心重新发送本机实例信息。',
+      '重新注册确认',
+      { type: 'info' }
+    )
+  } catch { return }
+  reregistering.value = true
+  try {
+    const triggered = await reregisterSelf()
+    if (triggered) {
+      ElMessage.success('已触发重新注册，各注册中心状态请稍后到「辅助工具 → 注册中心管理」查看')
+    } else {
+      ElMessage.warning('未启用任何注册中心，请先到「辅助工具 → 注册中心管理」新增')
+    }
+  } catch (e) {
+    ElMessage.error('重新注册失败：' + (e?.message || e))
+  } finally {
+    reregistering.value = false
+  }
+}
 
 const userStore = useUserStore()
 const isAdmin = computed(() => userStore.role === 'admin')

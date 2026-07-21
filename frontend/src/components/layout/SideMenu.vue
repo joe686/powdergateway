@@ -157,6 +157,7 @@
         <el-menu-item v-if="can('/tools/debug')" index="/tools/debug">报文调试</el-menu-item>
         <el-menu-item v-if="can('/interface/doc')" index="/interface/doc">接口文档</el-menu-item>
         <el-menu-item v-if="can('/interface/import-export')" index="/interface/import-export">配置导入/导出</el-menu-item>
+        <el-menu-item v-if="can('/tools/registry')" index="/tools/registry">注册中心管理</el-menu-item>
         <el-menu-item v-if="can('/tools/swagger')" index="/tools/swagger">Swagger 文档</el-menu-item>
       </el-sub-menu>
     </el-menu>
@@ -193,7 +194,7 @@ var INTERFACE_PATHS = ['/interface/wizard', '/interface/db', '/interface/table',
                        '/interface/insert', '/interface/update', '/interface/delete',
                        '/interface/list', '/interface/shard', '/interface/cache']
 var SYSTEM_PATHS   = ['/system/log', '/system/stats', '/system/user', '/system/config']
-var TOOLS_PATHS    = ['/tools/debug', '/tools/swagger', '/interface/doc', '/interface/import-export']
+var TOOLS_PATHS    = ['/tools/debug', '/tools/swagger', '/interface/doc', '/interface/import-export', '/tools/registry']
 
 const hasConvert   = computed(function() { return CONVERT_PATHS.some(function(p) { return can(p) }) })
 const hasInterface = computed(function() { return INTERFACE_PATHS.some(function(p) { return can(p) }) })

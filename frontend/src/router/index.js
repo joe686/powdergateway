@@ -173,6 +173,13 @@ const router = createRouter({
           component: () => import('@/views/placeholder/PlaceholderView.vue'),
           meta: { title: '接口文档' }
         },
+        // REG-1 注册中心管理（阶段七）
+        {
+          path: 'tools/registry',
+          name: 'RegistryManagement',
+          component: () => import('@/views/tools/RegistryManagement.vue'),
+          meta: { title: '注册中心管理' }
+        },
         // FN-09 接口文档（UX-E）
         {
           path: 'interface/doc',

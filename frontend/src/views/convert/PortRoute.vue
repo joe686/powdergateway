@@ -110,11 +110,15 @@
           <div class="field-tip">选择已有渠道，或直接输入新渠道编码；编辑时不可修改</div>
         </el-form-item>
         <el-form-item label="转发地址" prop="portAddress">
-          <el-input
-            v-model="form.portAddress"
-            placeholder="如：http://api.partner.com:8080/v1/pay"
-          />
-          <div class="field-tip">目标系统完整 URL，含协议、主机、端口和路径</div>
+          <div style="display:flex; gap:8px; width:100%">
+            <el-input
+              v-model="form.portAddress"
+              placeholder="如：http://api.partner.com:8080/v1/pay 或 service://CBS_SVC/api"
+              style="flex:1"
+            />
+            <el-button @click="openServicePicker">选择服务</el-button>
+          </div>
+          <div class="field-tip">目标系统完整 URL；或用 service://SERVICE_NAME/path 从已配置的注册中心动态发现</div>
         </el-form-item>
         <el-form-item label="HTTP方法" prop="portMethod">
           <el-select v-model="form.portMethod" style="width: 100%">
@@ -232,6 +236,13 @@
         <el-button type="primary" :loading="saving" @click="handleSave">保存</el-button>
       </template>
     </el-dialog>
+
+    <!-- REG-1 · 服务选择弹窗 -->
+    <ServicePickerDialog
+      v-model="servicePickerVisible"
+      :initial-service-name="servicePickerInitial"
+      @pick="onServicePicked"
+    />
   </div>
 </template>
 
@@ -243,6 +254,33 @@ import { listPortRoutes, savePortRoute, deletePortRoute, testPortConnectivity, e
 import { listChannels } from '@/api/channel'
 import { listTemplates } from '@/api/template'
 import { downloadBlob } from '@/utils/download'
+import ServicePickerDialog from './ServicePickerDialog.vue'
+
+// REG-1 · 选择服务弹窗
+const servicePickerVisible = ref(false)
+const servicePickerInitial = ref('')
+function openServicePicker() {
+  const addr = (form.value.portAddress || '').trim()
+  if (addr.startsWith('service://')) {
+    const rest = addr.substring('service://'.length)
+    const slash = rest.indexOf('/')
+    servicePickerInitial.value = slash < 0 ? rest : rest.substring(0, slash)
+  } else {
+    servicePickerInitial.value = ''
+  }
+  servicePickerVisible.value = true
+}
+function onServicePicked(payload) {
+  // 保留原有 path 部分（若有），只替换 host:port
+  const addr = (form.value.portAddress || '').trim()
+  let path = ''
+  if (addr.startsWith('service://')) {
+    const rest = addr.substring('service://'.length)
+    const slash = rest.indexOf('/')
+    if (slash >= 0) path = rest.substring(slash)
+  }
+  form.value.portAddress = 'service://' + payload.serviceName + (path || '/')
+}
 
 // ─────────────────────── 列表数据 ───────────────────────
 const loading = ref(false)
