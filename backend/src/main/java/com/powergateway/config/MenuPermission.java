@@ -66,7 +66,7 @@ public class MenuPermission {
     public static final List<String> TESTER_MENUS = Arrays.asList(
         "/dashboard",
         "/testkit/demo-db", "/testkit/mock-rules", "/testkit/mock-history",
-        "/interface/list", "/tools/debug"
+        "/tools/debug"
     );
 
     /** sys_config 日志菜单开关的 key */
