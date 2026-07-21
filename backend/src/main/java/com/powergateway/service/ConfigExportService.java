@@ -4,6 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powergateway.exception.BusinessException;
 import com.powergateway.model.ConvertTemplate;
 import com.powergateway.model.InterfaceConfig;
+import com.powergateway.service.codec.ExcelConfigCodec;
+import com.powergateway.service.codec.ExcelTemplateCodec;
+import com.powergateway.service.codec.MarkdownConfigCodec;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +29,103 @@ public class ConfigExportService {
     private final TemplateService templateService;
     private final InterfaceConfigService interfaceService;
     private final ObjectMapper objectMapper;
+    private final ExcelConfigCodec excelConfigCodec;
+    private final ExcelTemplateCodec excelTemplateCodec;
+    private final MarkdownConfigCodec markdownConfigCodec;
+
+    // ============================================================
+    // FN-11 Task 5 · 按 ID 列表导出 Excel / Markdown（新增端点用）
+    // ============================================================
+
+    private static final DateTimeFormatter FILE_TS = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
+
+    /** 导出接口配置 excel：单 ID 返回单 xlsx；多 ID 打包成 zip。 */
+    public ExportResult exportInterfaceItems(List<Long> ids, ExportFormat format) {
+        if (ids == null || ids.isEmpty()) {
+            throw new BusinessException(400, "ids 不能为空");
+        }
+        Map<String, byte[]> files = new LinkedHashMap<>();
+        String ext = format == ExportFormat.EXCEL ? ".xlsx" : ".md";
+        for (Long id : ids) {
+            InterfaceConfig cfg = interfaceService.getById(id);
+            if (cfg == null) continue;
+            String fileName = sanitize(cfg.getType()) + "_" + sanitize(cfg.getName()) + "_"
+                    + LocalDateTime.now().format(FILE_TS) + ext;
+            byte[] bytes = format == ExportFormat.EXCEL
+                    ? excelConfigCodec.encode(cfg)
+                    : markdownConfigCodec.encodeInterface(cfg).getBytes(StandardCharsets.UTF_8);
+            files.put(fileName, bytes);
+        }
+        return finalizeExport(files, ext, format);
+    }
+
+    /** 导出转换模板 excel/markdown：单 ID 返回单文件；多 ID 打包成 zip。 */
+    public ExportResult exportTemplateItems(List<Long> ids, ExportFormat format) {
+        if (ids == null || ids.isEmpty()) {
+            throw new BusinessException(400, "ids 不能为空");
+        }
+        Map<String, byte[]> files = new LinkedHashMap<>();
+        String ext = format == ExportFormat.EXCEL ? ".xlsx" : ".md";
+        for (Long id : ids) {
+            ConvertTemplate t = templateService.getById(id);
+            if (t == null) continue;
+            String fileName = "TEMPLATE_" + sanitize(t.getName()) + "_"
+                    + sanitize(t.getSrcFormat()) + "to" + sanitize(t.getTargetFormat()) + "_"
+                    + LocalDateTime.now().format(FILE_TS) + ext;
+            byte[] bytes = format == ExportFormat.EXCEL
+                    ? excelTemplateCodec.encode(t)
+                    : markdownConfigCodec.encodeTemplate(t).getBytes(StandardCharsets.UTF_8);
+            files.put(fileName, bytes);
+        }
+        return finalizeExport(files, ext, format);
+    }
+
+    private ExportResult finalizeExport(Map<String, byte[]> files, String ext, ExportFormat format) {
+        if (files.isEmpty()) {
+            throw new BusinessException(404, "未找到任何指定 id 对应的记录");
+        }
+        if (files.size() == 1) {
+            Map.Entry<String, byte[]> only = files.entrySet().iterator().next();
+            String contentType = format == ExportFormat.EXCEL
+                    ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    : "text/markdown; charset=utf-8";
+            return new ExportResult(only.getKey(), only.getValue(), contentType);
+        }
+        // 多文件打 zip
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream();
+             ZipOutputStream zos = new ZipOutputStream(out)) {
+            for (Map.Entry<String, byte[]> e : files.entrySet()) {
+                zos.putNextEntry(new ZipEntry(e.getKey()));
+                zos.write(e.getValue());
+                zos.closeEntry();
+            }
+            zos.finish();
+            String zipName = "PowerGateway_" + (format == ExportFormat.EXCEL ? "excel" : "markdown")
+                    + "_" + LocalDateTime.now().format(FILE_TS) + ".zip";
+            return new ExportResult(zipName, out.toByteArray(), "application/zip");
+        } catch (Exception e) {
+            throw new BusinessException(500, "打包 zip 失败: " + e.getMessage());
+        }
+    }
+
+    private String sanitize(String s) {
+        if (s == null || s.isEmpty()) return "unknown";
+        // 非法文件名字符替换为下划线
+        return s.replaceAll("[\\\\/:*?\"<>|\\s]", "_");
+    }
+
+    public enum ExportFormat { EXCEL, MARKDOWN }
+
+    public static class ExportResult {
+        public final String fileName;
+        public final byte[] data;
+        public final String contentType;
+        public ExportResult(String fileName, byte[] data, String contentType) {
+            this.fileName = fileName;
+            this.data = data;
+            this.contentType = contentType;
+        }
+    }
 
     /**
      * 导出全部最新版本模板 + 所有接口配置为 zip 包。
