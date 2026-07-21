@@ -19,5 +19,9 @@
 | 2026-05-14 | [sys5-interface-wizard-design.md](./2026-05-14-sys5-interface-wizard-design.md) | SYS-5 九步接口配置向导 |
 | 2026-05-15 | [aux1-message-debug-design.md](./2026-05-15-aux1-message-debug-design.md) | AUX-1 报文调试工具 |
 | 2026-05-20 | [AUX-2-design.md](./2026-05-20-AUX-2-design.md) | AUX-2 首页概览 |
+| 2026-07-21 | [FN-11-导入导出扩展方案.md](./FN-11-导入导出扩展方案.md) | FN-11 扩展 · 配置导入导出（阶段七） |
+| 2026-07-21 | [REG-1-注册中心集成方案.md](./REG-1-注册中心集成方案.md) | REG-1 · 注册中心集成（阶段七） |
+| 2026-07-22 | [2026-07-22-TEST-1-testkit-enhance-design.md](./2026-07-22-TEST-1-testkit-enhance-design.md) | TEST-1 · 测试工具改造（阶段七 · 待用户批准） |
+| 2026-07-22 | [2026-07-22-REL-1-release-packaging-design.md](./2026-07-22-REL-1-release-packaging-design.md) | REL-1 · 打包发布形态（阶段七 · 待用户批准） |
 
 每份 design 对应的实现计划在 [../../03-开发/任务计划/](../../03-开发/任务计划/) 下同日期文件。

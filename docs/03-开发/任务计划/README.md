@@ -19,3 +19,5 @@
 | 2026-05-14 | [sys5-interface-wizard.md](./2026-05-14-sys5-interface-wizard.md) | SYS-5 九步接口配置向导 |
 | 2026-05-15 | [aux1-message-debug.md](./2026-05-15-aux1-message-debug.md) | AUX-1 报文调试工具 |
 | 2026-05-20 | [AUX-2.md](./2026-05-20-AUX-2.md) | AUX-2 首页概览 |
+| 2026-07-22 | [2026-07-22-FN-11-import-export.md](./2026-07-22-FN-11-import-export.md) | FN-11 扩展 · 配置导入导出（Excel/Markdown/菜单合并） |
+| 2026-07-22 | [2026-07-22-REG-1-registry.md](./2026-07-22-REG-1-registry.md) | REG-1 · 注册中心集成（Nacos + Eureka） |
