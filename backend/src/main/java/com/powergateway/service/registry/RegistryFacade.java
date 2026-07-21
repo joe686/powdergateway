@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -30,7 +31,20 @@ public class RegistryFacade {
 
     @Autowired
     public RegistryFacade(List<RegistryClient> clients) {
-        this.clients = clients == null ? Collections.emptyList() : clients;
+        // 用 CopyOnWriteArrayList 支持运行时 add/remove（Controller 保存 registry_config 后 reload）
+        this.clients = new CopyOnWriteArrayList<>(clients == null ? Collections.emptyList() : clients);
+    }
+
+    /** REG-1 Task 7 · 供 RegistryClientRegistrar reload 时动态添加 client */
+    public void addClient(RegistryClient client) {
+        clients.add(client);
+    }
+
+    /** REG-1 Task 7 · 供 RegistryClientRegistrar reload 时先清空再重新添加 */
+    public void clearAllClients() {
+        clients.clear();
+        healthMap.clear();
+        rrCursors.clear();
     }
 
     public void registerSelfToAll(ServiceInstance self) {

@@ -28,8 +28,8 @@ public class MenuPermission {
         "/interface/doc", "/interface/import-export",
         // 系统管理
         "/system/log", "/system/stats", "/system/user", "/system/config",
-        // 辅助工具
-        "/tools/debug", "/tools/swagger"
+        // 辅助工具（REG-1 追加 /tools/registry；FN-11 追加 /tools/docs 未来 Task 5/6 时启用）
+        "/tools/debug", "/tools/swagger", "/tools/registry"
     );
 
     public static final List<String> USER_MENUS = Arrays.asList(

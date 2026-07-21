@@ -8,6 +8,7 @@ import com.powergateway.service.registry.RegistryFacade;
 import com.powergateway.service.registry.RegistryHeartbeatScheduler;
 import com.powergateway.service.registry.SelfRegistrationRunner;
 import com.powergateway.service.registry.ServiceInstance;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,9 +16,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -45,11 +48,16 @@ class REG1HeartbeatAlertTest {
     @BeforeEach
     void setUp() {
         nacos = new MockRegistryClient("nacos", "TestNacos");
-        // 反射把 mock client 塞进 Facade（避免污染 Spring 容器）
-        ReflectionTestUtils.setField(facade, "clients", Collections.singletonList(nacos));
-        // 清空告警记忆（每次测试独立）
-        // healthMap 用同样反射清空
-        ReflectionTestUtils.getField(facade, "healthMap");
+        // 反射把 mock client 塞进 Facade —— 必须用可变 List，因为后续 Task 7 有 addClient/clearAll 操作
+        List<com.powergateway.service.registry.RegistryClient> mutable = new CopyOnWriteArrayList<>();
+        mutable.add(nacos);
+        ReflectionTestUtils.setField(facade, "clients", mutable);
+    }
+
+    @AfterEach
+    void tearDown() {
+        // 恢复 Facade 到空状态，避免污染其他测试类共享的 Spring 单例
+        ReflectionTestUtils.setField(facade, "clients", new CopyOnWriteArrayList<>());
     }
 
     // ============ SelfRegistrationRunner ============
@@ -63,7 +71,7 @@ class REG1HeartbeatAlertTest {
 
     @Test
     void reregisterSelf_registry未启用_返回false() {
-        ReflectionTestUtils.setField(facade, "clients", Collections.emptyList());
+        ReflectionTestUtils.setField(facade, "clients", new CopyOnWriteArrayList<>());
         boolean triggered = selfRegistrationRunner.reregisterSelf();
         assertThat(triggered).isFalse();
     }
@@ -139,7 +147,7 @@ class REG1HeartbeatAlertTest {
 
     @Test
     void tick_registry未启用_直接返回_不查告警() {
-        ReflectionTestUtils.setField(facade, "clients", Collections.emptyList());
+        ReflectionTestUtils.setField(facade, "clients", new CopyOnWriteArrayList<>());
         PerfAlertMapper mockMapper = mock(PerfAlertMapper.class);
         RegistryHeartbeatScheduler scheduler = new RegistryHeartbeatScheduler(facade, sysConfigService, mockMapper);
 

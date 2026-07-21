@@ -39,10 +39,11 @@ class UxBMenuPermissionOrderTest {
             "/interface/list", "/interface/shard", "/interface/formula", "/interface/cache",
             "/interface/doc", "/interface/import-export",   // UX-E append
             "/system/log", "/system/stats", "/system/user", "/system/config",
-            "/tools/debug", "/tools/swagger"
+            "/tools/debug", "/tools/swagger",
+            "/tools/registry"                                // REG-1 append
         ));
         assertEquals(expected, new HashSet<>(MenuPermission.ADMIN_MENUS));
-        assertEquals(27, MenuPermission.ADMIN_MENUS.size(), "ADMIN 白名单元素个数 = 24 SYS-3 基线 + 3 UX-D/E 新增");
+        assertEquals(28, MenuPermission.ADMIN_MENUS.size(), "ADMIN 白名单元素个数 = 24 SYS-3 基线 + 3 UX-D/E + 1 REG-1");
     }
 
     @Test
