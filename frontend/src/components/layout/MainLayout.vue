@@ -24,11 +24,25 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import SideMenu from './SideMenu.vue'
 import TopBar from './TopBar.vue'
+import { getMenuPermissions } from '@/api/auth'
+import { useUserStore } from '@/store/user'
 
 const isCollapsed = ref(false)
+
+// FB-037: MainLayout 挂载即校验 token 有效性
+// 覆盖 localStorage 残留旧 token 场景：token 存在让路由守卫放行进业务页，
+// 但服务端已失效。主动拉一次 menu 探测，失败由 request.js 拦截器 401 分支自动清 store + 跳登录
+onMounted(async () => {
+  const userStore = useUserStore()
+  if (!userStore.isLoggedIn) return
+  try {
+    const menus = await getMenuPermissions()
+    userStore.setAllowedMenus(menus)
+  } catch { /* 401 已由 request.js 处理 */ }
+})
 </script>
 
 <style scoped>
