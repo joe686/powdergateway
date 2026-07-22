@@ -4,6 +4,13 @@
   <router-view />
 </template>
 
+<script setup>
+// FB-038: 在 App 层初始化主题，让登录页等 MainLayout 外的路由也能读到 --pg-* tokens
+// （此前只有 TopBar 挂载才 apply data-theme，登录页 tokens 全 undefined 导致渐变/毛玻璃失效）
+import { useTheme } from '@/composables/useTheme'
+useTheme()
+</script>
+
 <style>
 * {
   box-sizing: border-box;
