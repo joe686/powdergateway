@@ -99,8 +99,9 @@ CREATE TABLE IF NOT EXISTS dict_mapping (
 | `DictMappingMapper` | `backend/src/main/java/com/powergateway/dao/DictMappingMapper.java` | MP Mapper · `selectByLookup(system,key,direction)` 返回全量 |
 | `DictMappingService` | `backend/src/main/java/com/powergateway/service/DictMappingService.java` | CRUD + 双向拆条 + Redis + Excel |
 | `DictMappingController` | `backend/src/main/java/com/powergateway/controller/DictMappingController.java` | REST + Sa-Token + Swagger |
-| `DictMappingExcelDTO` | `backend/src/main/java/com/powergateway/model/dto/DictMappingExcelDTO.java` | Excel 行 DTO · EasyExcel 注解 |
+| `DictMappingExcelRow` | `backend/src/main/java/com/powergateway/model/dto/DictMappingExcelRow.java` | Excel 行 DTO · POI 手工解析（无注解） |
 | `DictMappingImportResult` | `backend/src/main/java/com/powergateway/model/dto/DictMappingImportResult.java` | `{successCount, failedRows:[{rowIndex,errorMsg}]}` |
+| `DictMappingExcelHelper` | `backend/src/main/java/com/powergateway/utils/DictMappingExcelHelper.java` | POI 读写工具（`parse(InputStream)` + `build(List<DictMapping>)`） |
 
 ### 3.2 REST API
 
@@ -136,7 +137,7 @@ CREATE TABLE IF NOT EXISTS dict_mapping (
 | **direction 兼容** | 数字 `1/2` OR 中文 `出向/入向` OR 英文 `OUT/IN` 都接受 |
 | **表头容错** | 只校验必填列（前 5 列），额外列忽略 |
 
-**依赖**：EasyExcel 3.x（阿里 · MyBatis-Plus 生态友好 · 轻量，不需要 POI 全家桶）。CR-001 § 扩展 A 也用它，共享依赖。
+**依赖**：**复用项目已有的 Apache POI 5.2.3**（M2-2 表结构导出已用）。CR-001 § 扩展 A 原写"实施时选 EasyExcel"但项目已有 POI 时应复用，避免新增依赖（YAGNI）。POI 手写 Workbook 读写虽多几行代码，但依赖树更干净。
 
 ---
 
@@ -149,19 +150,19 @@ CREATE TABLE IF NOT EXISTS dict_mapping (
 
 ### 4.2 授权（Q1 拍板：三角色均可访问，admin/user 可写 · readonly 只读）
 
-Controller 层：
+**项目惯例（重要）**：既有代码**不使用 `@SaCheckRole`**，角色权限拦截统一由**前端菜单路由白名单**（`MenuPermission`）承担；后端 Controller 只做 Sa-Token 登录验证。
 
-```java
-@SaCheckRole(value = {"admin","user"}, mode = SaMode.OR)  // 写方法
-@PostMapping ...
-
-// 读方法不加 @SaCheckRole（三角色都能查）
-@GetMapping ...
-```
+- **v0.2.0 ① 后端阶段**：Controller 层无角色注解，`SaTokenConfig` 认证即可
+- **v0.2.0 ③ 前端阶段**：在 `MenuPermission.java` 添加路由白名单
+  - `ADMIN_MENUS` 和 `USER_MENUS` 追加 `/tools/dict`（可写）
+  - `READONLY_MENUS` 追加 `/tools/dict/view`（如做只读页）或干脆不加
+- **风险与缓解**：仅前端拦截存在越权风险（懂 API 的人可绕过前端直调 REST）；但对齐项目现状，且字典 CRUD 属于配置类操作不是敏感数据，等 v0.5.0 SYS-3 大升级引入统一后端 RBAC 后一并加强
 
 ### 4.3 审计
 
-每个 CRUD 方法加 `@SysLogRecord(module = "字典管理", opType = "CREATE|UPDATE|DELETE|IMPORT|EXPORT")`，走既有 `SysLogAspect` 异步写 `sys_log`。
+每个 CRUD 方法加 `@SysLogRecord(module = "字典管理", action = "保存字典|删除字典|导入字典|导出字典")`，走既有 `SysLogAspect` 异步写 `sys_log`。
+
+**注意 `@SysLogRecord` 签名**：只有 `module` 和 `action` 两个 String 参数（不是 `opType` 枚举）。
 
 ---
 
@@ -284,7 +285,7 @@ ALTER TABLE dict_mapping
 
 | 项 | 影响 |
 |---|---|
-| **新增 Maven 依赖** | `com.alibaba:easyexcel:3.3.4`（已在 CR-001 § 扩展 A 规划） |
+| **新增 Maven 依赖** | 无（复用既有 `poi-ooxml:5.2.3`） |
 | **配置库 DDL** | +1 表 `dict_mapping` |
 | **审计库** | 无变更 |
 | **Redis** | 新增 key 前缀 `dict:*`，占用小 |
