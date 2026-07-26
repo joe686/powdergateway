@@ -20,10 +20,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional
+@org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 class FN12DictMappingTest {
 
     @Autowired private DictMappingMapper dictMappingMapper;
     @Autowired private DictMappingService dictMappingService;
+    @Autowired org.springframework.test.web.servlet.MockMvc mockMvc;
 
     @Test
     void insertAndSelect_正常路径() {
@@ -312,6 +314,50 @@ class FN12DictMappingTest {
 
         assertThat(bytes).isNotNull();
         assertThat(bytes.length).isGreaterThan(100);  // 最小合法 xlsx 骨架
+    }
+
+    // ──────── Task 9：Controller MockMvc ────────
+
+    @Test
+    void controller_list_默认返200并有list结构() throws Exception {
+        cn.dev33.satoken.stp.StpUtil.login(1L);
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                .get("/api/dict-mapping/list")
+                .header("satoken", cn.dev33.satoken.stp.StpUtil.getTokenValue()))
+            .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk())
+            .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                .jsonPath("$.code").value(200));
+    }
+
+    @Test
+    void controller_save_单向_返id列表() throws Exception {
+        cn.dev33.satoken.stp.StpUtil.login(1L);
+        String json = "{\"systemCode\":\"CIF\",\"dictKey\":\"K\",\"direction\":1,"
+                    + "\"sourceValue\":\"A\",\"targetValue\":\"1\",\"bidirectional\":false}";
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                .post("/api/dict-mapping")
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .content(json)
+                .header("satoken", cn.dev33.satoken.stp.StpUtil.getTokenValue()))
+            .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk())
+            .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                .jsonPath("$.data.length()").value(1));
+    }
+
+    @Test
+    void controller_getSystems_返回distinct列表() throws Exception {
+        cn.dev33.satoken.stp.StpUtil.login(1L);
+        DictMappingSaveRequest req = new DictMappingSaveRequest();
+        req.setSystemCode("CORE"); req.setDictKey("K"); req.setDirection(1);
+        req.setSourceValue("A"); req.setTargetValue("1");
+        dictMappingService.save(req);
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                .get("/api/dict-mapping/systems")
+                .header("satoken", cn.dev33.satoken.stp.StpUtil.getTokenValue()))
+            .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk())
+            .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                .jsonPath("$.data[0]").value("CORE"));
     }
 
     @Test
