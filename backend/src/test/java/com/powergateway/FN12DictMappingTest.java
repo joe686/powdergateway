@@ -170,4 +170,34 @@ class FN12DictMappingTest {
             .isInstanceOf(com.powergateway.exception.BusinessException.class)
             .hasMessageContaining("不允许修改方向");
     }
+
+    @Test
+    void delete_软删_selectById返null() {
+        DictMappingSaveRequest req = new DictMappingSaveRequest();
+        req.setSystemCode("CIF"); req.setDictKey("K"); req.setDirection(1);
+        req.setSourceValue("A"); req.setTargetValue("1");
+        Long id = dictMappingService.save(req).get(0);
+
+        dictMappingService.delete(id);
+        DictMapping still = dictMappingMapper.selectById(id);
+        assertThat(still).isNull();  // MyBatis-Plus 软删除自动过滤
+    }
+
+    @Test
+    void getSystems_返回distinct排序() {
+        DictMappingSaveRequest a = new DictMappingSaveRequest();
+        a.setSystemCode("CORE"); a.setDictKey("K"); a.setDirection(1);
+        a.setSourceValue("A"); a.setTargetValue("1"); dictMappingService.save(a);
+
+        DictMappingSaveRequest b = new DictMappingSaveRequest();
+        b.setSystemCode("CIF"); b.setDictKey("K"); b.setDirection(1);
+        b.setSourceValue("B"); b.setTargetValue("2"); dictMappingService.save(b);
+
+        DictMappingSaveRequest c = new DictMappingSaveRequest();
+        c.setSystemCode("CIF"); c.setDictKey("K2"); c.setDirection(1);
+        c.setSourceValue("C"); c.setTargetValue("3"); dictMappingService.save(c);
+
+        java.util.List<String> systems = dictMappingService.getSystems();
+        assertThat(systems).containsExactly("CIF", "CORE");  // distinct + 字母升序
+    }
 }

@@ -121,6 +121,24 @@ public class DictMappingService {
         dictMappingMapper.updateById(cur);
     }
 
+    /**
+     * 软删除字典映射条目。不存在则抛异常；否则标记 deleted=1（MP @TableLogic 自动处理）
+     */
+    @Transactional
+    public void delete(Long id) {
+        DictMapping m = dictMappingMapper.selectById(id);
+        if (m == null) throw new BusinessException(404, "字典条目不存在或已删除：" + id);
+        dictMappingMapper.deleteById(id);
+        // Redis 精准失效留 Task 7 加
+    }
+
+    /**
+     * 查询已有的 system_code 去重列表（字母升序）
+     */
+    public List<String> getSystems() {
+        return dictMappingMapper.selectDistinctSystems();
+    }
+
     private DictMappingVO toVO(DictMapping m) {
         DictMappingVO v = new DictMappingVO();
         v.setId(m.getId());
