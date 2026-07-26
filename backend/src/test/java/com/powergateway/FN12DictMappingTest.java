@@ -2,6 +2,7 @@ package com.powergateway;
 
 import com.powergateway.dao.DictMappingMapper;
 import com.powergateway.model.DictMapping;
+import com.powergateway.model.dto.DictMappingLookupResult;
 import com.powergateway.model.dto.DictMappingSaveRequest;
 import com.powergateway.model.dto.DictMappingVO;
 import com.powergateway.service.DictMappingService;
@@ -199,5 +200,43 @@ class FN12DictMappingTest {
 
         java.util.List<String> systems = dictMappingService.getSystems();
         assertThat(systems).containsExactly("CIF", "CORE");  // distinct + 字母升序
+    }
+
+    @Test
+    void lookup_命中_返回targetValue() {
+        DictMappingSaveRequest req = new DictMappingSaveRequest();
+        req.setSystemCode("CIF"); req.setDictKey("GENDER"); req.setDirection(1);
+        req.setSourceValue("M"); req.setTargetValue("1"); req.setCnLabel("男");
+        dictMappingService.save(req);
+
+        DictMappingLookupResult r = dictMappingService.lookup("CIF", "GENDER", 1, "M");
+        assertThat(r).isNotNull();
+        assertThat(r.getTargetValue()).isEqualTo("1");
+        assertThat(r.getCnLabel()).isEqualTo("男");
+    }
+
+    @Test
+    void lookup_未命中_返null() {
+        DictMappingSaveRequest req = new DictMappingSaveRequest();
+        req.setSystemCode("CIF"); req.setDictKey("GENDER"); req.setDirection(1);
+        req.setSourceValue("M"); req.setTargetValue("1");
+        dictMappingService.save(req);
+
+        DictMappingLookupResult r = dictMappingService.lookup("CIF", "GENDER", 1, "X");
+        assertThat(r).isNull();
+    }
+
+    @Test
+    void delete_后lookup_不再命中() {
+        DictMappingSaveRequest req = new DictMappingSaveRequest();
+        req.setSystemCode("CIF"); req.setDictKey("GENDER"); req.setDirection(1);
+        req.setSourceValue("M"); req.setTargetValue("1");
+        Long id = dictMappingService.save(req).get(0);
+        // 先查一次装载缓存
+        assertThat(dictMappingService.lookup("CIF", "GENDER", 1, "M")).isNotNull();
+
+        dictMappingService.delete(id);
+        // 删后 lookup 应 null（Redis 已精准失效 + DB 已软删）
+        assertThat(dictMappingService.lookup("CIF", "GENDER", 1, "M")).isNull();
     }
 }

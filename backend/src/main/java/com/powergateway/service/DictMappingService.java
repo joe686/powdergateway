@@ -4,14 +4,22 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.powergateway.dao.DictMappingMapper;
 import com.powergateway.exception.BusinessException;
 import com.powergateway.model.DictMapping;
+import com.powergateway.model.dto.DictMappingLookupResult;
 import com.powergateway.model.dto.DictMappingSaveRequest;
 import com.powergateway.model.dto.DictMappingVO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.RedisConnectionFailureException;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 字典映射业务层（FN-12 · v0.2.0 ①）
@@ -19,7 +27,14 @@ import java.util.List;
 @Service
 public class DictMappingService {
 
+    private static final Logger log = LoggerFactory.getLogger(DictMappingService.class);
+    private static final long DICT_TTL_SECONDS = 3600L;
+
     @Autowired private DictMappingMapper dictMappingMapper;
+
+    /** 测试环境 Redis 未注入时为 null，需 null 判断后再使用 */
+    @Autowired(required = false)
+    private StringRedisTemplate stringRedisTemplate;
 
     /**
      * 保存字典映射条目。bidirectional=true 时拆两条（direction=1 + direction=2，source/target 互换）。
@@ -39,6 +54,11 @@ public class DictMappingService {
             DictMapping second = toEntity(req, reverseDir, req.getTargetValue(), req.getSourceValue());
             insertOne(second);
             ids.add(second.getId());
+        }
+        // 精准失效缓存（单向 + 双向的反向）
+        tryEvictRedis(req.getSystemCode(), req.getDictKey(), req.getDirection());
+        if (Boolean.TRUE.equals(req.getBidirectional())) {
+            tryEvictRedis(req.getSystemCode(), req.getDictKey(), 3 - req.getDirection());
         }
         return ids;
     }
@@ -119,6 +139,8 @@ public class DictMappingService {
         if (req.getStatus() != null) cur.setStatus(req.getStatus());
 
         dictMappingMapper.updateById(cur);
+        // 精准失效缓存
+        tryEvictRedis(cur.getSystemCode(), cur.getDictKey(), cur.getDirection());
     }
 
     /**
@@ -129,7 +151,8 @@ public class DictMappingService {
         DictMapping m = dictMappingMapper.selectById(id);
         if (m == null) throw new BusinessException(404, "字典条目不存在或已删除：" + id);
         dictMappingMapper.deleteById(id);
-        // Redis 精准失效留 Task 7 加
+        // 精准失效缓存
+        tryEvictRedis(m.getSystemCode(), m.getDictKey(), m.getDirection());
     }
 
     /**
@@ -137,6 +160,96 @@ public class DictMappingService {
      */
     public List<String> getSystems() {
         return dictMappingMapper.selectDistinctSystems();
+    }
+
+    /**
+     * 字典查值：Redis 命中直接返回；未命中时全量装载 DB 并写 Redis（TTL 3600s）。
+     * 测试环境 stringRedisTemplate 为 null，直接走 DB fallback。
+     *
+     * @return 命中时返回 {@link DictMappingLookupResult}，miss 返回 null
+     */
+    public DictMappingLookupResult lookup(String system, String dictKey, Integer direction, String source) {
+        String key = cacheKey(system, dictKey, direction);
+
+        // 1. 先尝试从 Redis 读取
+        DictMappingLookupResult fromRedis = tryLoadFromRedis(key, source);
+        if (fromRedis != null) {
+            return fromRedis;
+        }
+
+        // 2. Redis miss（或 Redis 不可用）→ DB 全量装载
+        List<DictMapping> rows = dictMappingMapper.selectByLookup(system, dictKey, direction);
+        if (rows.isEmpty()) return null;
+
+        Map<String, String> hashData = new HashMap<>();
+        for (DictMapping m : rows) {
+            hashData.put(m.getSourceValue(), m.getTargetValue());
+            if (m.getCnLabel() != null) {
+                hashData.put(m.getSourceValue() + "__cn", m.getCnLabel());
+            }
+        }
+
+        // 3. 异步写入 Redis（失败降级，不抛出）
+        if (stringRedisTemplate != null) {
+            try {
+                stringRedisTemplate.opsForHash().putAll(key, hashData);
+                stringRedisTemplate.expire(key, DICT_TTL_SECONDS, TimeUnit.SECONDS);
+            } catch (RedisConnectionFailureException e) {
+                log.warn("Redis 写入失败，已降级走 DB：{}", e.getMessage());
+            }
+        }
+
+        // 4. 从 DB 结果返回
+        String hit = hashData.get(source);
+        if (hit == null) return null;
+        String hitCn = hashData.get(source + "__cn");
+        return new DictMappingLookupResult(hit, hitCn);
+    }
+
+    // ──────────────── Redis 私有 helper ────────────────
+
+    private String cacheKey(String system, String dictKey, Integer direction) {
+        return "dict:" + system + ":" + dictKey + ":" + direction;
+    }
+
+    /**
+     * 尝试从 Redis Hash 读取 lookup 结果。
+     * 若 stringRedisTemplate 为 null（测试环境）或 Redis 不可用，直接返回 null（交由调用方走 DB fallback）。
+     * 若缓存已装载但无该 source，返回空壳对象 DictMappingLookupResult(null, null) 以区分"命中但无值"；
+     * 调用方只检查 != null 即可，此处用 sentinel 值标识 Hash 存在但无 source。
+     */
+    private DictMappingLookupResult tryLoadFromRedis(String key, String source) {
+        if (stringRedisTemplate == null) return null;
+        try {
+            Map<Object, Object> hash = stringRedisTemplate.opsForHash().entries(key);
+            if (!hash.isEmpty()) {
+                Object t = hash.get(source);
+                if (t != null) {
+                    String cnLabel = null;
+                    Object c = hash.get(source + "__cn");
+                    if (c != null) cnLabel = c.toString();
+                    return new DictMappingLookupResult(t.toString(), cnLabel);
+                }
+                // 缓存已装载，但无该 source → miss
+                return null;
+            }
+        } catch (RedisConnectionFailureException e) {
+            log.warn("Redis 读取失败，降级走 DB：{}", e.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * 精准删除 Redis 中对应 dict key 的缓存 Hash。
+     * 若 stringRedisTemplate 为 null（测试环境）或 Redis 不可用，静默忽略。
+     */
+    private void tryEvictRedis(String system, String dictKey, Integer direction) {
+        if (stringRedisTemplate == null) return;
+        try {
+            stringRedisTemplate.delete(cacheKey(system, dictKey, direction));
+        } catch (RedisConnectionFailureException e) {
+            log.warn("Redis 删除缓存失败，忽略：{}", e.getMessage());
+        }
     }
 
     private DictMappingVO toVO(DictMapping m) {
