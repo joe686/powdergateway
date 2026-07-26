@@ -37,6 +37,12 @@ public class DictMappingService {
     private StringRedisTemplate stringRedisTemplate;
 
     /**
+     * 哨兵常量：Redis Hash 已全量装载，但其中不存在请求的 source（真实 miss）。
+     * 调用方收到此值应直接返回 null，不再走 DB fallback 重新装载。
+     */
+    private static final DictMappingLookupResult REDIS_HIT_BUT_MISS = new DictMappingLookupResult(null, null);
+
+    /**
      * 保存字典映射条目。bidirectional=true 时拆两条（direction=1 + direction=2，source/target 互换）。
      * @return 新增 id 列表
      */
@@ -173,7 +179,12 @@ public class DictMappingService {
 
         // 1. 先尝试从 Redis 读取
         DictMappingLookupResult fromRedis = tryLoadFromRedis(key, source);
+        if (fromRedis == REDIS_HIT_BUT_MISS) {
+            // Hash 已全量装载，source 不在其中 → 权威 miss，不回 DB
+            return null;
+        }
         if (fromRedis != null) {
+            // Hash 命中且 source 存在 → 直接返回
             return fromRedis;
         }
 
@@ -214,9 +225,14 @@ public class DictMappingService {
 
     /**
      * 尝试从 Redis Hash 读取 lookup 结果。
-     * 若 stringRedisTemplate 为 null（测试环境）或 Redis 不可用，直接返回 null（交由调用方走 DB fallback）。
-     * 若缓存已装载但无该 source，返回空壳对象 DictMappingLookupResult(null, null) 以区分"命中但无值"；
-     * 调用方只检查 != null 即可，此处用 sentinel 值标识 Hash 存在但无 source。
+     *
+     * @return
+     *   <ul>
+     *     <li>命中：{@code DictMappingLookupResult(target, cnLabel)}</li>
+     *     <li>Hash 存在但无此 source（真实 miss）：{@link #REDIS_HIT_BUT_MISS} 哨兵，
+     *         调用方应返回 null，不走 DB fallback（Hash 已是全量权威数据）</li>
+     *     <li>Hash 未装载 or Redis 不可用：{@code null}，调用方应走 DB fallback 全量装载</li>
+     *   </ul>
      */
     private DictMappingLookupResult tryLoadFromRedis(String key, String source) {
         if (stringRedisTemplate == null) return null;
@@ -230,8 +246,8 @@ public class DictMappingService {
                     if (c != null) cnLabel = c.toString();
                     return new DictMappingLookupResult(t.toString(), cnLabel);
                 }
-                // 缓存已装载，但无该 source → miss
-                return null;
+                // Hash 已全量装载，但无该 source → 真实 miss，返回哨兵，不让调用方回 DB
+                return REDIS_HIT_BUT_MISS;
             }
         } catch (RedisConnectionFailureException e) {
             log.warn("Redis 读取失败，降级走 DB：{}", e.getMessage());
