@@ -4,6 +4,12 @@
 -- 兼容旧库（CHG-020 UX-E FN-06）：如已存在 interface_config 表，请执行 migration-response-format.sql
 
 -- 1. 用户表
+--    基础账号由 backend/src/main/java/com/powergateway/config/DataInitializer.java
+--    在 Spring Boot 启动时用 BCrypt 加密后 INSERT，不在本 SQL 硬编码密文：
+--      · admin      / Admin@123  (role=admin)
+--      · testuser1  / Test@123   (role=user)     — 手工测试用，验证菜单收窄
+--      · testreader / Test@123   (role=readonly) — 手工测试用，验证删除拦截
+--    INSERT-if-not-exists，不会覆盖已改过密码的账号。
 CREATE TABLE IF NOT EXISTS sys_user (
   id BIGINT PRIMARY KEY AUTO_INCREMENT,
   username VARCHAR(64) NOT NULL UNIQUE,
