@@ -137,4 +137,37 @@ class FN12DictMappingTest {
             .isInstanceOf(com.powergateway.exception.BusinessException.class)
             .hasMessageContaining("不存在");
     }
+
+    @Test
+    void update_target与cnLabel_成功() {
+        DictMappingSaveRequest req = new DictMappingSaveRequest();
+        req.setSystemCode("CIF"); req.setDictKey("K"); req.setDirection(1);
+        req.setSourceValue("A"); req.setTargetValue("1");
+        Long id = dictMappingService.save(req).get(0);
+
+        DictMappingSaveRequest upd = new DictMappingSaveRequest();
+        upd.setSystemCode("CIF"); upd.setDictKey("K"); upd.setDirection(1);
+        upd.setSourceValue("A"); upd.setTargetValue("2"); upd.setCnLabel("改后");
+        dictMappingService.update(id, upd);
+
+        DictMappingVO v = dictMappingService.getById(id);
+        assertThat(v.getTargetValue()).isEqualTo("2");
+        assertThat(v.getCnLabel()).isEqualTo("改后");
+    }
+
+    @Test
+    void update_修改direction_拒绝抛BusinessException400() {
+        DictMappingSaveRequest req = new DictMappingSaveRequest();
+        req.setSystemCode("CIF"); req.setDictKey("K"); req.setDirection(1);
+        req.setSourceValue("A"); req.setTargetValue("1");
+        Long id = dictMappingService.save(req).get(0);
+
+        DictMappingSaveRequest badUpd = new DictMappingSaveRequest();
+        badUpd.setSystemCode("CIF"); badUpd.setDictKey("K"); badUpd.setDirection(2);  // 改方向
+        badUpd.setSourceValue("A"); badUpd.setTargetValue("1");
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> dictMappingService.update(id, badUpd))
+            .isInstanceOf(com.powergateway.exception.BusinessException.class)
+            .hasMessageContaining("不允许修改方向");
+    }
 }

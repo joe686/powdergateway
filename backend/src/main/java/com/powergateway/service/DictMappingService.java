@@ -94,6 +94,33 @@ public class DictMappingService {
         return toVO(m);
     }
 
+    /**
+     * 更新字典映射条目。允许修改 targetValue/cnLabel/status；禁止修改 direction 或 sourceValue（必须删除后重建）
+     */
+    @Transactional
+    public void update(Long id, DictMappingSaveRequest req) {
+        // 检查条目存在性
+        DictMapping cur = dictMappingMapper.selectById(id);
+        if (cur == null) throw new BusinessException(404, "字典条目不存在或已删除：" + id);
+
+        // 禁止改 direction
+        if (!cur.getDirection().equals(req.getDirection())) {
+            throw new BusinessException(400, "不允许修改方向，请删除后重建");
+        }
+
+        // 禁止改 sourceValue
+        if (!cur.getSourceValue().equals(req.getSourceValue())) {
+            throw new BusinessException(400, "不允许修改源值，请删除后重建");
+        }
+
+        // 更新允许的字段
+        cur.setTargetValue(req.getTargetValue());
+        cur.setCnLabel(req.getCnLabel());
+        if (req.getStatus() != null) cur.setStatus(req.getStatus());
+
+        dictMappingMapper.updateById(cur);
+    }
+
     private DictMappingVO toVO(DictMapping m) {
         DictMappingVO v = new DictMappingVO();
         v.setId(m.getId());
