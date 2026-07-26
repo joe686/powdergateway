@@ -1,7 +1,9 @@
 package com.powergateway;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.powergateway.dao.DictMappingMapper;
 import com.powergateway.model.DictMapping;
+import com.powergateway.model.dto.DictMappingImportResult;
 import com.powergateway.model.dto.DictMappingLookupResult;
 import com.powergateway.model.dto.DictMappingSaveRequest;
 import com.powergateway.model.dto.DictMappingVO;
@@ -10,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -238,5 +241,76 @@ class FN12DictMappingTest {
         dictMappingService.delete(id);
         // 删后 lookup 应 null（Redis 已精准失效 + DB 已软删）
         assertThat(dictMappingService.lookup("CIF", "GENDER", 1, "M")).isNull();
+    }
+
+    // ──────── Task 8：importExcel / exportExcel ────────
+
+    @Test
+    void importExcel_正常_成功计数正确() throws Exception {
+        // 构造 3 行合法数据的 xlsx
+        java.util.List<DictMappingVO> seed = new java.util.ArrayList<>();
+        for (int i = 0; i < 3; i++) {
+            DictMappingVO v = new DictMappingVO();
+            v.setSystemCode("CIF"); v.setDictKey("K"); v.setDirection(1);
+            v.setSourceValue("S" + i); v.setTargetValue("T" + i); v.setStatus(1);
+            seed.add(v);
+        }
+        byte[] xlsx = com.powergateway.utils.DictMappingExcelHelper.build(seed);
+        org.springframework.mock.web.MockMultipartFile file =
+            new org.springframework.mock.web.MockMultipartFile(
+                "file", "in.xlsx",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", xlsx);
+
+        DictMappingImportResult r = dictMappingService.importExcel(file);
+
+        assertThat(r.getSuccessCount()).isEqualTo(3);
+        assertThat(r.getFailedRows()).isEmpty();
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void importExcel_一行错_整体回滚() throws Exception {
+        // 第 1 行合法（direction=1），第 2 行 direction=9 非法
+        java.util.List<DictMappingVO> seed = new java.util.ArrayList<>();
+        DictMappingVO v1 = new DictMappingVO();
+        v1.setSystemCode("CIF"); v1.setDictKey("K"); v1.setDirection(1);
+        v1.setSourceValue("A"); v1.setTargetValue("1"); v1.setStatus(1);
+        seed.add(v1);
+
+        DictMappingVO v2 = new DictMappingVO();
+        v2.setSystemCode("CIF"); v2.setDictKey("K"); v2.setDirection(9);  // 写 "9" 进 Excel
+        v2.setSourceValue("B"); v2.setTargetValue("2"); v2.setStatus(1);
+        seed.add(v2);
+
+        byte[] xlsx = com.powergateway.utils.DictMappingExcelHelper.build(seed);
+        org.springframework.mock.web.MockMultipartFile file =
+            new org.springframework.mock.web.MockMultipartFile("file", "in.xlsx",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", xlsx);
+
+        DictMappingImportResult r = dictMappingService.importExcel(file);
+
+        assertThat(r.getSuccessCount()).isZero();
+        assertThat(r.getFailedRows()).hasSize(1);
+        // 第 2 条数据行 → Excel 行号 = 1(索引) + 2 = 3
+        assertThat(r.getFailedRows().get(0).getRowIndex()).isEqualTo(3);
+        // 整体回滚：第 1 行虽合法也不应留存
+        java.util.List<DictMappingVO> after = dictMappingService.list("CIF", "K", 1, null);
+        assertThat(after).isEmpty();
+
+        // 测试完毕后手工清理（本方法跳过了类级事务，需显式删除）
+        dictMappingMapper.delete(new QueryWrapper<DictMapping>().eq("system_code", "CIF"));
+    }
+
+    @Test
+    void exportExcel_返回非空字节() throws Exception {
+        DictMappingSaveRequest req = new DictMappingSaveRequest();
+        req.setSystemCode("CIF"); req.setDictKey("K"); req.setDirection(1);
+        req.setSourceValue("A"); req.setTargetValue("1");
+        dictMappingService.save(req);
+
+        byte[] bytes = dictMappingService.exportExcel("CIF", null, null, null);
+
+        assertThat(bytes).isNotNull();
+        assertThat(bytes.length).isGreaterThan(100);  // 最小合法 xlsx 骨架
     }
 }

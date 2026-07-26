@@ -7,6 +7,12 @@ import com.powergateway.model.DictMapping;
 import com.powergateway.model.dto.DictMappingLookupResult;
 import com.powergateway.model.dto.DictMappingSaveRequest;
 import com.powergateway.model.dto.DictMappingVO;
+import com.powergateway.model.dto.DictMappingImportResult;
+import com.powergateway.utils.DictMappingExcelHelper;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +20,8 @@ import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -281,5 +289,71 @@ public class DictMappingService {
         v.setCreateTime(m.getCreateTime());
         v.setUpdateTime(m.getUpdateTime());
         return v;
+    }
+
+    // ──────────────── Excel 导入 / 导出 ────────────────
+
+    /**
+     * 批量导入字典映射（整体事务：任意一行失败则全部回滚）。
+     * <p>逐行解析 + 逐行保存；遇到第一个错误时记入 failedRows，手工触发 setRollbackOnly，
+     * 函数正常返回（不抛异常），结果中 successCount=0。</p>
+     *
+     * @param file 上传的 .xlsx 文件
+     * @return 导入结果（成功行数 + 失败行列表）
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public DictMappingImportResult importExcel(MultipartFile file) {
+        DictMappingImportResult result = new DictMappingImportResult();
+        Exception firstError = null;
+
+        try (Workbook wb = new XSSFWorkbook(file.getInputStream())) {
+            Sheet sheet = wb.getSheetAt(0);
+            for (int r = 1; r <= sheet.getLastRowNum(); r++) {
+                Row row = sheet.getRow(r);
+                if (row == null) continue;
+
+                int excelRowIndex = r + 1;  // Excel 行号：表头=1，数据行从 2 起
+                try {
+                    // 逐行解析（direction 非法时抛 IllegalArgumentException）
+                    DictMappingSaveRequest req = DictMappingExcelHelper.parseRow(row);
+                    // 逐行保存（唯一约束冲突等抛 BusinessException）
+                    save(req);
+                    result.setSuccessCount(result.getSuccessCount() + 1);
+                } catch (Exception e) {
+                    firstError = e;
+                    result.getFailedRows().add(
+                        new DictMappingImportResult.FailedRow(excelRowIndex, e.getMessage()));
+                    break;  // 遇第一个错误立即停止，准备整体回滚
+                }
+            }
+        } catch (Exception e) {
+            // Excel 文件本身无法打开
+            throw new BusinessException(400, "Excel 解析失败：" + e.getMessage());
+        }
+
+        if (firstError != null) {
+            // 整体回滚：已成功插入的行也全部撤销
+            result.setSuccessCount(0);
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+        }
+        return result;
+    }
+
+    /**
+     * 导出字典映射为 .xlsx 字节流。
+     *
+     * @param systemCode 系统代号（可为 null，不筛选）
+     * @param dictKey    字典标识（可为 null，不筛选）
+     * @param direction  方向（可为 null，不筛选）
+     * @param status     状态（可为 null，不筛选）
+     * @return .xlsx 文件字节数组
+     */
+    public byte[] exportExcel(String systemCode, String dictKey, Integer direction, Integer status) {
+        List<DictMappingVO> data = list(systemCode, dictKey, direction, status);
+        try {
+            return DictMappingExcelHelper.build(data);
+        } catch (Exception e) {
+            throw new BusinessException(500, "Excel 生成失败：" + e.getMessage());
+        }
     }
 }
