@@ -313,4 +313,43 @@ class FN12DictMappingTest {
         assertThat(bytes).isNotNull();
         assertThat(bytes.length).isGreaterThan(100);  // 最小合法 xlsx 骨架
     }
+
+    @Test
+    void importExcel_末尾空行被跳过_不误报回滚() throws Exception {
+        // 构造 2 行合法 + 1 行全空的 xlsx
+        java.util.List<DictMappingVO> seed = new java.util.ArrayList<>();
+        for (int i = 0; i < 2; i++) {
+            DictMappingVO v = new DictMappingVO();
+            v.setSystemCode("CIF"); v.setDictKey("BLANK_TEST"); v.setDirection(1);
+            v.setSourceValue("S" + i); v.setTargetValue("T" + i); v.setStatus(1);
+            seed.add(v);
+        }
+        // build 只能生成非空行，我们手工创建带尾空行的 workbook
+        org.apache.poi.xssf.usermodel.XSSFWorkbook wb = new org.apache.poi.xssf.usermodel.XSSFWorkbook();
+        org.apache.poi.ss.usermodel.Sheet sheet = wb.createSheet("t");
+        org.apache.poi.ss.usermodel.Row header = sheet.createRow(0);
+        String[] headers = {"系统代号", "字典标识", "方向", "源值", "目标值", "中文", "状态"};
+        for (int i = 0; i < headers.length; i++) header.createCell(i).setCellValue(headers[i]);
+        for (int i = 0; i < 2; i++) {
+            org.apache.poi.ss.usermodel.Row r = sheet.createRow(i + 1);
+            r.createCell(0).setCellValue("CIF");
+            r.createCell(1).setCellValue("BLANK_TEST");
+            r.createCell(2).setCellValue("1");
+            r.createCell(3).setCellValue("S" + i);
+            r.createCell(4).setCellValue("T" + i);
+            r.createCell(5).setCellValue("");
+            r.createCell(6).setCellValue("1");
+        }
+        // 追加一行全空
+        sheet.createRow(3);
+        java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+        wb.write(out); wb.close();
+
+        org.springframework.mock.web.MockMultipartFile file =
+            new org.springframework.mock.web.MockMultipartFile("file", "in.xlsx",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", out.toByteArray());
+        DictMappingImportResult r = dictMappingService.importExcel(file);
+        assertThat(r.getSuccessCount()).isEqualTo(2);   // 2 条成功，空行跳过
+        assertThat(r.getFailedRows()).isEmpty();
+    }
 }

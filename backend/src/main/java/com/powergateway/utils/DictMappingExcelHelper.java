@@ -113,7 +113,7 @@ public class DictMappingExcelHelper {
     }
 
     /** 判断是否为空行（前5列均为空） */
-    private static boolean isBlankRow(Row row) {
+    public static boolean isBlankRow(Row row) {
         for (int i = 0; i < 5; i++) {
             if (!cellStr(row, i).isEmpty()) return false;
         }

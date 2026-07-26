@@ -310,7 +310,7 @@ public class DictMappingService {
             Sheet sheet = wb.getSheetAt(0);
             for (int r = 1; r <= sheet.getLastRowNum(); r++) {
                 Row row = sheet.getRow(r);
-                if (row == null) continue;
+                if (row == null || DictMappingExcelHelper.isBlankRow(row)) continue;
 
                 int excelRowIndex = r + 1;  // Excel 行号：表头=1，数据行从 2 起
                 try {
