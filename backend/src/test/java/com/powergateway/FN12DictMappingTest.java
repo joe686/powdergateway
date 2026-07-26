@@ -76,4 +76,42 @@ class FN12DictMappingTest {
             .isInstanceOf(com.powergateway.exception.BusinessException.class)
             .hasMessageContaining("已存在");
     }
+
+    @Test
+    void save_双向_产生2条并方向互换() {
+        DictMappingSaveRequest req = new DictMappingSaveRequest();
+        req.setSystemCode("CIF");
+        req.setDictKey("GENDER");
+        req.setDirection(1);           // 起始出向
+        req.setSourceValue("M");
+        req.setTargetValue("1");
+        req.setBidirectional(true);    // 双向
+
+        java.util.List<Long> ids = dictMappingService.save(req);
+        assertThat(ids).hasSize(2);
+
+        DictMapping out = dictMappingMapper.selectById(ids.get(0));
+        DictMapping in  = dictMappingMapper.selectById(ids.get(1));
+        assertThat(out.getDirection()).isEqualTo(1);
+        assertThat(out.getSourceValue()).isEqualTo("M");
+        assertThat(out.getTargetValue()).isEqualTo("1");
+        assertThat(in.getDirection()).isEqualTo(2);
+        assertThat(in.getSourceValue()).isEqualTo("1"); // 互换
+        assertThat(in.getTargetValue()).isEqualTo("M");
+    }
+
+    @Test
+    void save_多对一允许_targetValue重复() {
+        DictMappingSaveRequest a = new DictMappingSaveRequest();
+        a.setSystemCode("CIF"); a.setDictKey("STATUS"); a.setDirection(1);
+        a.setSourceValue("A"); a.setTargetValue("ACTIVE");
+        dictMappingService.save(a);
+
+        DictMappingSaveRequest b = new DictMappingSaveRequest();
+        b.setSystemCode("CIF"); b.setDictKey("STATUS"); b.setDirection(1);
+        b.setSourceValue("N"); b.setTargetValue("ACTIVE");  // 同 target
+        b.setBidirectional(false);
+        java.util.List<Long> ids = dictMappingService.save(b);
+        assertThat(ids).hasSize(1);   // 允许保存
+    }
 }

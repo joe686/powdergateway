@@ -28,10 +28,17 @@ public class DictMappingService {
     public List<Long> save(DictMappingSaveRequest req) {
         List<Long> ids = new ArrayList<>();
         // 单向
-        DictMapping m = toEntity(req, req.getDirection(), req.getSourceValue(), req.getTargetValue());
-        insertOne(m);
-        ids.add(m.getId());
-        // 双向拆条留 Task 3
+        DictMapping first = toEntity(req, req.getDirection(), req.getSourceValue(), req.getTargetValue());
+        insertOne(first);
+        ids.add(first.getId());
+
+        // 双向拆条
+        if (Boolean.TRUE.equals(req.getBidirectional())) {
+            int reverseDir = 3 - req.getDirection();  // 1↔2 互换
+            DictMapping second = toEntity(req, reverseDir, req.getTargetValue(), req.getSourceValue());
+            insertOne(second);
+            ids.add(second.getId());
+        }
         return ids;
     }
 
