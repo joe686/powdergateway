@@ -3,6 +3,7 @@ package com.powergateway;
 import com.powergateway.dao.DictMappingMapper;
 import com.powergateway.model.DictMapping;
 import com.powergateway.model.dto.DictMappingSaveRequest;
+import com.powergateway.model.dto.DictMappingVO;
 import com.powergateway.service.DictMappingService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -113,5 +114,27 @@ class FN12DictMappingTest {
         b.setBidirectional(false);
         java.util.List<Long> ids = dictMappingService.save(b);
         assertThat(ids).hasSize(1);   // 允许保存
+    }
+
+    @Test
+    void list_按systemCode筛选() {
+        DictMappingSaveRequest a = new DictMappingSaveRequest();
+        a.setSystemCode("CIF"); a.setDictKey("K1"); a.setDirection(1);
+        a.setSourceValue("A"); a.setTargetValue("1"); dictMappingService.save(a);
+
+        DictMappingSaveRequest b = new DictMappingSaveRequest();
+        b.setSystemCode("CORE"); b.setDictKey("K2"); b.setDirection(1);
+        b.setSourceValue("X"); b.setTargetValue("2"); dictMappingService.save(b);
+
+        java.util.List<DictMappingVO> cif = dictMappingService.list("CIF", null, null, null);
+        assertThat(cif).hasSize(1);
+        assertThat(cif.get(0).getSystemCode()).isEqualTo("CIF");
+    }
+
+    @Test
+    void getById_不存在_抛BusinessException404() {
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> dictMappingService.getById(99999L))
+            .isInstanceOf(com.powergateway.exception.BusinessException.class)
+            .hasMessageContaining("不存在");
     }
 }

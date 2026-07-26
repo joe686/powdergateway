@@ -5,6 +5,7 @@ import com.powergateway.dao.DictMappingMapper;
 import com.powergateway.exception.BusinessException;
 import com.powergateway.model.DictMapping;
 import com.powergateway.model.dto.DictMappingSaveRequest;
+import com.powergateway.model.dto.DictMappingVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -66,5 +67,45 @@ public class DictMappingService {
         m.setCnLabel(req.getCnLabel());
         m.setStatus(req.getStatus() == null ? 1 : req.getStatus());
         return m;
+    }
+
+    /**
+     * 查询字典映射条目（支持多条件筛选）
+     */
+    public List<DictMappingVO> list(String systemCode, String dictKey, Integer direction, Integer status) {
+        QueryWrapper<DictMapping> q = new QueryWrapper<>();
+        if (systemCode != null && !systemCode.isEmpty()) q.eq("system_code", systemCode);
+        if (dictKey != null && !dictKey.isEmpty())       q.eq("dict_key", dictKey);
+        if (direction != null)                            q.eq("direction", direction);
+        if (status != null)                               q.eq("status", status);
+        q.orderByDesc("id");
+        List<DictMapping> rows = dictMappingMapper.selectList(q);
+        List<DictMappingVO> vos = new ArrayList<>(rows.size());
+        for (DictMapping r : rows) vos.add(toVO(r));
+        return vos;
+    }
+
+    /**
+     * 按 id 查询字典映射条目，不存在则抛异常
+     */
+    public DictMappingVO getById(Long id) {
+        DictMapping m = dictMappingMapper.selectById(id);
+        if (m == null) throw new BusinessException(404, "字典条目不存在或已删除：" + id);
+        return toVO(m);
+    }
+
+    private DictMappingVO toVO(DictMapping m) {
+        DictMappingVO v = new DictMappingVO();
+        v.setId(m.getId());
+        v.setSystemCode(m.getSystemCode());
+        v.setDictKey(m.getDictKey());
+        v.setDirection(m.getDirection());
+        v.setSourceValue(m.getSourceValue());
+        v.setTargetValue(m.getTargetValue());
+        v.setCnLabel(m.getCnLabel());
+        v.setStatus(m.getStatus());
+        v.setCreateTime(m.getCreateTime());
+        v.setUpdateTime(m.getUpdateTime());
+        return v;
     }
 }
