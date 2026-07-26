@@ -56,6 +56,23 @@ public class DictMappingService {
      */
     @Transactional
     public List<Long> save(DictMappingSaveRequest req) {
+        // Service 层自守卫（Processor 直调不走 Controller @Valid）
+        if (req.getSystemCode() == null || req.getSystemCode().trim().isEmpty()) {
+            throw new BusinessException(400, "systemCode 必填");
+        }
+        if (req.getDictKey() == null || req.getDictKey().trim().isEmpty()) {
+            throw new BusinessException(400, "dictKey 必填");
+        }
+        if (req.getSourceValue() == null || req.getSourceValue().trim().isEmpty()) {
+            throw new BusinessException(400, "sourceValue 必填");
+        }
+        if (req.getTargetValue() == null || req.getTargetValue().trim().isEmpty()) {
+            throw new BusinessException(400, "targetValue 必填");
+        }
+        if (req.getDirection() == null || (req.getDirection() != 1 && req.getDirection() != 2)) {
+            throw new BusinessException(400, "direction 必须为 1 (出向) 或 2 (入向)");
+        }
+
         List<Long> ids = new ArrayList<>();
         // 单向
         DictMapping first = toEntity(req, req.getDirection(), req.getSourceValue(), req.getTargetValue());
@@ -183,6 +200,20 @@ public class DictMappingService {
      * @return 命中时返回 {@link DictMappingLookupResult}，miss 返回 null
      */
     public DictMappingLookupResult lookup(String system, String dictKey, Integer direction, String source) {
+        // 契约保护：Processor v0.2.0 ② 直调时 null 参数应立即报错，不静默 miss
+        if (system == null || system.trim().isEmpty()) {
+            throw new BusinessException(400, "lookup 参数 system 必填");
+        }
+        if (dictKey == null || dictKey.trim().isEmpty()) {
+            throw new BusinessException(400, "lookup 参数 dictKey 必填");
+        }
+        if (direction == null || (direction != 1 && direction != 2)) {
+            throw new BusinessException(400, "lookup 参数 direction 必须为 1 或 2");
+        }
+        if (source == null || source.trim().isEmpty()) {
+            throw new BusinessException(400, "lookup 参数 source 必填");
+        }
+
         String key = cacheKey(system, dictKey, direction);
 
         // 1. 先尝试从 Redis 读取
@@ -319,7 +350,7 @@ public class DictMappingService {
                     // 逐行保存（唯一约束冲突等抛 BusinessException）
                     save(req);
                     result.setSuccessCount(result.getSuccessCount() + 1);
-                } catch (Exception e) {
+                } catch (BusinessException | IllegalArgumentException e) {
                     firstError = e;
                     result.getFailedRows().add(
                         new DictMappingImportResult.FailedRow(excelRowIndex, e.getMessage()));
