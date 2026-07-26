@@ -234,3 +234,20 @@ CREATE TABLE IF NOT EXISTS perf_alert (
   check_time  DATETIME      DEFAULT CURRENT_TIMESTAMP,
   resolved    TINYINT       DEFAULT 0
 );
+
+-- 12. 字典映射表（CR-001 · FN-12 · v0.2.0 ①）
+CREATE TABLE IF NOT EXISTS dict_mapping (
+  id            BIGINT       PRIMARY KEY AUTO_INCREMENT,
+  system_code   VARCHAR(64)  NOT NULL COMMENT '对端系统标识（业务代号 · 自由文本 · 前端下拉去重）',
+  dict_key      VARCHAR(128) NOT NULL COMMENT '字典标识',
+  direction     TINYINT      NOT NULL COMMENT '1=出向(PG→对端)  2=入向(对端→PG)',
+  source_value  VARCHAR(255) NOT NULL COMMENT '源值',
+  target_value  VARCHAR(255) NOT NULL COMMENT '目标值（多对一允许 target 重复）',
+  cn_label      VARCHAR(255)          COMMENT '中文含义',
+  status        TINYINT      DEFAULT 1 COMMENT '1=启用 0=停用',
+  deleted       TINYINT      DEFAULT 0 COMMENT '软删除',
+  create_time   DATETIME     DEFAULT CURRENT_TIMESTAMP,
+  update_time   DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_src (system_code, dict_key, direction, source_value),
+  KEY idx_lookup (system_code, dict_key, direction, source_value)
+);

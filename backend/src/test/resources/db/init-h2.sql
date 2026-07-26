@@ -247,3 +247,19 @@ CREATE TABLE perf_alert (
   check_time  DATETIME      DEFAULT CURRENT_TIMESTAMP,
   resolved    TINYINT       DEFAULT 0
 );
+
+-- 12. 字典映射表（H2，CR-001 · FN-12 · v0.2.0 ①）
+CREATE TABLE IF NOT EXISTS dict_mapping (
+  id            BIGINT       PRIMARY KEY AUTO_INCREMENT,
+  system_code   VARCHAR(64)  NOT NULL,
+  dict_key      VARCHAR(128) NOT NULL,
+  direction     TINYINT      NOT NULL,
+  source_value  VARCHAR(255) NOT NULL,
+  target_value  VARCHAR(255) NOT NULL,
+  cn_label      VARCHAR(255),
+  status        TINYINT      DEFAULT 1,
+  deleted       TINYINT      DEFAULT 0,
+  create_time   DATETIME     DEFAULT CURRENT_TIMESTAMP,
+  update_time   DATETIME     DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (system_code, dict_key, direction, source_value)
+);
