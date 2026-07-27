@@ -15,7 +15,7 @@ SET CHARACTER_SET_CLIENT     = utf8mb4;
 SET CHARACTER_SET_CONNECTION = utf8mb4;
 SET CHARACTER_SET_RESULTS    = utf8mb4;
 
--- 1. 4 条已知乱码 config_key 白名单修复（幂等：目标值已正确则 UPDATE 影响行=0）
+-- 1. UX-F Wave 4 条已知乱码 config_key 白名单修复（幂等：目标值已正确则 UPDATE 影响行=0）
 UPDATE sys_config SET description = '审计日志保留天数'
  WHERE config_key = 'audit.log.retention.days' AND description <> '审计日志保留天数';
 UPDATE sys_config SET description = '查询缓存 TTL（秒）'
@@ -25,14 +25,33 @@ UPDATE sys_config SET description = '转换模板缓存 TTL（秒）'
 UPDATE sys_config SET description = 'SQL 日志保留天数'
  WHERE config_key = 'sql.log.retention.days' AND description <> 'SQL 日志保留天数';
 
+-- 1b. FB-051 · v0.2.1 · REG-1 阶段（v0.1.0+）由 GBK 客户端连接导入的 sys_config 4 条乱码
+--     根因：客户端 mysql --default-character-set=gbk 导入 init.sql 时中文被打成 3F(?)，
+--          原始字节已丢失，无法逆向恢复，只能按 init.sql 原始文案覆写。
+--     注意：group_name 字段是 SYS-4 后引入的 sys_config 分组列（UX-F 时未涉及此字段）。
+UPDATE sys_config SET group_name = '注册中心', description = '本机注册到注册中心时使用的服务名（REG-1）'
+ WHERE config_key = 'registry.self.service_name'
+   AND (HEX(description) LIKE '%3F3F3F%' OR HEX(group_name) LIKE '%3F3F3F%');
+UPDATE sys_config SET group_name = '注册中心', description = '注册时上报的 IP，空则自动探测（REG-1）'
+ WHERE config_key = 'registry.self.ip.override'
+   AND (HEX(description) LIKE '%3F3F3F%' OR HEX(group_name) LIKE '%3F3F3F%');
+UPDATE sys_config SET group_name = '注册中心', description = '注册中心心跳间隔（秒，REG-1）'
+ WHERE config_key = 'registry.heartbeat.interval.seconds'
+   AND (HEX(description) LIKE '%3F3F3F%' OR HEX(group_name) LIKE '%3F3F3F%');
+UPDATE sys_config SET group_name = '注册中心', description = '连续心跳失败多少次触发告警（REG-1）'
+ WHERE config_key = 'registry.heartbeat.fail.threshold'
+   AND (HEX(description) LIKE '%3F3F3F%' OR HEX(group_name) LIKE '%3F3F3F%');
+
 -- 2. 表字符集升级 utf8mb4（防止新数据再次乱码）
 ALTER TABLE sys_config
     CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
--- 3. 校验输出
-SELECT config_key, description
+-- 3. 校验输出（含 UX-F 与 FB-051 全部 8 条）
+SELECT config_key, group_name, description
   FROM sys_config
  WHERE config_key IN (
     'audit.log.retention.days','cache.query.ttl',
-    'cache.template.ttl','sql.log.retention.days'
+    'cache.template.ttl','sql.log.retention.days',
+    'registry.self.service_name','registry.self.ip.override',
+    'registry.heartbeat.interval.seconds','registry.heartbeat.fail.threshold'
  );

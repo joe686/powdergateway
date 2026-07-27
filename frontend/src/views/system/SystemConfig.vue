@@ -28,7 +28,7 @@
       :key="group"
       class="group-card"
     >
-      <template #header>{{ group }}</template>
+      <template #header>{{ sanitize(group, '（编码异常）') }}</template>
       <el-form label-width="220px" label-position="left">
         <el-form-item
           v-for="item in items"
