@@ -87,7 +87,9 @@ public class FieldProcessController {
                 new RuleTypeDesc(ProcessRuleType.CASE, "大小写转换",
                         "mode: UPPER（全大写）| LOWER（全小写）| CAPITALIZE（首字母大写）"),
                 new RuleTypeDesc(ProcessRuleType.TYPE_CAST, "类型转换",
-                        "targetType: STRING | INTEGER | DECIMAL | BOOLEAN")
+                        "targetType: STRING | INTEGER | DECIMAL | BOOLEAN"),
+                new RuleTypeDesc(ProcessRuleType.DICT_MAP, "字典转换",
+                        "system: 对端系统标识（如 CIF）; dictKey: 字典标识（如 GENDER）; direction: 1(出向) 或 2(入向)")
         );
         return Result.success(list);
     }
