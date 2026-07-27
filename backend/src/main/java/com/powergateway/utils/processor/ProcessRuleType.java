@@ -18,5 +18,11 @@ public enum ProcessRuleType {
     CASE,
 
     /** 类型转换：字符串 ↔ 整数/小数/布尔 */
-    TYPE_CAST
+    TYPE_CAST,
+
+    /**
+     * 字典转换（FN-12 · v0.2.0 ②）
+     * params: system (对端系统标识) · dictKey (字典标识) · direction (1=出向 2=入向)
+     */
+    DICT_MAP
 }
