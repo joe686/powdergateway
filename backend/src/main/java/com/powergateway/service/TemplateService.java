@@ -232,6 +232,13 @@ public class TemplateService {
         return templateMapper.selectOne(wrapper);
     }
 
+    /** FN-09 Task 1：更新模板的 processRule（用于测试） */
+    public void updateProcessRuleById(Long id, String processRule) {
+        ConvertTemplate tpl = requireById(id);
+        tpl.setProcessRule(processRule);
+        templateMapper.updateById(tpl);
+    }
+
     private String serializeMappingRules(List<FieldMappingRule> rules) {
         try {
             return objectMapper.writeValueAsString(rules != null ? rules : Collections.emptyList());

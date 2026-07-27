@@ -142,6 +142,8 @@ public class InterfaceDocumentService {
         List<List<String>> table = new ArrayList<>();
         table.add(Arrays.asList("序号", "源字段", "目标字段", "转换方式", "字典 key"));
         List<Map<String, Object>> mappingRows = parseMappingRules(tpl.getMappingRule());
+        // 解析 processRule 列中的字段加工规则（含 DICT_MAP 字典规则）
+        List<Map<String, Object>> processRules = parseProcessRules(tpl.getProcessRule());
         if (mappingRows.isEmpty()) {
             table.add(Arrays.asList("—", "（无）", "（无）", "—", ""));
         } else {
@@ -153,8 +155,9 @@ public class InterfaceDocumentService {
                 String fixedValue  = row.getOrDefault("fixedValue",  "") != null ? row.getOrDefault("fixedValue",  "").toString() : "";
                 // 显示来源：srcField 优先，无则显示 fixedValue（固定值）
                 String src = srcField.isEmpty() ? (fixedValue.isEmpty() ? "" : "[固定:" + fixedValue + "]") : srcField;
-                // mappingRule 本身不含 process 信息（process 在 process_rule 列），dictKey 显示空串
-                table.add(Arrays.asList(String.valueOf(seq++), src, targetField, "", ""));
+                // 从 processRule 列按 targetField 提取真实 dictKey
+                String dictKey = extractDictKeyForField(processRules, targetField);
+                table.add(Arrays.asList(String.valueOf(seq++), src, targetField, "", dictKey));
             }
         }
         mapping.setTable(table);

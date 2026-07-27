@@ -52,6 +52,15 @@ class FN12FN09LinkageTest {
     }
 
     @Test
+    void transformMd_字段映射真实dictKey被展示() {
+        // 前置：创建转换模板，mappingRule 含字段映射，processRule 含 DICT_MAP 字典规则
+        Long id = insertTransformWithDictMap("STATUS");
+        String md = docService.buildMarkdownForTemplate(id);
+        // dictKey "STATUS" 应在字段映射行出现
+        assertThat(md).contains("STATUS");
+    }
+
+    @Test
     void extractDictKey_无DICT_MAP规则返空串() {
         // 直接调用 package-private static 方法（同一包）
         List<Map<String, Object>> rules = new ArrayList<>();
@@ -120,5 +129,31 @@ class FN12FN09LinkageTest {
         rule.setTargetField("b");
         req.setMappingRules(Collections.singletonList(rule));
         return templateService.saveTemplate(req);
+    }
+
+    /**
+     * 创建转换模板，含 processRule（字典规则）。
+     * mappingRule 结构：[{srcField, targetField}]
+     * processRule 结构：[{type, field, params:{system, dictKey, direction}}]
+     */
+    private Long insertTransformWithDictMap(String dictKey) {
+        TemplateSaveRequest req = new TemplateSaveRequest();
+        req.setName("测试模板字典FN12FN09_" + dictKey);
+        req.setSrcFormat("JSON");
+        req.setTargetFormat("XML");
+        FieldMappingRule rule = new FieldMappingRule();
+        rule.setSrcField("a");
+        rule.setTargetField("b");
+        req.setMappingRules(Collections.singletonList(rule));
+        // 注意：TemplateSaveRequest 可能没有 processRule 字段，需要用原始 SQL 或直接操作数据库
+        // 或者如果有 setter，直接设置；此处假设需要用 mapper.insert 或等价操作
+        Long id = templateService.saveTemplate(req);
+        // 后置：直接写入 processRule（模拟向导生成的规则）
+        // 由于 TemplateSaveRequest 可能不支持 processRule，通过 mapper 或原生 SQL 更新
+        String processRuleJson = "[{\"type\":\"DICT_MAP\",\"field\":\"b\"," +
+                "\"params\":{\"system\":\"CIF\",\"dictKey\":\"" + dictKey + "\",\"direction\":\"1\"}}]";
+        // 假设 templateService 有 updateProcessRule 或可访问 mapper
+        templateService.updateProcessRuleById(id, processRuleJson);
+        return id;
     }
 }
