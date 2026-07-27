@@ -180,10 +180,29 @@ INSERT IGNORE INTO sys_config (config_key, config_value, description, value_type
 ('registry.heartbeat.interval.seconds','5',            '注册中心心跳间隔（秒，REG-1）',              'number',  '注册中心'),
 ('registry.heartbeat.fail.threshold',  '3',            '连续心跳失败多少次触发告警（REG-1）',       'number',  '注册中心');
 
--- ========== 审计库表（M2-9）：在独立 powergateway_audit 库中建表 ==========
--- 注意：审计表 DDL 已拆分到独立文件 init-audit.sql（BUG-007/BUG-008 修复）
--- 请在审计库 powergateway_audit 中单独执行 init-audit.sql
--- 脚本位置：backend/src/main/resources/db/init-audit.sql
+-- ========== SQL 审计日志表（M2-9）· FB-043 后合并到配置库 ==========
+-- 历史：v0.1.x 及以前 sql_audit_log 建在独立 powergateway_audit 库；
+--       FB-043（2026-07-27）为简化客户环境部署（DBA 不建多 schema），
+--       合并到 powergateway_config 单库。application.yml 里 audit datasource
+--       URL 已改指 config 库；SqlAuditLogMapper 保留 @DS("audit") 兼容。
+-- 老库客户升级：见 backend/src/main/resources/db/migration-audit-to-config.sql
+
+CREATE TABLE IF NOT EXISTS sql_audit_log (
+  id              BIGINT PRIMARY KEY AUTO_INCREMENT,
+  interface_id    BIGINT,
+  sql_text        TEXT,
+  op_type         VARCHAR(32),
+  operator        VARCHAR(64),
+  op_ip           VARCHAR(64),
+  op_time         DATETIME,
+  target_db       VARCHAR(128),
+  target_table    VARCHAR(128),
+  result          VARCHAR(32)  COMMENT 'SUCCESS/FAIL',
+  error_msg       TEXT,
+  before_snapshot JSON         COMMENT '修改前数据快照'
+);
+CREATE INDEX IF NOT EXISTS idx_sql_audit_op_time ON sql_audit_log(op_time);
+CREATE INDEX IF NOT EXISTS idx_sql_audit_interface_id ON sql_audit_log(interface_id);
 
 -- SYS-1 操作日志表（配置库）
 CREATE TABLE IF NOT EXISTS sys_log (

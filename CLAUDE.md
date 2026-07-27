@@ -109,14 +109,15 @@ mvn spring-boot:run
 
 ## 关键架构决策
 
-- **三库分离**：配置库（MySQL，存模板/接口配置）、业务库（`dynamic-datasource-spring-boot-starter` 按 dbId 动态切换）、审计库（独立 MySQL，保留1年）
+- **两库分离**（FB-043 · 2026-07-27 简化）：配置库（MySQL，含配置表 + 审计日志表 `sql_audit_log`）、业务库（`dynamic-datasource-spring-boot-starter` 按 dbId 动态切换）
   - 配置库：无注解，默认 `master` 数据源
-  - 审计库：`@DS("audit")` 注解，对应独立 MySQL
+  - **审计日志表** `sql_audit_log` 与配置表同库；`@DS("audit")` 注解保留 · datasource bean 保留但 URL 指向 config 库（为未来若需真拆两库预留切换接口）
   - 业务库：`DynamicDataSourceContextHolder.push(dbId)` 在 Service 中动态切换，exec 方法结束后 `pop`
+  - 老库客户升级脚本：`backend/src/main/resources/db/migration-audit-to-config.sql`
 - **双层缓存**：Caffeine → Redis → DB；分布式锁（SET NX PX 3000）防缓存击穿；查询目标 ≤ 300ms，增删改 ≤ 500ms
 - **配置驱动 SQL**：接口配置以 JSON 持久化（`interface_config.config_json`），运行时 QueryBuilder/InsertBuilder/UpdateBuilder/DeleteBuilder 动态构造，不存硬编码 SQL
 - **统一执行入口**：所有已发布接口通过 `POST /api/exec/{interfaceId}` 调用，状态流转 `draft → published → disabled`
-- **异步审计**：AOP @Around 拦截 Executor → LinkedBlockingQueue + @Async 写审计库，不阻塞主业务链路
+- **异步审计**：AOP @Around 拦截 Executor → LinkedBlockingQueue + @Async 写 `sql_audit_log`（同 config 库），不阻塞主业务链路
 
 ### 密码安全规约
 

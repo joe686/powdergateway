@@ -184,7 +184,7 @@ INSERT INTO sys_config (config_key, config_value, description, value_type, group
   ('registry.heartbeat.interval.seconds','5',           '注册中心心跳间隔（秒，REG-1）',              'number',  '注册中心'),
   ('registry.heartbeat.fail.threshold', '3',            '连续心跳失败多少次触发告警（REG-1）',       'number',  '注册中心');
 
--- 审计日志表（M2-9）：独立审计库，H2 测试中使用 TEXT 代替 JSON
+-- 审计日志表（M2-9）· FB-043 后已合并到配置库（H2 测试环境本来就同库）· TEXT 代 JSON
 CREATE TABLE sql_audit_log (
   id              BIGINT PRIMARY KEY AUTO_INCREMENT,
   interface_id    BIGINT,

@@ -2,7 +2,7 @@
 # 使用方式：java -jar powergateway.jar --spring.profiles.active=standalone
 #
 # 特点：
-#   - 内嵌 H2 数据库（配置库 + 审计库 分别独立文件），MODE=MySQL 兼容
+#   - 内嵌 H2 数据库（单库 pg_config，含所有配置表 + 审计表；FB-043 后合并为单文件），MODE=MySQL 兼容
 #   - 无 Redis：Caffeine-only 单层缓存
 #   - h2-console 开启（浏览器打开 http://localhost:8080/h2-console 管理数据）
 #   - Redis 自动配置排除，避免启动时尝试连 localhost:6379 报错
@@ -27,8 +27,9 @@ spring:
           driver-class-name: org.h2.Driver
           username: sa
           password:
+        # FB-043 · 2026-07-27：audit 与 master 指向同一 H2 文件 pg_config，sql_audit_log 表已合并到 config 库
         audit:
-          url: jdbc:h2:file:./data/h2/pg_audit;MODE=MySQL;DB_CLOSE_DELAY=-1;AUTO_SERVER=TRUE
+          url: jdbc:h2:file:./data/h2/pg_config;MODE=MySQL;DB_CLOSE_DELAY=-1;AUTO_SERVER=TRUE
           driver-class-name: org.h2.Driver
           username: sa
           password:

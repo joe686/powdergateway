@@ -1,25 +1,10 @@
--- PowerGateway 审计库初始化脚本（BUG-007/BUG-008 修复）
--- 对应 M2-9 SQL 审计日志模块
--- 执行前请确保数据库已创建：CREATE DATABASE IF NOT EXISTS powergateway_audit DEFAULT CHARACTER SET utf8mb4;
--- 使用方法：mysql -u root -p -D <你的审计库名> < init-audit.sql
---        （由命令行 -D 参数指定库，本脚本不硬编码 USE 语句，便于客户自定义库名）
-
--- SQL 审计日志表（M2-9）
-CREATE TABLE IF NOT EXISTS sql_audit_log (
-  id              BIGINT PRIMARY KEY AUTO_INCREMENT,
-  interface_id    BIGINT,
-  sql_text        TEXT,
-  op_type         VARCHAR(32),
-  operator        VARCHAR(64),
-  op_ip           VARCHAR(64),
-  op_time         DATETIME,
-  target_db       VARCHAR(128),
-  target_table    VARCHAR(128),
-  result          VARCHAR(32)  COMMENT 'SUCCESS/FAIL',
-  error_msg       TEXT,
-  before_snapshot JSON         COMMENT '修改前数据快照'
-);
-
--- 建议为审计日志表添加索引以提升查询性能（按时间范围查询为主）
-CREATE INDEX idx_sql_audit_op_time ON sql_audit_log(op_time);
-CREATE INDEX idx_sql_audit_interface_id ON sql_audit_log(interface_id);
+-- PowerGateway 审计库初始化脚本（已归档 · FB-043）
+--
+-- ⚠️ 本脚本自 2026-07-27 起 **已停用**（FB-043 · CHG-030）：
+--    sql_audit_log 表已合并到配置库 powergateway_config（简化客户环境部署，DBA 不建多 schema）。
+--    新库客户：直接执行 init.sql 即可（含 sql_audit_log 表）。
+--    老库客户升级：执行 migration-audit-to-config.sql 把已有数据从 audit 库迁到 config 库。
+--    应用侧 application.yml 的 audit datasource URL 已改为指向 powergateway_config；
+--    SqlAuditLogMapper 保留 @DS("audit") 兼容标注（B 方案），datasource bean 保留但物理同库。
+--
+-- 保留本文件仅供项目决策历史查证，请勿再运行。
