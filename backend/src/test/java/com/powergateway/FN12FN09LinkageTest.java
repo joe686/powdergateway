@@ -208,4 +208,57 @@ class FN12FN09LinkageTest {
             assertThat(wb.getSheetAt(2).getSheetName()).isEqualTo("字典对照");
         }
     }
+
+    // ─── Task 3：zip 升级含 xlsx + manifest 加 xlsx 键 ────────────────────────
+
+    @Test
+    void visualZip_manifest含xlsx键() throws Exception {
+        insertVisualWithFields();
+        byte[] zipBytes = docService.exportAllVisualZip();
+        // 解压找 manifest.json
+        try (java.util.zip.ZipInputStream zis = new java.util.zip.ZipInputStream(new java.io.ByteArrayInputStream(zipBytes))) {
+            java.util.zip.ZipEntry e;
+            String manifestJson = null;
+            java.util.Set<String> names = new java.util.HashSet<>();
+            while ((e = zis.getNextEntry()) != null) {
+                names.add(e.getName());
+                if ("manifest.json".equals(e.getName())) {
+                    java.io.ByteArrayOutputStream buf = new java.io.ByteArrayOutputStream();
+                    byte[] bytes = new byte[1024];
+                    int len;
+                    while ((len = zis.read(bytes)) != -1) {
+                        buf.write(bytes, 0, len);
+                    }
+                    manifestJson = new String(buf.toByteArray(), java.nio.charset.StandardCharsets.UTF_8);
+                }
+            }
+            assertThat(manifestJson).contains("\"xlsx\"");
+            assertThat(names).anyMatch(n -> n.endsWith(".xlsx"));
+        }
+    }
+
+    @Test
+    void transformZip_每接口含md_html_xlsx三份() throws Exception {
+        insertTransformWithMapping();
+        byte[] zipBytes = docService.exportAllTransformZip();
+        try (java.util.zip.ZipInputStream zis = new java.util.zip.ZipInputStream(new java.io.ByteArrayInputStream(zipBytes))) {
+            java.util.zip.ZipEntry e;
+            int mdCount = 0, htmlCount = 0, xlsxCount = 0;
+            while ((e = zis.getNextEntry()) != null) {
+                if (e.getName().endsWith(".md")) mdCount++;
+                if (e.getName().endsWith(".html")) htmlCount++;
+                if (e.getName().endsWith(".xlsx")) xlsxCount++;
+            }
+            assertThat(mdCount).isEqualTo(htmlCount).isEqualTo(xlsxCount);
+            assertThat(xlsxCount).isGreaterThan(0);
+        }
+    }
+
+    @Test
+    void controllerFormatXlsx_returnsExcelResponse() throws Exception {
+        // 通过直接调 docService 方法验证 bytes 非空
+        Long id = insertVisualWithFields();
+        byte[] bytes = docService.buildVisualXlsx(id);
+        assertThat(bytes.length).isGreaterThan(100);
+    }
 }

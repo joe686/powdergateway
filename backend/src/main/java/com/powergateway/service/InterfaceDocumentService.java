@@ -67,15 +67,19 @@ public class InterfaceDocumentService {
             try {
                 String md = buildMarkdownForTemplate(id);
                 String html = buildHtmlForTemplate(id);
+                byte[] xlsx = buildTransformXlsx(id);
                 String mdKey = "transform/" + safe + ".md";
                 String htmlKey = "transform/" + safe + ".html";
+                String xlsxKey = "transform/" + safe + ".xlsx";
                 entries.put(mdKey, md.getBytes(StandardCharsets.UTF_8));
                 entries.put(htmlKey, html.getBytes(StandardCharsets.UTF_8));
+                entries.put(xlsxKey, xlsx);
                 Map<String, Object> item = new LinkedHashMap<>();
                 item.put("id", id);
                 item.put("name", name);
                 item.put("md", mdKey);
                 item.put("html", htmlKey);
+                item.put("xlsx", xlsxKey);
                 manifest.add(item);
             } catch (Exception ignore) { /* 单个失败不影响其他 */ }
         }
@@ -103,15 +107,19 @@ public class InterfaceDocumentService {
             try {
                 String md = buildMarkdownForVisual(id);
                 String html = buildHtmlForVisual(id);
+                byte[] xlsx = buildVisualXlsx(id);
                 String mdKey = "visual/" + safe + ".md";
                 String htmlKey = "visual/" + safe + ".html";
+                String xlsxKey = "visual/" + safe + ".xlsx";
                 entries.put(mdKey, md.getBytes(StandardCharsets.UTF_8));
                 entries.put(htmlKey, html.getBytes(StandardCharsets.UTF_8));
+                entries.put(xlsxKey, xlsx);
                 Map<String, Object> item = new LinkedHashMap<>();
                 item.put("id", id);
                 item.put("name", name);
                 item.put("md", mdKey);
                 item.put("html", htmlKey);
+                item.put("xlsx", xlsxKey);
                 manifest.add(item);
             } catch (Exception ignore) { }
         }

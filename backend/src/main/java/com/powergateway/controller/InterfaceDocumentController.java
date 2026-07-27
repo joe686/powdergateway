@@ -51,10 +51,15 @@ public class InterfaceDocumentController {
     }
 
     @GetMapping("/transform/{id}")
-    @Operation(summary = "下载单份转换接口文档（md 或 html）")
+    @Operation(summary = "下载单份转换接口文档（md 或 html 或 xlsx）")
     public ResponseEntity<byte[]> transformDoc(
             @PathVariable Long id,
-            @RequestParam(defaultValue = "md") String format) {
+            @RequestParam(defaultValue = "md") String format) throws Exception {
+        if ("xlsx".equalsIgnoreCase(format)) {
+            byte[] bytes = docService.buildTransformXlsx(id);
+            return InterfaceConfigController.excelResponse(bytes,
+                    "接口文档_" + id + "_" + InterfaceConfigController.tsSuffix() + ".xlsx");
+        }
         String content = "html".equalsIgnoreCase(format)
                 ? docService.buildHtmlForTemplate(id)
                 : docService.buildMarkdownForTemplate(id);
@@ -63,10 +68,15 @@ public class InterfaceDocumentController {
     }
 
     @GetMapping("/visual/{id}")
-    @Operation(summary = "下载单份可视化接口文档（md 或 html）")
+    @Operation(summary = "下载单份可视化接口文档（md 或 html 或 xlsx）")
     public ResponseEntity<byte[]> visualDoc(
             @PathVariable Long id,
-            @RequestParam(defaultValue = "md") String format) {
+            @RequestParam(defaultValue = "md") String format) throws Exception {
+        if ("xlsx".equalsIgnoreCase(format)) {
+            byte[] bytes = docService.buildVisualXlsx(id);
+            return InterfaceConfigController.excelResponse(bytes,
+                    "接口文档_" + id + "_" + InterfaceConfigController.tsSuffix() + ".xlsx");
+        }
         String content = "html".equalsIgnoreCase(format)
                 ? docService.buildHtmlForVisual(id)
                 : docService.buildMarkdownForVisual(id);
