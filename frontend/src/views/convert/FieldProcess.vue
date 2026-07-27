@@ -142,6 +142,12 @@
                   <el-option label="布尔值" value="BOOLEAN" />
                 </el-select>
               </template>
+
+              <template v-else-if="element.type === 'DICT_MAP'">
+                <el-button size="small" @click="openDictParam(element)">
+                  {{ element.params.system ? `${element.params.system}/${element.params.dictKey}/${element.params.direction==='1'?'出':'入'}` : '配置字典参数' }}
+                </el-button>
+              </template>
             </div>
 
             <!-- 该步骤输出预览 -->
@@ -186,6 +192,13 @@
         </el-collapse-item>
       </el-collapse>
     </el-card>
+
+    <!-- DictMappingParamDialog · 字典转换参数编辑 -->
+    <DictMappingParamDialog
+      v-model:visible="dictParamVisible"
+      :model-value="currentRule ? currentRule.params : {}"
+      @confirm="onDictConfirm"
+    />
   </div>
 </template>
 
@@ -195,6 +208,7 @@ import { ElMessage } from 'element-plus'
 import { Plus, Delete, Rank, QuestionFilled, VideoPlay, DocumentChecked } from '@element-plus/icons-vue'
 import { VueDraggableNext as draggable } from 'vue-draggable-next'
 import request from '@/api/request'
+import DictMappingParamDialog from '@/components/dict/DictMappingParamDialog.vue'
 
 // ==================== Props ====================
 const props = defineProps({
@@ -218,7 +232,8 @@ const ruleTypes = [
   { type: 'SUBSTRING', label: '截位' },
   { type: 'PAD',       label: '补位' },
   { type: 'CASE',      label: '大小写转换' },
-  { type: 'TYPE_CAST', label: '类型转换' }
+  { type: 'TYPE_CAST', label: '类型转换' },
+  { type: 'DICT_MAP',  label: '字典转换' }
 ]
 
 // 各规则类型的默认参数
@@ -227,7 +242,8 @@ const defaultParams = {
   SUBSTRING: { start: 0, length: 10 },
   PAD:       { direction: 'LEFT', char: '0', length: 8 },
   CASE:      { mode: 'UPPER' },
-  TYPE_CAST: { targetType: 'STRING' }
+  TYPE_CAST: { targetType: 'STRING' },
+  DICT_MAP:  {}
 }
 
 // ==================== 状态 ====================
@@ -331,6 +347,19 @@ function normalizeParams(type, params) {
     if (p.length !== undefined) p.length = String(p.length)
   }
   return p
+}
+
+// ==================== DICT_MAP 参数编辑 ====================
+const dictParamVisible = ref(false)
+const currentRule      = ref(null)
+
+function openDictParam(rule) {
+  currentRule.value      = rule
+  dictParamVisible.value = true
+}
+
+function onDictConfirm(params) {
+  if (currentRule.value) currentRule.value.params = params
 }
 
 // ==================== 保存 ====================

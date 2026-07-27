@@ -153,15 +153,20 @@
               <el-table-column label="目标字段">
                 <template #default="{ row }"><el-input v-model="row.target" size="small" /></template>
               </el-table-column>
-              <el-table-column label="加工规则" width="140">
+              <el-table-column label="加工规则" width="200">
                 <template #default="{ row }">
-                  <el-select v-model="row.process" size="small" clearable>
+                  <el-select v-model="row.process" size="small" clearable @change="v => onProcessTypeChange(row, v)">
                     <el-option label="TRIM" value="TRIM" />
                     <el-option label="UPPER" value="UPPER" />
                     <el-option label="LOWER" value="LOWER" />
                     <el-option label="SUBSTRING" value="SUBSTRING" />
                     <el-option label="PAD" value="PAD" />
+                    <el-option label="DICT_MAP（字典转换）" value="DICT_MAP" />
                   </el-select>
+                  <el-button v-if="row.process === 'DICT_MAP'" size="small" style="margin-top:4px"
+                             @click="onProcessTypeChange(row, 'DICT_MAP')">
+                    {{ row.dictParams?.system ? `${row.dictParams.system}/${row.dictParams.dictKey}/${row.dictParams.direction==='1'?'出':'入'}` : '配置字典参数' }}
+                  </el-button>
                 </template>
               </el-table-column>
               <el-table-column label="操作" width="70">
@@ -202,6 +207,13 @@
       <el-link type="primary" style="margin-top:12px;display:block" @click="skipTestToPublish">跳过测试直接发布</el-link>
     </div>
 
+    <!-- DictMappingParamDialog · 字典转换参数编辑 -->
+    <DictMappingParamDialog
+      v-model:visible="dictParamVisible"
+      :model-value="currentDictParams"
+      @confirm="onDictParamsConfirm"
+    />
+
     <!-- Step 7 · 发布 -->
     <div v-show="props.isActive('publish')">
       <el-descriptions :column="2" border>
@@ -227,6 +239,7 @@ import { savePortRoute } from '@/api/portRoute'
 import { checkFunctionCodeExists } from '@/api/functionCode'
 import { listTemplates, saveTemplate } from '@/api/template'
 import request from '@/api/request'
+import DictMappingParamDialog from '@/components/dict/DictMappingParamDialog.vue'
 
 const props = defineProps({
   isActive: { type: Function, required: true }
@@ -446,7 +459,27 @@ async function onSubmit() {
   router.push('/convert/port-route')
 }
 
-defineExpose({ validateStep, savePortRouteIfNeeded, buildPortRoutePayload, onSubmit })
+// ─── DICT_MAP 参数编辑 ────────────────────────────────────────────────────
+const dictParamVisible   = ref(false)
+const currentDictParams  = ref({})
+const currentDictRow     = ref(null)
+
+function onProcessTypeChange(row, type) {
+  row.process = type
+  if (type === 'DICT_MAP') {
+    currentDictRow.value   = row
+    currentDictParams.value = row.dictParams || {}
+    dictParamVisible.value  = true
+  }
+}
+
+function onDictParamsConfirm(params) {
+  if (currentDictRow.value) {
+    currentDictRow.value.dictParams = params
+  }
+}
+
+defineExpose({ validateStep, savePortRouteIfNeeded, buildPortRoutePayload, onSubmit, dictParamVisible, currentDictRow })
 </script>
 
 <style scoped>

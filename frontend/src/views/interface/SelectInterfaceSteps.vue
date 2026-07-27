@@ -186,14 +186,15 @@
     <div v-show="props.isActive('process')">
       <p style="color:#606266;margin-bottom:16px">配置字段加工规则（如截位、补位、大小写转换），不需要可直接跳过。</p>
       <el-table :data="wizard.processRules" border size="small" style="margin-bottom:12px">
-        <el-table-column label="加工类型" width="160">
+        <el-table-column label="加工类型" width="180">
           <template #default="{ row }">
-            <el-select v-model="row.type" size="small" style="width:100%">
+            <el-select v-model="row.type" size="small" style="width:100%" @change="v => onProcessRuleTypeChange(row, v)">
               <el-option label="去空格" value="TRIM" />
               <el-option label="转大写" value="UPPER" />
               <el-option label="转小写" value="LOWER" />
               <el-option label="截取" value="SUBSTRING" />
               <el-option label="补位" value="PAD" />
+              <el-option label="DICT_MAP（字典转换）" value="DICT_MAP" />
             </el-select>
           </template>
         </el-table-column>
@@ -201,7 +202,14 @@
           <template #default="{ row }"><el-input v-model="row.field" size="small" placeholder="字段名" /></template>
         </el-table-column>
         <el-table-column label="参数" min-width="200">
-          <template #default="{ row }"><el-input v-model="row.params" size="small" placeholder="如：length=10,padChar=0" /></template>
+          <template #default="{ row }">
+            <template v-if="row.type === 'DICT_MAP'">
+              <el-button size="small" @click="openDictParamForRule(row)">
+                {{ row.dictParams?.system ? `${row.dictParams.system}/${row.dictParams.dictKey}/${row.dictParams.direction==='1'?'出':'入'}` : '配置字典参数' }}
+              </el-button>
+            </template>
+            <el-input v-else v-model="row.params" size="small" placeholder="如：length=10,padChar=0" />
+          </template>
         </el-table-column>
         <el-table-column label="操作" width="80" align="center">
           <template #default="{ $index }">
@@ -299,6 +307,12 @@
         <el-button type="primary" :loading="publishing" @click="doPublish">保存并发布</el-button>
       </div>
     </div>
+    <!-- DictMappingParamDialog · 字典转换参数编辑 -->
+    <DictMappingParamDialog
+      v-model:visible="dictParamVisible"
+      :model-value="currentDictParams"
+      @confirm="onDictRuleConfirm"
+    />
   </div>
 </template>
 
@@ -312,6 +326,7 @@ import { getTableStructure } from '@/api/tableStructure'
 import { listShardConfigs } from '@/api/shardConfig'
 import { saveInterface, previewInterface, deletePreview, publishInterface } from '@/api/interface'
 import ConditionBuilder from '@/components/ConditionBuilder.vue'
+import DictMappingParamDialog from '@/components/dict/DictMappingParamDialog.vue'
 
 const props = defineProps({
   isActive: { type: Function, required: true }
@@ -658,7 +673,33 @@ async function onSubmit() {
   await doPublish()
 }
 
-defineExpose({ validateStep, buildPayload, onSubmit })
+// ─── DICT_MAP 参数编辑 ────────────────────────────────────────────────────
+const dictParamVisible    = ref(false)
+const currentDictParams   = ref({})
+const currentDictRuleRow  = ref(null)
+
+function onProcessRuleTypeChange(row, type) {
+  row.type = type
+  if (type === 'DICT_MAP') {
+    currentDictRuleRow.value  = row
+    currentDictParams.value   = row.dictParams || {}
+    dictParamVisible.value    = true
+  }
+}
+
+function openDictParamForRule(row) {
+  currentDictRuleRow.value  = row
+  currentDictParams.value   = row.dictParams || {}
+  dictParamVisible.value    = true
+}
+
+function onDictRuleConfirm(params) {
+  if (currentDictRuleRow.value) {
+    currentDictRuleRow.value.dictParams = params
+  }
+}
+
+defineExpose({ validateStep, buildPayload, onSubmit, dictParamVisible, currentDictRuleRow })
 </script>
 
 <style scoped>
