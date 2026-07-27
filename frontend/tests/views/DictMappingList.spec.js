@@ -68,4 +68,38 @@ describe('DictMappingList.vue', () => {
       direction: 1
     }))
   })
+
+  test('导入返回 failedRows 时展示错误表格且 dialog 不关闭', async () => {
+    asRole('admin')
+    api.importDictMappings.mockResolvedValue({ data: {
+      successCount: 0,
+      failedRows: [
+        { rowIndex: 3, errorMsg: 'direction 必须为 1 或 2' },
+        { rowIndex: 5, errorMsg: '已存在同源值映射' }
+      ]
+    }})
+    const w = mount(DictMappingList, { global: { plugins: [ElementPlus] } })
+    await flushPromises()
+    const vm = w.vm
+    vm.selectedFile = new File(['x'], 'test.xlsx')
+    await vm.doImport()
+    await flushPromises()
+    expect(vm.importResult.failedRows.length).toBe(2)
+    expect(vm.importResult.failedRows[0].rowIndex).toBe(3)
+  })
+
+  test('导入成功（无 failedRows）时刷新列表', async () => {
+    asRole('admin')
+    api.importDictMappings.mockResolvedValue({ data: { successCount: 5, failedRows: [] } })
+    api.listDictMappings.mockClear()
+    api.listDictMappings.mockResolvedValue({ data: seedData })
+    const w = mount(DictMappingList, { global: { plugins: [ElementPlus] } })
+    await flushPromises()
+    const vm = w.vm
+    vm.selectedFile = new File(['x'], 'test.xlsx')
+    api.listDictMappings.mockClear()
+    await vm.doImport()
+    await flushPromises()
+    expect(api.listDictMappings).toHaveBeenCalled()
+  })
 })

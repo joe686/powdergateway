@@ -83,6 +83,30 @@
       <el-button type="primary" @click="doSave(false)">保存</el-button>
     </template>
   </el-dialog>
+
+  <!-- 导入 dialog -->
+  <el-dialog v-model="importVisible" title="导入字典 Excel" width="700px" @close="onImportClose">
+    <el-upload accept=".xlsx" :auto-upload="false" :on-change="handleFileSelect" :show-file-list="false">
+      <el-button>选择 xlsx 文件</el-button>
+    </el-upload>
+    <div v-if="selectedFile" style="margin:8px 0">已选：{{ selectedFile.name }}</div>
+    <el-button type="primary" :disabled="!selectedFile || uploading" @click="doImport">
+      {{ uploading ? '上传中...' : '上传' }}
+    </el-button>
+
+    <template v-if="importResult">
+      <el-alert v-if="importResult.failedRows.length > 0"
+                :title="`共 ${importResult.failedRows.length} 行失败，事务已回滚，无数据入库`"
+                type="error" :closable="false" style="margin-top:12px" />
+      <el-alert v-else :title="`导入成功：${importResult.successCount} 条`"
+                type="success" :closable="false" style="margin-top:12px" />
+      <el-table v-if="importResult.failedRows.length > 0" :data="importResult.failedRows"
+                max-height="300" style="margin-top:12px">
+        <el-table-column prop="rowIndex" label="行号" width="100" />
+        <el-table-column prop="errorMsg" label="错误描述" />
+      </el-table>
+    </template>
+  </el-dialog>
 </template>
 
 <script setup>
@@ -104,7 +128,7 @@ const pageSize = 20
 
 // 对话框状态
 const editVisible = ref(false)
-const importVisible = ref(false)  // Task 3 将填充导入对话框内容
+const importVisible = ref(false)
 const formRef = ref(null)
 const form = reactive({
   id: null,
@@ -116,6 +140,11 @@ const form = reactive({
   cnLabel: '',
   status: 1
 })
+
+// 导入对话框状态
+const selectedFile = ref(null)
+const uploading = ref(false)
+const importResult = ref(null)
 
 // 表单校验规则
 const rules = {
@@ -244,8 +273,39 @@ async function download() {
   URL.revokeObjectURL(url)
 }
 
-// 暴露给测试 · 供断言 form 状态、调 doSave、调 openEdit
-defineExpose({ form, doSave, openEdit })
+// 导入处理函数
+function handleFileSelect(file) {
+  selectedFile.value = file.raw
+}
+
+async function doImport() {
+  if (!selectedFile.value) return
+  const fd = new FormData()
+  fd.append('file', selectedFile.value)
+  uploading.value = true
+  try {
+    const res = await api.importDictMappings(fd)
+    importResult.value = res?.data || res
+    if (importResult.value.failedRows.length === 0) {
+      ElMessage.success(`成功导入 ${importResult.value.successCount} 条`)
+      importVisible.value = false
+      await reload()
+    }
+  } catch (e) {
+    ElMessage.error('导入失败：' + (e.message || e))
+  } finally {
+    uploading.value = false
+  }
+}
+
+function onImportClose() {
+  selectedFile.value = null
+  importResult.value = null
+  uploading.value = false
+}
+
+// 暴露给测试 · 供断言 form 状态、调 doSave、调 openEdit、导入测试
+defineExpose({ form, doSave, openEdit, doImport, importResult, selectedFile })
 
 onMounted(reload)
 </script>
