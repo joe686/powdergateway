@@ -205,7 +205,7 @@
           <template #default="{ row }">
             <template v-if="row.type === 'DICT_MAP'">
               <el-button size="small" @click="openDictParamForRule(row)">
-                {{ row.dictParams?.system ? `${row.dictParams.system}/${row.dictParams.dictKey}/${row.dictParams.direction==='1'?'出':'入'}` : '配置字典参数' }}
+                {{ row.params?.system ? `${row.params.system}/${row.params.dictKey}/${row.params.direction==='1'?'出':'入'}` : '配置字典参数' }}
               </el-button>
             </template>
             <el-input v-else v-model="row.params" size="small" placeholder="如：length=10,padChar=0" />
@@ -682,20 +682,20 @@ function onProcessRuleTypeChange(row, type) {
   row.type = type
   if (type === 'DICT_MAP') {
     currentDictRuleRow.value  = row
-    currentDictParams.value   = row.dictParams || {}
+    currentDictParams.value   = row.params || {}   // 对齐后端 ProcessRule.params 契约
     dictParamVisible.value    = true
   }
 }
 
 function openDictParamForRule(row) {
   currentDictRuleRow.value  = row
-  currentDictParams.value   = row.dictParams || {}
+  currentDictParams.value   = row.params || {}   // 对齐后端 ProcessRule.params 契约
   dictParamVisible.value    = true
 }
 
 function onDictRuleConfirm(params) {
   if (currentDictRuleRow.value) {
-    currentDictRuleRow.value.dictParams = params
+    currentDictRuleRow.value.params = params   // 直接写 params，消除独立 dictParams 字段
   }
 }
 

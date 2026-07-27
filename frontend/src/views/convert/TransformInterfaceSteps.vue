@@ -165,7 +165,7 @@
                   </el-select>
                   <el-button v-if="row.process === 'DICT_MAP'" size="small" style="margin-top:4px"
                              @click="onProcessTypeChange(row, 'DICT_MAP')">
-                    {{ row.dictParams?.system ? `${row.dictParams.system}/${row.dictParams.dictKey}/${row.dictParams.direction==='1'?'出':'入'}` : '配置字典参数' }}
+                    {{ row.params?.system ? `${row.params.system}/${row.params.dictKey}/${row.params.direction==='1'?'出':'入'}` : '配置字典参数' }}
                   </el-button>
                 </template>
               </el-table-column>
@@ -468,14 +468,14 @@ function onProcessTypeChange(row, type) {
   row.process = type
   if (type === 'DICT_MAP') {
     currentDictRow.value   = row
-    currentDictParams.value = row.dictParams || {}
+    currentDictParams.value = row.params || {}   // 对齐后端 ProcessRule.params 契约
     dictParamVisible.value  = true
   }
 }
 
 function onDictParamsConfirm(params) {
   if (currentDictRow.value) {
-    currentDictRow.value.dictParams = params
+    currentDictRow.value.params = params   // 直接写 params，消除独立 dictParams 字段
   }
 }
 
