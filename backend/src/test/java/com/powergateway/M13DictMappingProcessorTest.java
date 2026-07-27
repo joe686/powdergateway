@@ -49,4 +49,44 @@ class M13DictMappingProcessorTest {
         assertThat(result).isEqualTo("1");
         assertThat(processor.ruleType()).isEqualTo(ProcessRuleType.DICT_MAP);
     }
+
+    @Test
+    void mock_未命中_抛BusinessException400() {
+        Mockito.when(mockService.lookup(Mockito.anyString(), Mockito.anyString(),
+                                        Mockito.anyInt(), Mockito.anyString()))
+               .thenReturn(null);
+
+        Map<String, String> params = new HashMap<>();
+        params.put("system", "CIF");
+        params.put("dictKey", "GENDER");
+        params.put("direction", "1");
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> processor.process("X", params))
+            .isInstanceOf(com.powergateway.exception.BusinessException.class)
+            .hasMessageContaining("未定义映射");
+    }
+
+    @Test
+    void 参数缺失_无system_抛400() {
+        Map<String, String> params = new HashMap<>();
+        params.put("dictKey", "GENDER");
+        params.put("direction", "1");
+        // 缺 system
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> processor.process("M", params))
+            .isInstanceOf(com.powergateway.exception.BusinessException.class)
+            .hasMessageContaining("system/dictKey/direction 均必填");
+    }
+
+    @Test
+    void direction非整数_抛400() {
+        Map<String, String> params = new HashMap<>();
+        params.put("system", "CIF");
+        params.put("dictKey", "GENDER");
+        params.put("direction", "abc");   // 非整数
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> processor.process("M", params))
+            .isInstanceOf(com.powergateway.exception.BusinessException.class)
+            .hasMessageContaining("direction 必须为整数");
+    }
 }
