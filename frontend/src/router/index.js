@@ -182,6 +182,13 @@ const router = createRouter({
           component: () => import('@/views/tools/RegistryManagement.vue'),
           meta: { title: '注册中心管理' }
         },
+        // FN-12 字典映射管理（阶段七）
+        {
+          path: 'tools/dict',
+          name: 'DictMappingList',
+          component: () => import('@/views/tools/DictMappingList.vue'),
+          meta: { title: '字典映射管理' }
+        },
         // TEST-1 测试模块（阶段七，仅 TESTER 角色可见；生产不预置 tester 用户则不可达）
         ...testkitRoutes,
         // FN-09 接口文档（UX-E）

@@ -158,6 +158,7 @@
         <el-menu-item v-if="can('/interface/doc')" index="/interface/doc">接口文档</el-menu-item>
         <el-menu-item v-if="can('/interface/import-export')" index="/interface/import-export">配置导入/导出</el-menu-item>
         <el-menu-item v-if="can('/tools/registry')" index="/tools/registry">注册中心管理</el-menu-item>
+        <el-menu-item v-if="can('/tools/dict')" index="/tools/dict">字典映射管理</el-menu-item>
         <el-menu-item v-if="can('/tools/swagger')" index="/tools/swagger">Swagger 文档</el-menu-item>
       </el-sub-menu>
 
@@ -205,7 +206,7 @@ var INTERFACE_PATHS = ['/interface/wizard', '/interface/db', '/interface/table',
                        '/interface/insert', '/interface/update', '/interface/delete',
                        '/interface/list', '/interface/shard', '/interface/cache']
 var SYSTEM_PATHS   = ['/system/log', '/system/stats', '/system/user', '/system/config']
-var TOOLS_PATHS    = ['/tools/debug', '/tools/swagger', '/interface/doc', '/interface/import-export', '/tools/registry']
+var TOOLS_PATHS    = ['/tools/debug', '/tools/swagger', '/interface/doc', '/interface/import-export', '/tools/registry', '/tools/dict']
 var TESTKIT_PATHS  = ['/testkit/demo-db', '/testkit/mock-rules', '/testkit/mock-history']
 
 const hasConvert   = computed(function() { return CONVERT_PATHS.some(function(p) { return can(p) }) })

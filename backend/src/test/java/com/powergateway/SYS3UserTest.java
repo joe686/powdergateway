@@ -129,7 +129,8 @@ class SYS3UserTest {
         List<String> menus = JsonPath.read(r.getResponse().getContentAsString(), "$.data");
         assertThat(menus).containsExactlyInAnyOrder(
             "/dashboard", "/interface/list", "/interface/cache",
-            "/tools/debug"                                    // CHG-026: /tools/swagger 收归 admin 独有
+            "/tools/debug",                                   // CHG-026: /tools/swagger 收归 admin 独有
+            "/tools/dict"                                     // FN-12 append
         );
     }
 

@@ -40,10 +40,11 @@ class UxBMenuPermissionOrderTest {
             "/interface/doc", "/interface/import-export",   // UX-E append
             "/system/log", "/system/stats", "/system/user", "/system/config",
             "/tools/debug", "/tools/swagger",
-            "/tools/registry"                                // REG-1 append
+            "/tools/registry",                               // REG-1 append
+            "/tools/dict"                                    // FN-12 append
         ));
         assertEquals(expected, new HashSet<>(MenuPermission.ADMIN_MENUS));
-        assertEquals(28, MenuPermission.ADMIN_MENUS.size(), "ADMIN 白名单元素个数 = 24 SYS-3 基线 + 3 UX-D/E + 1 REG-1");
+        assertEquals(29, MenuPermission.ADMIN_MENUS.size(), "ADMIN 白名单元素个数 = 24 SYS-3 基线 + 3 UX-D/E + 1 REG-1 + 1 FN-12");
     }
 
     @Test
@@ -70,20 +71,22 @@ class UxBMenuPermissionOrderTest {
             "/interface/list", "/interface/formula", "/interface/cache",
             "/interface/doc", "/interface/import-export",   // UX-E append
             "/system/log", "/system/stats",
-            "/tools/debug"                                   // CHG-026: /tools/swagger 收归 admin 独有
+            "/tools/debug",                                  // CHG-026: /tools/swagger 收归 admin 独有
+            "/tools/dict"                                    // FN-12 append
         ));
         assertEquals(expected, new HashSet<>(MenuPermission.USER_MENUS));
     }
 
     @Test
-    @DisplayName("READONLY_MENUS: 4 项集合（CHG-026 后移除 /tools/swagger）")
-    void readonlyMenus_只含4项() {
+    @DisplayName("READONLY_MENUS: 5 项集合（CHG-026 后移除 /tools/swagger；FN-12 新增 /tools/dict）")
+    void readonlyMenus_只含5项() {
         Set<String> expected = new HashSet<>(Arrays.asList(
             "/dashboard",
             "/interface/list", "/interface/cache",
-            "/tools/debug"                                   // CHG-026: /tools/swagger 收归 admin 独有
+            "/tools/debug",                                  // CHG-026: /tools/swagger 收归 admin 独有
+            "/tools/dict"                                    // FN-12 append
         ));
         assertEquals(expected, new HashSet<>(MenuPermission.READONLY_MENUS));
-        assertEquals(4, MenuPermission.READONLY_MENUS.size());
+        assertEquals(5, MenuPermission.READONLY_MENUS.size());
     }
 }

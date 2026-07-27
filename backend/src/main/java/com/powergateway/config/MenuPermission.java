@@ -28,8 +28,8 @@ public class MenuPermission {
         "/interface/doc", "/interface/import-export",
         // 系统管理
         "/system/log", "/system/stats", "/system/user", "/system/config",
-        // 辅助工具（REG-1 追加 /tools/registry；FN-11 追加 /tools/docs 未来 Task 5/6 时启用）
-        "/tools/debug", "/tools/swagger", "/tools/registry"
+        // 辅助工具（REG-1 追加 /tools/registry；FN-12 追加 /tools/dict；FN-11 追加 /tools/docs 未来 Task 5/6 时启用）
+        "/tools/debug", "/tools/swagger", "/tools/registry", "/tools/dict"
     );
 
     public static final List<String> USER_MENUS = Arrays.asList(
@@ -49,15 +49,15 @@ public class MenuPermission {
         "/interface/doc", "/interface/import-export",
         // 系统管理（user 不含 user / config）
         "/system/log", "/system/stats",
-        // 辅助工具（CHG-026：/tools/swagger 收归 admin 独有，此处移除）
-        "/tools/debug"
+        // 辅助工具（CHG-026：/tools/swagger 收归 admin 独有，此处移除；FN-12 追加 /tools/dict）
+        "/tools/debug", "/tools/dict"
     );
 
     public static final List<String> READONLY_MENUS = Arrays.asList(
         "/dashboard",
         "/interface/list", "/interface/cache",
-        // CHG-026：/tools/swagger 收归 admin 独有，此处移除
-        "/tools/debug"
+        // CHG-026：/tools/swagger 收归 admin 独有，此处移除；FN-12 追加 /tools/dict
+        "/tools/debug", "/tools/dict"
     );
 
     /**
