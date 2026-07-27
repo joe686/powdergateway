@@ -1,8 +1,10 @@
 package com.powergateway;
 
+import com.powergateway.model.dto.DictMappingSaveRequest;
 import com.powergateway.model.dto.InterfaceSaveRequest;
 import com.powergateway.model.dto.TemplateSaveRequest;
 import com.powergateway.model.dto.FieldMappingRule;
+import com.powergateway.service.DictMappingService;
 import com.powergateway.service.InterfaceDocumentService;
 import com.powergateway.service.InterfaceConfigService;
 import com.powergateway.service.TemplateService;
@@ -16,7 +18,7 @@ import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/** FN-12 × FN-09 联动测试（v0.2.0 ④ Task 1）：字段行读真实 configJson/mappingRule + 提取 dictKey */
+/** FN-12 × FN-09 联动测试（v0.2.0 ④ Task 1 + Task 2）：字段行读真实 configJson/mappingRule + 提取 dictKey + xlsx 多 sheet */
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional
@@ -25,6 +27,7 @@ class FN12FN09LinkageTest {
     @Autowired private InterfaceDocumentService docService;
     @Autowired private InterfaceConfigService interfaceService;
     @Autowired private TemplateService templateService;
+    @Autowired private DictMappingService dictMappingService;
 
     // ─── Task 1：字段行改造 + dictKey 提取 + md/html 加列 ─────────────────────
 
@@ -155,5 +158,54 @@ class FN12FN09LinkageTest {
         // 假设 templateService 有 updateProcessRule 或可访问 mapper
         templateService.updateProcessRuleById(id, processRuleJson);
         return id;
+    }
+
+    // ─── Task 2：xlsx 多 sheet 生成 ───────────────────────────────────────────
+
+    @Test
+    void visualXlsx_返4sheet() throws Exception {
+        Long id = insertVisualWithDictMapField("GENDER");
+        byte[] bytes = docService.buildVisualXlsx(id);
+        assertThat(bytes).isNotNull();
+        // 用 POI 读取验证 sheet 数量和名称
+        try (org.apache.poi.ss.usermodel.Workbook wb =
+                new org.apache.poi.xssf.usermodel.XSSFWorkbook(new java.io.ByteArrayInputStream(bytes))) {
+            assertThat(wb.getNumberOfSheets()).isEqualTo(4);
+            assertThat(wb.getSheetAt(0).getSheetName()).isEqualTo("基本信息");
+            assertThat(wb.getSheetAt(1).getSheetName()).isEqualTo("请求字段");
+            assertThat(wb.getSheetAt(2).getSheetName()).isEqualTo("响应字段");
+            assertThat(wb.getSheetAt(3).getSheetName()).isEqualTo("字典对照");
+        }
+    }
+
+    @Test
+    void visualXlsx_字典对照sheet含预置字典条目() throws Exception {
+        // 前置：先预置 dict_mapping 数据
+        DictMappingSaveRequest req = new DictMappingSaveRequest();
+        req.setSystemCode("CIF"); req.setDictKey("GENDER"); req.setDirection(1);
+        req.setSourceValue("M"); req.setTargetValue("1"); req.setBidirectional(false);
+        dictMappingService.save(req);
+
+        Long id = insertVisualWithDictMapField("GENDER");
+        byte[] bytes = docService.buildVisualXlsx(id);
+        try (org.apache.poi.ss.usermodel.Workbook wb =
+                new org.apache.poi.xssf.usermodel.XSSFWorkbook(new java.io.ByteArrayInputStream(bytes))) {
+            org.apache.poi.ss.usermodel.Sheet dict = wb.getSheetAt(3);
+            // 至少 header + 1 数据行
+            assertThat(dict.getPhysicalNumberOfRows()).isGreaterThanOrEqualTo(2);
+        }
+    }
+
+    @Test
+    void transformXlsx_返3sheet() throws Exception {
+        Long id = insertTransformWithMapping();
+        byte[] bytes = docService.buildTransformXlsx(id);
+        try (org.apache.poi.ss.usermodel.Workbook wb =
+                new org.apache.poi.xssf.usermodel.XSSFWorkbook(new java.io.ByteArrayInputStream(bytes))) {
+            assertThat(wb.getNumberOfSheets()).isEqualTo(3);
+            assertThat(wb.getSheetAt(0).getSheetName()).isEqualTo("基本信息");
+            assertThat(wb.getSheetAt(1).getSheetName()).isEqualTo("字段映射");
+            assertThat(wb.getSheetAt(2).getSheetName()).isEqualTo("字典对照");
+        }
     }
 }

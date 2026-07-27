@@ -2,11 +2,15 @@ package com.powergateway.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.powergateway.dao.DictMappingMapper;
 import com.powergateway.exception.BusinessException;
 import com.powergateway.model.ConvertTemplate;
+import com.powergateway.model.DictMapping;
 import com.powergateway.model.InterfaceConfig;
 import com.powergateway.model.dto.DocumentModel;
+import com.powergateway.utils.ExcelExportUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
@@ -18,6 +22,7 @@ import java.util.zip.ZipOutputStream;
 /**
  * FN-09 接口文档 Service：生成 Markdown / HTML 文档，支持全量 zip 导出。
  * v0.2.0 ④ Task 1：读真实 configJson/mappingRule，提取 DICT_MAP dictKey，md/html 加"字典 key"列。
+ * v0.2.0 ④ Task 2：新增 buildVisualXlsx（4 sheet）/ buildTransformXlsx（3 sheet）。
  */
 @Service
 @RequiredArgsConstructor
@@ -25,6 +30,10 @@ public class InterfaceDocumentService {
 
     private final TemplateService templateService;
     private final InterfaceConfigService interfaceService;
+
+    /** FN-12 字典映射 Mapper（Task 2 字典对照 sheet 数据组装） */
+    @Autowired
+    private DictMappingMapper dictMappingMapper;
 
     /** 复用同一 ObjectMapper 实例，避免每次 new */
     private static final ObjectMapper OM = new ObjectMapper();
@@ -117,6 +126,263 @@ public class InterfaceDocumentService {
             throw new BusinessException(500, "manifest 序列化失败");
         }
         return pack(entries);
+    }
+
+    // ─── xlsx 多 Sheet 生成（Task 2）─────────────────────────────────────────
+
+    /**
+     * 生成可视化接口 xlsx 文档（4 sheet：基本信息 / 请求字段 / 响应字段 / 字典对照）。
+     */
+    public byte[] buildVisualXlsx(Long id) {
+        InterfaceConfig cfg = interfaceService.getById(id);
+        List<Map<String, Object>> fields = parseFields(cfg.getConfigJson());
+        List<Map<String, Object>> processRules = parseProcessRules(cfg.getConfigJson());
+
+        LinkedHashMap<String, ExcelExportUtil.SheetSpec<?>> sheets = new LinkedHashMap<>();
+
+        // Sheet 1：基本信息
+        sheets.put("基本信息", buildBasicSheet(cfg));
+
+        // Sheet 2：请求字段（从 configJson.fields 读取，含字典 key 列）
+        sheets.put("请求字段", buildFieldsSheet(fields, processRules, false));
+
+        // Sheet 3：响应字段（configJson 无独立响应字段表时用固定行）
+        sheets.put("响应字段", buildResponseFieldsSheet(cfg));
+
+        // Sheet 4：字典对照（遍历字段的 processRules 收集 DICT_MAP 三元组后查 DB）
+        sheets.put("字典对照", buildDictRefSheet(fields, processRules));
+
+        try {
+            return ExcelExportUtil.exportMultiSheet(sheets);
+        } catch (BusinessException be) {
+            throw be;
+        } catch (Exception e) {
+            throw new BusinessException(500, "接口文档 xlsx 生成失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 生成转换模板 xlsx 文档（3 sheet：基本信息 / 字段映射 / 字典对照）。
+     * 转换模板无"响应字段" sheet。
+     */
+    public byte[] buildTransformXlsx(Long id) {
+        ConvertTemplate tpl = templateService.getById(id);
+        List<Map<String, Object>> mappings = parseMappingRules(tpl.getMappingRule());
+        List<Map<String, Object>> processRules = parseProcessRules(tpl.getProcessRule());
+
+        LinkedHashMap<String, ExcelExportUtil.SheetSpec<?>> sheets = new LinkedHashMap<>();
+
+        // Sheet 1：基本信息
+        sheets.put("基本信息", buildBasicSheetForTpl(tpl));
+
+        // Sheet 2：字段映射
+        sheets.put("字段映射", buildMappingSheet(mappings, processRules));
+
+        // Sheet 3：字典对照（从 processRules 里收集 DICT_MAP 三元组后查 DB）
+        sheets.put("字典对照", buildDictRefSheetFromMappings(processRules));
+
+        try {
+            return ExcelExportUtil.exportMultiSheet(sheets);
+        } catch (BusinessException be) {
+            throw be;
+        } catch (Exception e) {
+            throw new BusinessException(500, "转换模板文档 xlsx 生成失败：" + e.getMessage());
+        }
+    }
+
+    // ─── xlsx helper：基本信息 sheet ──────────────────────────────────────────
+
+    /** 可视化接口基本信息 sheet：每行一个 KV 对（键、值）。 */
+    private ExcelExportUtil.SheetSpec<Map.Entry<String, String>> buildBasicSheet(InterfaceConfig cfg) {
+        List<ExcelExportUtil.Column<Map.Entry<String, String>>> cols = Arrays.asList(
+                new ExcelExportUtil.Column<>("属性", e -> e.getKey()),
+                new ExcelExportUtil.Column<>("值",  e -> e.getValue())
+        );
+        LinkedHashMap<String, String> info = new LinkedHashMap<>();
+        info.put("接口名称", cfg.getName());
+        info.put("接口类型", cfg.getType());
+        info.put("状态",    cfg.getStatus());
+        info.put("响应格式", cfg.getResponseFormat() != null ? cfg.getResponseFormat() : "JSON");
+        if (cfg.getPath() != null) info.put("访问路径", cfg.getPath());
+        List<Map.Entry<String, String>> rows = new ArrayList<>(info.entrySet());
+        return new ExcelExportUtil.SheetSpec<>(cols, rows);
+    }
+
+    /** 转换模板基本信息 sheet。 */
+    private ExcelExportUtil.SheetSpec<Map.Entry<String, String>> buildBasicSheetForTpl(ConvertTemplate tpl) {
+        List<ExcelExportUtil.Column<Map.Entry<String, String>>> cols = Arrays.asList(
+                new ExcelExportUtil.Column<>("属性", e -> e.getKey()),
+                new ExcelExportUtil.Column<>("值",  e -> e.getValue())
+        );
+        LinkedHashMap<String, String> info = new LinkedHashMap<>();
+        info.put("模板名称", tpl.getName());
+        info.put("源格式",   tpl.getSrcFormat());
+        info.put("目标格式", tpl.getTargetFormat());
+        info.put("版本",     tpl.getVersion() != null ? tpl.getVersion().toString() : "1");
+        List<Map.Entry<String, String>> rows = new ArrayList<>(info.entrySet());
+        return new ExcelExportUtil.SheetSpec<>(cols, rows);
+    }
+
+    // ─── xlsx helper：请求字段 sheet ──────────────────────────────────────────
+
+    /**
+     * 请求字段 sheet（6 列：字段名 / 类型 / 必填 / 说明 / 字典 key / alias）。
+     * isResponse 参数保留（本版本请求与响应字段共享同一来源，但接口预留）。
+     */
+    @SuppressWarnings("unused")
+    private ExcelExportUtil.SheetSpec<Map<String, Object>> buildFieldsSheet(
+            List<Map<String, Object>> fields,
+            List<Map<String, Object>> processRules,
+            boolean isResponse) {
+        List<ExcelExportUtil.Column<Map<String, Object>>> cols = Arrays.asList(
+                new ExcelExportUtil.Column<>("字段名",  f -> {
+                    String alias  = nvl(f.get("alias"));
+                    String column = nvl(f.get("column"));
+                    return alias.isEmpty() ? column : alias;
+                }),
+                new ExcelExportUtil.Column<>("类型",   f -> nvl(f.get("dataType"))),
+                new ExcelExportUtil.Column<>("必填",   f -> nvl(f.get("required"))),
+                new ExcelExportUtil.Column<>("说明",   f -> nvl(f.get("remark"))),
+                new ExcelExportUtil.Column<>("字典 key", f -> {
+                    String alias  = nvl(f.get("alias"));
+                    String column = nvl(f.get("column"));
+                    String fname  = alias.isEmpty() ? column : alias;
+                    return extractDictKeyForField(processRules, fname);
+                })
+        );
+        return new ExcelExportUtil.SheetSpec<>(cols, fields);
+    }
+
+    /** 响应字段 sheet（固定行：data / code；SELECT 类型多一条 total 行）。 */
+    private ExcelExportUtil.SheetSpec<String[]> buildResponseFieldsSheet(InterfaceConfig cfg) {
+        List<ExcelExportUtil.Column<String[]>> cols = Arrays.asList(
+                new ExcelExportUtil.Column<>("字段名", r -> r[0]),
+                new ExcelExportUtil.Column<>("类型",  r -> r[1]),
+                new ExcelExportUtil.Column<>("说明",  r -> r[2])
+        );
+        List<String[]> rows = new ArrayList<>();
+        if ("SELECT".equals(cfg.getType())) {
+            rows.add(new String[]{"data",  "Array",   "查询结果列表"});
+            rows.add(new String[]{"total", "Integer", "总记录数"});
+        } else {
+            rows.add(new String[]{"data", "Integer", "影响行数（affectedRows）"});
+        }
+        rows.add(new String[]{"code", "Integer", "200=成功"});
+        return new ExcelExportUtil.SheetSpec<>(cols, rows);
+    }
+
+    // ─── xlsx helper：字段映射 sheet ──────────────────────────────────────────
+
+    /** 转换模板字段映射 sheet（5 列：序号 / 源字段 / 目标字段 / 转换方式 / 字典 key）。 */
+    private ExcelExportUtil.SheetSpec<Map<String, Object>> buildMappingSheet(
+            List<Map<String, Object>> mappings,
+            List<Map<String, Object>> processRules) {
+        // 用包装类携带序号
+        List<ExcelExportUtil.Column<Map<String, Object>>> cols = Arrays.asList(
+                new ExcelExportUtil.Column<>("序号",     m -> nvl(m.get("_seq"))),
+                new ExcelExportUtil.Column<>("源字段",   m -> {
+                    String sf = nvl(m.get("srcField"));
+                    String fv = nvl(m.get("fixedValue"));
+                    return sf.isEmpty() ? (fv.isEmpty() ? "" : "[固定:" + fv + "]") : sf;
+                }),
+                new ExcelExportUtil.Column<>("目标字段", m -> nvl(m.get("targetField"))),
+                new ExcelExportUtil.Column<>("转换方式", m -> nvl(m.get("transformType"))),
+                new ExcelExportUtil.Column<>("字典 key", m -> {
+                    String tf = nvl(m.get("targetField"));
+                    return extractDictKeyForField(processRules, tf);
+                })
+        );
+        // 追加序号字段（避免修改原 Map，拷贝一份）
+        List<Map<String, Object>> rows = new ArrayList<>();
+        int seq = 1;
+        for (Map<String, Object> m : mappings) {
+            Map<String, Object> copy = new LinkedHashMap<>(m);
+            copy.put("_seq", seq++);
+            rows.add(copy);
+        }
+        return new ExcelExportUtil.SheetSpec<>(cols, rows);
+    }
+
+    // ─── xlsx helper：字典对照 sheet ──────────────────────────────────────────
+
+    /**
+     * 可视化接口字典对照 sheet：遍历 fields 的 processRules 收集 DICT_MAP 三元组，
+     * 对每个三元组调 selectByLookup 拿全量条目，汇总为表格行。
+     */
+    private ExcelExportUtil.SheetSpec<DictMapping> buildDictRefSheet(
+            List<Map<String, Object>> fields,
+            List<Map<String, Object>> processRules) {
+        List<DictMapping> dictRows = collectDictMappings(processRules);
+        return buildDictMappingSheet(dictRows);
+    }
+
+    /**
+     * 转换模板字典对照 sheet：从 processRules 收集 DICT_MAP 三元组，查 DB 拿全量条目。
+     */
+    private ExcelExportUtil.SheetSpec<DictMapping> buildDictRefSheetFromMappings(
+            List<Map<String, Object>> processRules) {
+        List<DictMapping> dictRows = collectDictMappings(processRules);
+        return buildDictMappingSheet(dictRows);
+    }
+
+    /** 统一字典对照 sheet 构造（6 列：系统 / 字典键 / 方向 / source / target / cn_label）。 */
+    private ExcelExportUtil.SheetSpec<DictMapping> buildDictMappingSheet(List<DictMapping> rows) {
+        List<ExcelExportUtil.Column<DictMapping>> cols = Arrays.asList(
+                new ExcelExportUtil.Column<>("系统",     d -> d.getSystemCode()),
+                new ExcelExportUtil.Column<>("字典键",   d -> d.getDictKey()),
+                new ExcelExportUtil.Column<>("方向",     d -> d.getDirection()),
+                new ExcelExportUtil.Column<>("source",  d -> d.getSourceValue()),
+                new ExcelExportUtil.Column<>("target",  d -> d.getTargetValue()),
+                new ExcelExportUtil.Column<>("cn_label", d -> d.getCnLabel() != null ? d.getCnLabel() : "")
+        );
+        return new ExcelExportUtil.SheetSpec<>(cols, rows);
+    }
+
+    /**
+     * 遍历 processRules 收集所有 DICT_MAP 三元组（system, dictKey, direction），去重后
+     * 对每个三元组调 selectByLookup 拿全量条目，汇总返回。
+     * 无 DICT_MAP 规则时返回空 list（字典对照 sheet 只 header）。
+     */
+    @SuppressWarnings("unchecked")
+    private List<DictMapping> collectDictMappings(List<Map<String, Object>> processRules) {
+        if (processRules == null || processRules.isEmpty()) return Collections.emptyList();
+
+        // 三元组去重（用 List<String> 作 set key）
+        LinkedHashSet<List<String>> seen = new LinkedHashSet<>();
+        for (Map<String, Object> r : processRules) {
+            if (!"DICT_MAP".equals(r.get("type"))) continue;
+            Object paramsObj = r.get("params");
+            if (!(paramsObj instanceof Map)) continue;
+            Map<?, ?> params = (Map<?, ?>) paramsObj;
+            String system    = params.get("system")    != null ? params.get("system").toString()    : "";
+            String dictKey   = params.get("dictKey")   != null ? params.get("dictKey").toString()   : "";
+            String direction = params.get("direction") != null ? params.get("direction").toString()  : "1";
+            if (system.isEmpty() || dictKey.isEmpty()) continue;
+            seen.add(Arrays.asList(system, dictKey, direction));
+        }
+
+        // 对每个三元组查 DB，汇总全量条目
+        List<DictMapping> result = new ArrayList<>();
+        for (List<String> triple : seen) {
+            String system    = triple.get(0);
+            String dictKey   = triple.get(1);
+            int    direction;
+            try {
+                direction = Integer.parseInt(triple.get(2));
+            } catch (NumberFormatException e) {
+                direction = 1;  // 默认出向
+            }
+            List<DictMapping> rows = dictMappingMapper.selectByLookup(system, dictKey, direction);
+            result.addAll(rows);
+        }
+        return result;
+    }
+
+    // ─── 工具方法 ─────────────────────────────────────────────────────────────
+
+    /** 将 Object 安全转为 String，null 返回空串。 */
+    private String nvl(Object v) {
+        return v == null ? "" : v.toString();
     }
 
     // ─── DocumentModel 构造 ────────────────────────────────────────────────────
