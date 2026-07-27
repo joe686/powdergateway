@@ -1,5 +1,7 @@
 package com.powergateway.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powergateway.exception.BusinessException;
 import com.powergateway.model.ConvertTemplate;
 import com.powergateway.model.InterfaceConfig;
@@ -15,6 +17,7 @@ import java.util.zip.ZipOutputStream;
 
 /**
  * FN-09 接口文档 Service：生成 Markdown / HTML 文档，支持全量 zip 导出。
+ * v0.2.0 ④ Task 1：读真实 configJson/mappingRule，提取 DICT_MAP dictKey，md/html 加"字典 key"列。
  */
 @Service
 @RequiredArgsConstructor
@@ -22,6 +25,9 @@ public class InterfaceDocumentService {
 
     private final TemplateService templateService;
     private final InterfaceConfigService interfaceService;
+
+    /** 复用同一 ObjectMapper 实例，避免每次 new */
+    private static final ObjectMapper OM = new ObjectMapper();
 
     // ─── 对外接口 ──────────────────────────────────────────────────────────────
 
@@ -69,8 +75,7 @@ public class InterfaceDocumentService {
         mf.put("count", manifest.size());
         mf.put("entries", manifest);
         try {
-            String manifestJson = new com.fasterxml.jackson.databind.ObjectMapper()
-                .writerWithDefaultPrettyPrinter().writeValueAsString(mf);
+            String manifestJson = OM.writerWithDefaultPrettyPrinter().writeValueAsString(mf);
             entries.put("manifest.json", manifestJson.getBytes(StandardCharsets.UTF_8));
         } catch (Exception e) {
             throw new BusinessException(500, "manifest 序列化失败");
@@ -106,8 +111,7 @@ public class InterfaceDocumentService {
         mf.put("count", manifest.size());
         mf.put("entries", manifest);
         try {
-            String manifestJson = new com.fasterxml.jackson.databind.ObjectMapper()
-                .writerWithDefaultPrettyPrinter().writeValueAsString(mf);
+            String manifestJson = OM.writerWithDefaultPrettyPrinter().writeValueAsString(mf);
             entries.put("manifest.json", manifestJson.getBytes(StandardCharsets.UTF_8));
         } catch (Exception e) {
             throw new BusinessException(500, "manifest 序列化失败");
@@ -132,16 +136,26 @@ public class InterfaceDocumentService {
 
         List<DocumentModel.Section> sections = new ArrayList<>();
 
-        // 字段映射表
+        // 字段映射表（v0.2.0 ④：header 追加"字典 key"列，从 mappingRule 读取真实行）
         DocumentModel.Section mapping = new DocumentModel.Section();
         mapping.setHeading("字段映射规则");
         List<List<String>> table = new ArrayList<>();
-        table.add(Arrays.asList("序号", "源字段", "目标字段", "转换方式"));
-        if (tpl.getMappingRule() != null && !tpl.getMappingRule().trim().isEmpty()
-                && !"[]".equals(tpl.getMappingRule().trim())) {
-            mapping.setDescription("字段映射规则（摘要）");
+        table.add(Arrays.asList("序号", "源字段", "目标字段", "转换方式", "字典 key"));
+        List<Map<String, Object>> mappingRows = parseMappingRules(tpl.getMappingRule());
+        if (mappingRows.isEmpty()) {
+            table.add(Arrays.asList("—", "（无）", "（无）", "—", ""));
         } else {
-            table.add(Arrays.asList("—", "（无）", "（无）", "—"));
+            mapping.setDescription("字段映射规则（摘要）");
+            int seq = 1;
+            for (Map<String, Object> row : mappingRows) {
+                String srcField    = row.getOrDefault("srcField",    "") != null ? row.getOrDefault("srcField",    "").toString() : "";
+                String targetField = row.getOrDefault("targetField", "") != null ? row.getOrDefault("targetField", "").toString() : "";
+                String fixedValue  = row.getOrDefault("fixedValue",  "") != null ? row.getOrDefault("fixedValue",  "").toString() : "";
+                // 显示来源：srcField 优先，无则显示 fixedValue（固定值）
+                String src = srcField.isEmpty() ? (fixedValue.isEmpty() ? "" : "[固定:" + fixedValue + "]") : srcField;
+                // mappingRule 本身不含 process 信息（process 在 process_rule 列），dictKey 显示空串
+                table.add(Arrays.asList(String.valueOf(seq++), src, targetField, "", ""));
+            }
         }
         mapping.setTable(table);
         sections.add(mapping);
@@ -172,30 +186,48 @@ public class InterfaceDocumentService {
 
         List<DocumentModel.Section> sections = new ArrayList<>();
 
-        // 请求字段
+        // 解析 configJson 中的顶层 processRules（含 DICT_MAP 字典规则）
+        List<Map<String, Object>> processRules = parseProcessRules(cfg.getConfigJson());
+        // 解析 SELECT 接口的返回字段列表（{table, column, alias}）
+        List<Map<String, Object>> cfgFields = parseFields(cfg.getConfigJson());
+
+        // 请求字段（v0.2.0 ④：header 追加"字典 key"列，从 configJson.fields 读真实字段）
         DocumentModel.Section reqSection = new DocumentModel.Section();
         reqSection.setHeading("请求字段");
         List<List<String>> reqTable = new ArrayList<>();
-        reqTable.add(Arrays.asList("字段名", "类型", "必填", "说明"));
-        reqTable.add(Arrays.asList("params", "Object", "N", "请求参数 Map（key-value 对）"));
-        if ("SELECT".equals(cfg.getType())) {
-            reqTable.add(Arrays.asList("page", "Integer", "N", "分页页码（默认 1）"));
-            reqTable.add(Arrays.asList("pageSize", "Integer", "N", "每页条数（默认 20）"));
+        reqTable.add(Arrays.asList("字段名", "类型", "必填", "说明", "字典 key"));
+        if (cfgFields.isEmpty()) {
+            // configJson 无 fields 时保持固定行（SELECT 通用参数），dictKey 填空串
+            reqTable.add(Arrays.asList("params", "Object", "N", "请求参数 Map（key-value 对）", ""));
+            if ("SELECT".equals(cfg.getType())) {
+                reqTable.add(Arrays.asList("page", "Integer", "N", "分页页码（默认 1）", ""));
+                reqTable.add(Arrays.asList("pageSize", "Integer", "N", "每页条数（默认 20）", ""));
+            }
+        } else {
+            for (Map<String, Object> f : cfgFields) {
+                // alias 优先用作展示字段名，其次 column
+                String alias  = f.getOrDefault("alias",  "") != null ? f.getOrDefault("alias",  "").toString() : "";
+                String column = f.getOrDefault("column", "") != null ? f.getOrDefault("column", "").toString() : "";
+                String fieldName = alias.isEmpty() ? column : alias;
+                // 从顶层 processRules 按 field 名找 DICT_MAP dictKey
+                String dk = extractDictKeyForField(processRules, fieldName);
+                reqTable.add(Arrays.asList(fieldName, "", "", "", dk));
+            }
         }
         reqSection.setTable(reqTable);
         sections.add(reqSection);
 
-        // 响应字段
+        // 响应字段（v0.2.0 ④：header 追加"字典 key"列；configJson 无独立响应字段表时沿用固定行）
         DocumentModel.Section respSection = new DocumentModel.Section();
         respSection.setHeading("响应字段");
         List<List<String>> respTable = new ArrayList<>();
-        respTable.add(Arrays.asList("字段名", "类型", "说明"));
+        respTable.add(Arrays.asList("字段名", "类型", "说明", "字典 key"));
         if ("SELECT".equals(cfg.getType())) {
-            respTable.add(Arrays.asList("data", "Array", "查询结果列表"));
-            respTable.add(Arrays.asList("code", "Integer", "200=成功"));
+            respTable.add(Arrays.asList("data", "Array", "查询结果列表", ""));
+            respTable.add(Arrays.asList("code", "Integer", "200=成功", ""));
         } else {
-            respTable.add(Arrays.asList("data", "Integer", "影响行数（affectedRows）"));
-            respTable.add(Arrays.asList("code", "Integer", "200=成功"));
+            respTable.add(Arrays.asList("data", "Integer", "影响行数（affectedRows）", ""));
+            respTable.add(Arrays.asList("code", "Integer", "200=成功", ""));
         }
         respSection.setTable(respTable);
         sections.add(respSection);
@@ -210,6 +242,108 @@ public class InterfaceDocumentService {
 
         m.setSections(sections);
         return m;
+    }
+
+    // ─── 字段解析与 dictKey 提取 ───────────────────────────────────────────────
+
+    /**
+     * 从字段加工规则列表中提取第一条 DICT_MAP 规则的 dictKey。
+     * <p>
+     * 实际 configJson.processRules 结构（SYS-5 向导生成）：
+     * <pre>
+     *   [{
+     *     "type": "DICT_MAP",
+     *     "field": "gender",
+     *     "params": {"system": "CIF", "dictKey": "GENDER", "direction": "1"}
+     *   }]
+     * </pre>
+     * params 可能是 Map（DICT_MAP 配置为对象），也可能是 String（其他规则用字符串 "key=val"）。
+     * public static 供测试直接调用（测试包 com.powergateway 与本类不同包）。
+     *
+     * @param processRules 规则列表（每条为 Map），null 或空列表返回 ""
+     * @return dictKey 字符串；无 DICT_MAP 规则时返回空串 ""
+     */
+    public static String extractDictKey(List<Map<String, Object>> processRules) {
+        if (processRules == null) return "";
+        for (Map<String, Object> r : processRules) {
+            if ("DICT_MAP".equals(r.get("type"))) {
+                Object params = r.get("params");
+                if (params instanceof Map) {
+                    Object dk = ((Map<?, ?>) params).get("dictKey");
+                    return dk == null ? "" : dk.toString();
+                }
+            }
+        }
+        return "";
+    }
+
+    /**
+     * 解析 configJson 中的 processRules 顶层数组。
+     * 失败时静默降级，返回空 list，不阻塞文档生成。
+     */
+    @SuppressWarnings("unchecked")
+    private List<Map<String, Object>> parseProcessRules(String configJson) {
+        if (configJson == null || configJson.isEmpty()) return Collections.emptyList();
+        try {
+            Map<String, Object> root = OM.readValue(configJson,
+                    new TypeReference<Map<String, Object>>() {});
+            Object rules = root.get("processRules");
+            if (rules instanceof List) return (List<Map<String, Object>>) rules;
+        } catch (Exception e) { /* 静默降级 */ }
+        return Collections.emptyList();
+    }
+
+    /**
+     * 解析 configJson 中的 fields 数组（SELECT 接口：{table, column, alias}）。
+     * 失败时静默降级，返回空 list。
+     */
+    @SuppressWarnings("unchecked")
+    private List<Map<String, Object>> parseFields(String configJson) {
+        if (configJson == null || configJson.isEmpty()) return Collections.emptyList();
+        try {
+            Map<String, Object> root = OM.readValue(configJson,
+                    new TypeReference<Map<String, Object>>() {});
+            Object fields = root.get("fields");
+            if (fields instanceof List) return (List<Map<String, Object>>) fields;
+        } catch (Exception e) { /* 静默降级 */ }
+        return Collections.emptyList();
+    }
+
+    /**
+     * 解析 mappingRule JSON 数组（转换模板：[{srcField, targetField, fixedValue}]）。
+     * 失败时静默降级，返回空 list。
+     */
+    @SuppressWarnings("unchecked")
+    private List<Map<String, Object>> parseMappingRules(String mappingRule) {
+        if (mappingRule == null || mappingRule.isEmpty()
+                || "[]".equals(mappingRule.trim())) return Collections.emptyList();
+        try {
+            return OM.readValue(mappingRule,
+                    new TypeReference<List<Map<String, Object>>>() {});
+        } catch (Exception e) { /* 静默降级 */ }
+        return Collections.emptyList();
+    }
+
+    /**
+     * 从顶层 processRules 中找到指定 field 对应的 DICT_MAP dictKey。
+     *
+     * @param processRules 配置的 processRules 列表
+     * @param fieldName    字段名（alias 或 column）
+     * @return dictKey 或 ""
+     */
+    private String extractDictKeyForField(List<Map<String, Object>> processRules, String fieldName) {
+        if (processRules == null || fieldName == null) return "";
+        for (Map<String, Object> r : processRules) {
+            if ("DICT_MAP".equals(r.get("type"))
+                    && fieldName.equals(r.get("field"))) {
+                Object params = r.get("params");
+                if (params instanceof Map) {
+                    Object dk = ((Map<?, ?>) params).get("dictKey");
+                    return dk == null ? "" : dk.toString();
+                }
+            }
+        }
+        return "";
     }
 
     // ─── 渲染器 ────────────────────────────────────────────────────────────────
