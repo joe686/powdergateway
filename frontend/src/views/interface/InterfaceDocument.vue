@@ -25,7 +25,7 @@
           <el-table-column prop="name" label="模板名称" min-width="160" />
           <el-table-column prop="srcFormat" label="源格式" width="120" />
           <el-table-column prop="targetFormat" label="目标格式" width="120" />
-          <el-table-column label="操作" width="240" fixed="right">
+          <el-table-column label="操作" width="320" fixed="right">
             <template #default="{ row }">
               <el-button
                 size="small"
@@ -36,6 +36,10 @@
                 type="primary"
                 @click="handleDownloadTransform(row, 'html')"
               >下载 HTML</el-button>
+              <el-button
+                size="small"
+                @click="handleDownloadTransform(row, 'xlsx')"
+              >Excel</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -74,7 +78,7 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="240" fixed="right">
+          <el-table-column label="操作" width="320" fixed="right">
             <template #default="{ row }">
               <el-button
                 size="small"
@@ -85,6 +89,10 @@
                 type="primary"
                 @click="handleDownloadVisual(row, 'html')"
               >下载 HTML</el-button>
+              <el-button
+                size="small"
+                @click="handleDownloadVisual(row, 'xlsx')"
+              >Excel</el-button>
             </template>
           </el-table-column>
         </el-table>
