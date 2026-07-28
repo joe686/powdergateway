@@ -69,9 +69,34 @@ MainLayout.vue          # 整体骨架，管理侧边栏折叠状态
 - 字段映射拖拽使用 `vue-draggable-next`（**注意**：必须用 default slot + `v-for`，**禁止**使用 `<template #item>` — `#item` 是 vuedraggable v4 的 API，在 vue-draggable-next v2.x 中被完全忽略，列表渲染为空）
 - 图表使用 `vue-echarts`（已安装）
 
-### 可复用前端组件（待实现，实现后禁止重复造轮子）
+### 可复用前端组件（已实现 · 禁重复造轮子）
 
-| 组件 | 计划单元 | 被复用方 |
+| 组件 | 路径 | 实现单元 | 被复用方 |
+|------|---------|:-:|---------|
+| `ConditionBuilder.vue` | `src/components/ConditionBuilder.vue` | M2-3 | M2-5 · M2-6 |
+| `InterfaceWizard.vue`（9 步向导） | `src/views/interface/InterfaceWizard.vue` | SYS-5 | 各接口配置页（M2-3/4/5/6）|
+| `DictMappingParamDialog.vue`（字典参数编辑器）| `src/components/dict/DictMappingParamDialog.vue` | FN-12 | `FieldProcess.vue` / `InterfaceWizard.vue` step 6 / `TransformInterfaceSteps.vue` step 5 / `SelectInterfaceSteps.vue` step 6 |
+
+### 关键页面地标（重大 UI 修改前先看这里）
+
+| 页面 | 路径 | 关键点 |
 |------|---------|---------|
-| `ConditionBuilder.vue` | M2-3 | M2-5、M2-6 |
-| `InterfaceWizard.vue`（9步向导） | SYS-5 | 各接口配置页 |
+| 主布局 | `src/components/layout/MainLayout.vue` | 侧边菜单折叠 + `SideMenu.vue` + `TopBar.vue` |
+| 侧边菜单 | `src/components/layout/SideMenu.vue` | `v-if="can(path)"` 菜单白名单联动 SYS-3 |
+| 登录页 | `src/views/login/LoginView.vue` | Sa-Token 集成 · `useUserStore.setAllowedMenus()` 调用后跳转 |
+| 首页概览 | `src/views/DashboardView.vue` | AUX-2 · 5卡+3图+TOP5表+告警+维度切换+30s 轮询 |
+| 字典管理 | `src/views/tools/DictMappingList.vue` | FN-12 · 三级联动 + 批量导入导出 · v0.2.5 后拆 `/transform/dict` + `/interface/dict` |
+| 报文调试 | `src/views/tools/MessageDebug.vue` | AUX-1 · JSON↔XML 双向 · v0.3.0 SOCK-3 加"XML→扁平 JSON"tab |
+| 接口向导 | `src/views/interface/InterfaceWizard.vue` | SYS-5 · 9 步 · v0.3.0 SOCK-2 加 SOCKET 目标类型 |
+| 系统配置 | `src/views/system/SystemConfig.vue` | SYS-4 · 分组表单 · 仅 admin 可保存 · v0.2.1 补 sanitize |
+| 转换向导 | `src/views/convert/TransformInterfaceSteps.vue` | UX-D · 报文转换 9 步向导 |
+| 字段加工 | `src/views/convert/FieldProcess.vue` | M1-3 · 加工规则独立编辑器（DICT_MAP 类型 v0.2.0 集成）|
+
+### 组件/页面变更后同步文档规约（2026-07-28 复盘落实）
+
+新增/删除/大改 页面或复用组件 → **必须**同步更新:
+
+1. **本文件** "可复用前端组件"表 · "关键页面地标"表 · "路由约定"（若新增路由）
+2. [`../CLAUDE.md`](../CLAUDE.md) 项目根 · "跨单元复用规约"表若含前端组件
+3. [`../backend/CLAUDE.md`](../backend/CLAUDE.md) 若涉及后端 API 变更 · 同步更新其"关键代码地标"
+4. [`../docs/03-开发/变更记录.md`](../docs/03-开发/变更记录.md) · 新增 CHG-XXX

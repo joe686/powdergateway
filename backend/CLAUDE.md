@@ -173,3 +173,38 @@ class M15TemplateControllerTest {
 | SYS-5 | 接口配置九步向导：纯前端 `InterfaceWizard.vue`（867 行），Pinia + localStorage 保存中间状态，按接口类型动态裁剪步骤，复用 `ConditionBuilder.vue` |
 | AUX-1 | 报文调试工具：`MessageDebug.vue`，格式转换调试 + 接口调用调试双模式，`/tools/debug` 路由 |
 | AUX-2 | 首页系统概览：`HomeOverviewController/Service`，`GET /api/home/overview?dimension=today\|week\|month`，聚合 interfaceStats/callStats/callTrend/opTypeDistribution/topSlowInterfaces/activeAlerts；前端 `DashboardView.vue`（5卡片+3图表+TOP5表+告警列表+维度切换+30s 轮询） |
+| FN-09 | 接口文档下载：`InterfaceDocumentService.buildVisualModel/buildTransformModel`,md/html/xlsx 三格式,zip 批量导出 · v0.2.0 CHG-032 加字典 key 列 + xlsx 4-sheet |
+| FN-11 | 配置导入导出扩展：`ConfigImportService/ConfigExportService`,Excel/Markdown/Zip 三格式,菜单合并,循环报文路径,manifest.json 元数据 · CHG-022 |
+| FN-12 | 字典映射管理全链路：`dict_mapping` 表 + `DictMappingController/Service` + Redis 缓存 · `DictMappingProcessor`（M1-3 集成 · `ProcessRuleType.DICT_MAP`）· POI Excel 导入导出 · 三级联动嵌入 M1-3/M1-6/M2-3/4/5/6 · FN-09 联动生成 xlsx 4-sheet · CHG-028/029/031/032 |
+| REG-1 | 注册中心集成：`RegistryClient` 接口抽象 + `RegistryFacade` 门面 + `NacosRegistryClient`/`EurekaRegistryClient` 双实现 + `service://` 协议解析 + `RegistryHeartbeatScheduler` 心跳骨架 · **注意**:`EurekaRegistryClient.selfRegister` 目前仅日志占位（L55-60）,v0.3.0 SOCK-1 补齐 · CHG-023 |
+| TEST-1 | pg-testkit 测试工具增强 + PG 前端嵌入 + TESTER 角色 + DemoDbController 骨架 · v1.1:Faker 10 万条数据 + 完整 10 表 DDL + Mock 规则持久化 · CHG-024 |
+| REL-1 | 打包发布形态：Maven profile + Caffeine 降级 + `scripts/build/build-portable.sh`/`build-standard.sh` + `jlink-jre.sh` + `verify-artifacts.sh` 本地冒烟 · 便携版 + 标准版 · 去 CI 化 · git tag 手动版本管理 · CHG-025 + CHG-027 |
+
+## 关键代码地标（跨单元复用组件 · 禁重复实现）
+
+| 组件 | 路径 | 首实现单元 | 被复用方 |
+|---|---|:-:|---|
+| `FieldProcessor` 字段加工引擎（策略模式）| `service/FieldProcessor.java` | M1-3 | M2-3/4/5,FN-12 DictMappingProcessor |
+| `FormatConverter`（JSON/XML/CSV 互转 + `flattenMap`) | `utils/FormatConverter.java` (L218-230 flattenMap) | M1-1 | M1-6/7,AUX-1,v0.3.0 SOCK-1 |
+| `DataSourceResolver`（REQUEST/CONST/CALC 解析）| `utils/DataSourceResolver.java` | M2-4 | M2-5 |
+| `ColumnValidator`（元数据字段校验）| `utils/ColumnValidator.java` | M2-4 | M2-5 |
+| `TableMetaService` 表结构 + Redis 缓存 | `service/TableMetaService.java` | M2-2 | M2-3/4/5/6 |
+| `SysConfigService` KV 配置 + 热更新广播 | `service/SysConfigService.java` | SYS-4 | M2-9,M2-10,SYS-1,SYS-3 |
+| `ShardRouter` 分片路由（取模/范围/补查/补零）| `utils/ShardRouter.java` | M2-8 | M2-8 exec 集成 |
+| `MenuPermission` 三角色菜单白名单 | `config/MenuPermission.java` | SYS-3 | `AuthService.getMenuForCurrentUser()` |
+| `RegistryFacade` 注册中心门面 | `service/registry/RegistryFacade.java` | REG-1 | v0.3.0 SOCK-1 |
+| `SqlAuditAspect` / `SysLogAspect` / `PerfStatAspect` AOP 异步审计 | `aop/` | M2-9 / SYS-1 / SYS-2 | AOP 拦截全站 |
+| `DictMappingProcessor` 字典映射策略 | `service/processor/DictMappingProcessor.java` | FN-12 | M1-3 集成 |
+| `ExecController.dispatchByType` 接口执行分发 | `controller/ExecController.java` (L82-108) | M2-7 | 当前仅 DB CRUD,v0.3.0 SOCK-1 加 SOCKET 分支 |
+
+## 单元变更后同步文档规约（2026-07-28 复盘落实）
+
+新单元交付 / 已有单元行为变更 / 新增关键复用组件 → **必须**同步更新以下位置:
+
+1. **本文件** "已完成单元"表 + "关键代码地标"表
+2. [`../CLAUDE.md`](../CLAUDE.md) 项目根 · "跨单元复用规约"表 · "已完成阶段"标注
+3. [`../docs/01-需求/需求拆分与最小实现方案.md`](../docs/01-需求/需求拆分与最小实现方案.md) · 状态列
+4. [`../docs/03-开发/开发计划.md`](../docs/03-开发/开发计划.md) · 交付状态列
+5. [`../docs/03-开发/变更记录.md`](../docs/03-开发/变更记录.md) · 新增 CHG-XXX
+
+若涉及跨模块 · 同步 [`../frontend/CLAUDE.md`](../frontend/CLAUDE.md)。
