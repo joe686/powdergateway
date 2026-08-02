@@ -24,6 +24,7 @@
         <springdoc.version>1.7.0</springdoc.version>
         <dom4j.version>2.1.4</dom4j.version>
         <opencsv.version>5.9</opencsv.version>
+        <netty.version>4.1.100.Final</netty.version>
     </properties>
 
     <dependencies>
@@ -164,6 +165,13 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
+
+        <!-- v0.3.0 SOCK-1 · Netty TCP Client(出站 Socket + XML 报文接入 · Q9=A) -->
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-all</artifactId>
+            <version>${netty.version}</version>
         </dependency>
 
         <!-- REG-1 · Nacos SDK 默认 provided scope：main/test 都可编译引用；fat-jar 默认不带 -->
