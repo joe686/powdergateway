@@ -28,3 +28,9 @@ frontend/theme-drawer*.png
 
 # 非项目主干内容(用户本地存放的对接资料,不入库)
 非项目主干内容/
+
+# Spring Boot 打包时前端拷贝产物(本地构建中间物,不入库)
+backend/src/main/resources/static/
+
+# Obsidian 编辑器本地状态(个人配置,不入库)
+docs/.obsidian/
