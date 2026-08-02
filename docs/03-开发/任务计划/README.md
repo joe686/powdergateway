@@ -30,6 +30,9 @@
 | 2026-07-27 | [2026-07-27-FN-12-processor.md](./2026-07-27-FN-12-processor.md) | FN-12 · M1-3 Processor 集成（v0.2.0 ②） |
 | 2026-07-27 | [2026-07-27-FN-12-frontend.md](./2026-07-27-FN-12-frontend.md) | FN-12 · 前端管理页 + 向导集成（v0.2.0 ③） |
 | 2026-07-27 | [2026-07-27-FN-12-x-FN-09.md](./2026-07-27-FN-12-x-FN-09.md) | FN-12 · FN-09 联动 · Excel xlsx 多 sheet（v0.2.0 ④） |
+| 2026-07-28 | [2026-07-28-FB-052-part1-lcpt-host-outbound.md](./2026-07-28-FB-052-part1-lcpt-host-outbound.md) | **v0.3.0** · SOCK-1~4 · lcpt-host 出站(三分帧+双编码 · 2026-08-02 24 项决策全定) |
+| 2026-07-28 | [2026-07-28-FB-052-part2-lcpt-bank-inbound.md](./2026-07-28-FB-052-part2-lcpt-bank-inbound.md) | **v0.3.2** · SOCK-5-A/B/C/D · lcpt-bank 入站(复用 v0.3.1 CR-007 · 附 preview tag) |
+| 2026-08-01 | [2026-08-01-v0.3.1-中间收官.md](./2026-08-01-v0.3.1-中间收官.md) | **v0.3.1** · CR-007 双层路由 + CR-003 版本显示(作者+日期+测试版注 H2 表)+ FB-046/054 patch + v0.2.7 分类型 4 页 + trace_id 三表 |
 
 ## 归档
 
@@ -40,8 +43,13 @@
 - v0.1.0 相关（22 份 M1/M2/SYS/AUX/UX/FN-11/REG-1 系列）→ `归档/v0.1.0/`
 - v0.1.1 相关（2 份 FB-037/038）→ `归档/v0.1.1/`
 - v0.2.0 相关（4 份 FN-12 全链路）→ `归档/v0.2.0/`
+- v0.2.5 相关（无独立任务计划文件 · CR-004 4 项 + CR-008 3 项 直接编码,细节沉淀在 CHG-034/035/036 + [v0.2.5-基线.md](../../06-项目管理/基线/v0.2.5-基线.md)）
 
-**待开工的任务计划**（未写）：
+**待开工的任务计划**(2026-08-02 24 项决策全部拍板 · 无待拍板项):
 
-- v0.3.0 SOCK-1~4：`2026-07-28-FB-052-part1-lcpt-host-outbound.md`（CR-005 SOCK-5-D 补 + 分帧默认调整 拍板后写）
-- v0.3.2 SOCK-5-A/B/C/D：`2026-07-28-FB-052-part2-lcpt-bank-inbound.md`（同上）
+- ✅ **v0.3.0 SOCK-1~4**:[2026-07-28-FB-052-part1-lcpt-host-outbound.md](./2026-07-28-FB-052-part1-lcpt-host-outbound.md) 已定 · Q5=C 三分帧 + Q6=B 双编码 + Q7A/Q20C 短连接预留 + Q8A Eureka 延 + Q9A netty-all + Q10A SOCK-3 归 + Q11A Netty Mock + Q12B host 指南
+- ✅ **v0.3.1 中间收官**:[2026-08-01-v0.3.1-中间收官.md](./2026-08-01-v0.3.1-中间收官.md) 已定 · Q1=B 启用 · 7 Task 装 CR-007 双层路由 + CR-003 版本(作者/中文日期/测试版注 H2 表) + FB-046 + FB-054 + v0.2.7 分类型 4 页 + trace_id 三表 · 不做 Q16 规约调整
+- ✅ **v0.3.2 SOCK-5-A/B/C/D**:[2026-07-28-FB-052-part2-lcpt-bank-inbound.md](./2026-07-28-FB-052-part2-lcpt-bank-inbound.md) 已定 · 复用 v0.3.1 CR-007 · Eureka selfRegister 补齐(Q8A 延到) · Q17A 最小 JSON 骨架 UI · Q21A pg-testkit 多应用并入 SOCK-5-B · Q4A 附 v0.3.2-preview tag
+- ⏹️ **v0.2.7 独立 minor**:2026-08-02 Q3=B 拍板并入 v0.3.1 Task 5 · 独立任务计划废弃
+
+**24 项决策归档**:[docs/06-项目管理/archived/2026-08-01-待确认问题清单.md](../../06-项目管理/archived/2026-08-01-待确认问题清单.md)
