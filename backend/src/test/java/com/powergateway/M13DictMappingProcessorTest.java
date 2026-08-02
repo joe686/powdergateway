@@ -37,7 +37,9 @@ class M13DictMappingProcessorTest {
 
     @Test
     void mock_命中_返回target() {
-        Mockito.when(mockService.lookup("CIF", "GENDER", 1, "M"))
+        // v0.2.5 CR-004:Processor 现在调 5 参 lookup(scope, ...) · 未指定 scope 时传 null
+        Mockito.when(mockService.lookup(
+                (Integer) null, "CIF", "GENDER", 1, "M"))
                .thenReturn(new DictMappingLookupResult("1", "男"));
 
         Map<String, String> params = new HashMap<>();
@@ -52,8 +54,11 @@ class M13DictMappingProcessorTest {
 
     @Test
     void mock_未命中_抛BusinessException400() {
-        Mockito.when(mockService.lookup(Mockito.anyString(), Mockito.anyString(),
-                                        Mockito.anyInt(), Mockito.anyString()))
+        // v0.2.5:5 参签名 · 用 any* matcher
+        Mockito.when(mockService.lookup(
+                Mockito.nullable(Integer.class),
+                Mockito.anyString(), Mockito.anyString(),
+                Mockito.anyInt(), Mockito.anyString()))
                .thenReturn(null);
 
         Map<String, String> params = new HashMap<>();
@@ -64,6 +69,22 @@ class M13DictMappingProcessorTest {
         org.assertj.core.api.Assertions.assertThatThrownBy(() -> processor.process("X", params))
             .isInstanceOf(com.powergateway.exception.BusinessException.class)
             .hasMessageContaining("未定义映射");
+    }
+
+    @Test
+    void mock_带scope参数_传给service() {
+        // v0.2.5 CR-004:params 含 scope=1 时应传给 service.lookup
+        Mockito.when(mockService.lookup(1, "CIF", "GENDER", 1, "M"))
+               .thenReturn(new DictMappingLookupResult("male", null));
+
+        Map<String, String> params = new HashMap<>();
+        params.put("system", "CIF");
+        params.put("dictKey", "GENDER");
+        params.put("direction", "1");
+        params.put("scope", "1");
+
+        String result = processor.process("M", params);
+        assertThat(result).isEqualTo("male");
     }
 
     @Test

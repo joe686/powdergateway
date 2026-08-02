@@ -254,9 +254,10 @@ CREATE TABLE IF NOT EXISTS perf_alert (
   resolved    TINYINT       DEFAULT 0
 );
 
--- 12. 字典映射表（CR-001 · FN-12 · v0.2.0 ①）
+-- 12. 字典映射表（CR-001 · FN-12 · v0.2.0 ① · CR-004 · v0.2.5 加 scope 分场景）
 CREATE TABLE IF NOT EXISTS dict_mapping (
   id            BIGINT       PRIMARY KEY AUTO_INCREMENT,
+  scope         TINYINT      NOT NULL DEFAULT 3 COMMENT '1=接口转换M1侧 2=可视化接口M2侧 3=通用共享(v0.2.5 CR-004)',
   system_code   VARCHAR(64)  NOT NULL COMMENT '对端系统标识（业务代号 · 自由文本 · 前端下拉去重）',
   dict_key      VARCHAR(128) NOT NULL COMMENT '字典标识',
   direction     TINYINT      NOT NULL COMMENT '1=出向(PG→对端)  2=入向(对端→PG)',
@@ -267,6 +268,6 @@ CREATE TABLE IF NOT EXISTS dict_mapping (
   deleted       TINYINT      DEFAULT 0 COMMENT '软删除',
   create_time   DATETIME     DEFAULT CURRENT_TIMESTAMP,
   update_time   DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  UNIQUE KEY uk_src (system_code, dict_key, direction, source_value),
-  KEY idx_lookup (system_code, dict_key, direction, source_value)
+  UNIQUE KEY uk_src (scope, system_code, dict_key, direction, source_value),
+  KEY idx_lookup (scope, system_code, dict_key, direction, source_value)
 );

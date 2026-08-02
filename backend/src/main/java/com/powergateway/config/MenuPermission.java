@@ -19,17 +19,21 @@ public class MenuPermission {
         "/convert/template", "/convert/channel",
         // 接口转换配置 · 转换规则
         "/convert/field-mapping", "/convert/field-process",
+        // 接口转换配置 · 字典（v0.2.5 CR-004 · scope=1 M1 侧）
+        "/transform/dict",
         // 接口转换配置 · 发布测试
         "/convert/port-route", "/convert/format",
         // 可视化接口开发
         "/interface/db", "/interface/table", "/interface/wizard", "/interface/dev",
         "/interface/insert", "/interface/update", "/interface/delete",
         "/interface/list", "/interface/shard", "/interface/formula", "/interface/cache",
+        // 可视化接口开发 · 字典（v0.2.5 CR-004 · scope=2 M2 侧）
+        "/interface/dict",
         "/interface/doc", "/interface/import-export",
         // 系统管理
         "/system/log", "/system/stats", "/system/user", "/system/config",
-        // 辅助工具（REG-1 追加 /tools/registry；FN-12 追加 /tools/dict；FN-11 追加 /tools/docs 未来 Task 5/6 时启用）
-        "/tools/debug", "/tools/swagger", "/tools/registry", "/tools/dict"
+        // 辅助工具（v0.2.5 CR-004 · 下线 /tools/dict · 拆到业务侧）
+        "/tools/debug", "/tools/swagger", "/tools/registry"
     );
 
     public static final List<String> USER_MENUS = Arrays.asList(
@@ -40,24 +44,30 @@ public class MenuPermission {
         "/convert/template", "/convert/channel",
         // 接口转换配置 · 转换规则
         "/convert/field-mapping", "/convert/field-process",
+        // 接口转换配置 · 字典（v0.2.5 CR-004）
+        "/transform/dict",
         // 接口转换配置 · 发布测试
         "/convert/port-route", "/convert/format",
         // 可视化接口开发（user 不含 delete / shard）
         "/interface/db", "/interface/table", "/interface/wizard", "/interface/dev",
         "/interface/insert", "/interface/update",
         "/interface/list", "/interface/formula", "/interface/cache",
+        // 可视化接口开发 · 字典（v0.2.5 CR-004）
+        "/interface/dict",
         "/interface/doc", "/interface/import-export",
         // 系统管理（user 不含 user / config）
         "/system/log", "/system/stats",
-        // 辅助工具（CHG-026：/tools/swagger 收归 admin 独有，此处移除；FN-12 追加 /tools/dict）
-        "/tools/debug", "/tools/dict"
+        // 辅助工具（v0.2.5 CR-004 · 下线 /tools/dict）
+        "/tools/debug"
     );
 
     public static final List<String> READONLY_MENUS = Arrays.asList(
         "/dashboard",
         "/interface/list", "/interface/cache",
-        // CHG-026：/tools/swagger 收归 admin 独有，此处移除；FN-12 追加 /tools/dict
-        "/tools/debug", "/tools/dict"
+        // 可视化接口开发 · 字典（v0.2.5 CR-004 · readonly 只可见 M2 侧）
+        "/interface/dict",
+        // 辅助工具（v0.2.5 CR-004 · 下线 /tools/dict）
+        "/tools/debug"
     );
 
     /**

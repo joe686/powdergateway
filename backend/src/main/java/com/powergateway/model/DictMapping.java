@@ -14,6 +14,9 @@ public class DictMapping {
     @TableId(type = IdType.AUTO)
     private Long id;
 
+    /** 使用场景（CR-004 · v0.2.5）：1=接口转换M1侧 2=可视化接口M2侧 3=通用共享 */
+    private Integer scope;
+
     /** 对端系统标识（业务代号，自由文本，前端下拉去重） */
     private String systemCode;
 

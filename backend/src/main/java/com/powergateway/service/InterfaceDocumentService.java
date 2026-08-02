@@ -380,7 +380,8 @@ public class InterfaceDocumentService {
             } catch (NumberFormatException e) {
                 direction = 1;  // 默认出向
             }
-            List<DictMapping> rows = dictMappingMapper.selectByLookup(system, dictKey, direction);
+            // v0.2.5 CR-004:文档生成默认走 scope=3 共享 · fallback 语义已在 mapper 里 IN(scope,3)
+            List<DictMapping> rows = dictMappingMapper.selectByLookup(3, system, dictKey, direction);
             result.addAll(rows);
         }
         return result;

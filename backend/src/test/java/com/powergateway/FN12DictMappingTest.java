@@ -402,6 +402,111 @@ class FN12DictMappingTest {
         assertThat(true).isTrue();
     }
 
+    // ══════════════════ v0.2.5 CR-004 新增：scope 拆分 + batch API 测试 ══════════════════
+
+    @Test
+    void saveBatch_正常路径_3条整批插入() {
+        com.powergateway.model.dto.DictMappingBatchSaveRequest req =
+            new com.powergateway.model.dto.DictMappingBatchSaveRequest();
+        req.setScope(2);
+        req.setSystemCode("CIF-BATCH");
+        req.setDictKey("STATUS");
+        req.setDirection(1);
+        java.util.List<com.powergateway.model.dto.DictMappingBatchSaveRequest.Item> items = new java.util.ArrayList<>();
+        for (int i = 0; i < 3; i++) {
+            com.powergateway.model.dto.DictMappingBatchSaveRequest.Item it =
+                new com.powergateway.model.dto.DictMappingBatchSaveRequest.Item();
+            it.setSourceValue("S" + i);
+            it.setTargetValue("T" + i);
+            it.setCnLabel("标签" + i);
+            items.add(it);
+        }
+        req.setItems(items);
+
+        java.util.List<Long> ids = dictMappingService.saveBatch(req);
+        assertThat(ids).hasSize(3).allMatch(id -> id != null && id > 0);
+    }
+
+    @Test
+    void saveBatch_超上限_抛400() {
+        com.powergateway.model.dto.DictMappingBatchSaveRequest req =
+            new com.powergateway.model.dto.DictMappingBatchSaveRequest();
+        req.setScope(2);
+        req.setSystemCode("CIF-BATCH2");
+        req.setDictKey("K");
+        req.setDirection(1);
+        java.util.List<com.powergateway.model.dto.DictMappingBatchSaveRequest.Item> items = new java.util.ArrayList<>();
+        for (int i = 0; i < 201; i++) {
+            com.powergateway.model.dto.DictMappingBatchSaveRequest.Item it =
+                new com.powergateway.model.dto.DictMappingBatchSaveRequest.Item();
+            it.setSourceValue("S" + i);
+            it.setTargetValue("T" + i);
+            items.add(it);
+        }
+        req.setItems(items);
+
+        assertThatThrownBy(() -> dictMappingService.saveBatch(req))
+            .isInstanceOf(com.powergateway.exception.BusinessException.class)
+            .hasMessageContaining("上限 200");
+    }
+
+    @Test
+    void scope_M1_M2_独立不冲突() {
+        // 同 (system, key, direction, source) 但不同 scope 允许并存
+        DictMappingSaveRequest a = new DictMappingSaveRequest();
+        a.setScope(1); a.setSystemCode("BANK"); a.setDictKey("STATE");
+        a.setDirection(1); a.setSourceValue("Y"); a.setTargetValue("1");
+        dictMappingService.save(a);
+
+        DictMappingSaveRequest b = new DictMappingSaveRequest();
+        b.setScope(2); b.setSystemCode("BANK"); b.setDictKey("STATE");
+        b.setDirection(1); b.setSourceValue("Y"); b.setTargetValue("2");
+        // 不抛冲突,因 scope 不同
+        dictMappingService.save(b);
+
+        // 查询验证:M1 视角命中 target=1
+        DictMappingLookupResult m1 = dictMappingService.lookup(1, "BANK", "STATE", 1, "Y");
+        assertThat(m1).isNotNull();
+        assertThat(m1.getTargetValue()).isEqualTo("1");
+
+        // M2 视角命中 target=2
+        DictMappingLookupResult m2 = dictMappingService.lookup(2, "BANK", "STATE", 1, "Y");
+        assertThat(m2).isNotNull();
+        assertThat(m2.getTargetValue()).isEqualTo("2");
+    }
+
+    @Test
+    void scope_M1_fallback_共享条目() {
+        // scope=3 共享条目,M1 视角查询也能命中(通过 IN(scope,3) fallback)
+        DictMappingSaveRequest shared = new DictMappingSaveRequest();
+        shared.setScope(3); shared.setSystemCode("BANK2"); shared.setDictKey("FLAG");
+        shared.setDirection(1); shared.setSourceValue("Y"); shared.setTargetValue("SHARED");
+        dictMappingService.save(shared);
+
+        // M1 视角查询 · 没有 scope=1 条目 · 应 fallback 到 scope=3 共享
+        DictMappingLookupResult m1 = dictMappingService.lookup(1, "BANK2", "FLAG", 1, "Y");
+        assertThat(m1).isNotNull();
+        assertThat(m1.getTargetValue()).isEqualTo("SHARED");
+    }
+
+    @Test
+    void scope_M1_精确_优先于共享() {
+        // 同键值,scope=1 和 scope=3 都有 · M1 视角应优先返回 scope=1
+        DictMappingSaveRequest m1Entry = new DictMappingSaveRequest();
+        m1Entry.setScope(1); m1Entry.setSystemCode("BANK3"); m1Entry.setDictKey("K");
+        m1Entry.setDirection(1); m1Entry.setSourceValue("A"); m1Entry.setTargetValue("M1_VAL");
+        dictMappingService.save(m1Entry);
+
+        DictMappingSaveRequest sharedEntry = new DictMappingSaveRequest();
+        sharedEntry.setScope(3); sharedEntry.setSystemCode("BANK3"); sharedEntry.setDictKey("K");
+        sharedEntry.setDirection(1); sharedEntry.setSourceValue("A"); sharedEntry.setTargetValue("SHARED_VAL");
+        dictMappingService.save(sharedEntry);
+
+        DictMappingLookupResult r = dictMappingService.lookup(1, "BANK3", "K", 1, "A");
+        assertThat(r).isNotNull();
+        assertThat(r.getTargetValue()).isEqualTo("M1_VAL");
+    }
+
     @Test
     void importExcel_末尾空行被跳过_不误报回滚() throws Exception {
         // 构造 2 行合法 + 1 行全空的 xlsx

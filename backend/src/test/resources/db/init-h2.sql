@@ -248,9 +248,10 @@ CREATE TABLE perf_alert (
   resolved    TINYINT       DEFAULT 0
 );
 
--- 12. 字典映射表（H2，CR-001 · FN-12 · v0.2.0 ①）
+-- 12. 字典映射表（H2，CR-001 · FN-12 · v0.2.0 ① · CR-004 · v0.2.5 加 scope）
 CREATE TABLE IF NOT EXISTS dict_mapping (
   id            BIGINT       PRIMARY KEY AUTO_INCREMENT,
+  scope         TINYINT      NOT NULL DEFAULT 3,
   system_code   VARCHAR(64)  NOT NULL,
   dict_key      VARCHAR(128) NOT NULL,
   direction     TINYINT      NOT NULL,
@@ -261,5 +262,5 @@ CREATE TABLE IF NOT EXISTS dict_mapping (
   deleted       TINYINT      DEFAULT 0,
   create_time   DATETIME     DEFAULT CURRENT_TIMESTAMP,
   update_time   DATETIME     DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE (system_code, dict_key, direction, source_value)
+  UNIQUE (scope, system_code, dict_key, direction, source_value)
 );

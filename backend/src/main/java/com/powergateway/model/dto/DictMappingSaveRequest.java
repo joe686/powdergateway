@@ -9,6 +9,10 @@ import javax.validation.constraints.*;
 @Data
 public class DictMappingSaveRequest {
 
+    /** 使用场景（CR-004 · v0.2.5）：1=接口转换M1侧 2=可视化接口M2侧 3=通用共享(默认) */
+    @Min(1) @Max(3)
+    private Integer scope = 3;
+
     @NotBlank(message = "系统代号必填")
     @Size(max = 64)
     private String systemCode;
