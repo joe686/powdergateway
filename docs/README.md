@@ -2,7 +2,7 @@
 
 > **单一入口**：任何 Claude 会话首次进入项目，先读本文件定位需要的文档，**不要**递归读 `docs/` 整个目录。这份索引本身控制在 ~200 行，读一次覆盖全景。
 
-**当前版本**：`v0.3.2`(MINOR SOCK-5 入站 lcpt-bank 场景闭环 · 2026-08-02 编码完成 9/12 Task 后端全 · CHG-042/043 · v0.2.5/v0.3.0/v0.3.1 tag 已 push · v0.3.2 待手工回归 + tag + preview tag · **Task 8 前端 3 step + 端到端手工 拆下会话**)· 基线序列见 [项目管理](06-项目管理/) · **规划已定** · v0.3.0 SOCK-1 出站 ✅ · v0.3.1 中间收官 5/7 ✅ · **v0.3.2 SOCK-5 入站 lcpt-bank 后端能力**(SOCK-5-A/B/C/D + Task 7 整合 + pg-testkit HttpMockController · CHG-042/043) · v0.3.5/7 前端 wizard 深度集成(v0.3.1 Task 5 分类型 4 页 + v0.3.2 Task 8 INBOUND_SOCKET 3 step + SOCK-2 SOCKET 深度集成 · 同批) · Oracle/Docker · Eureka selfRegister · v0.4.0 REL-1B · v0.5.0 FN-BIZ · 详见 [路线图](06-项目管理/路线图.md)
+**当前版本**：`v0.3.5`(MINOR v0.2.7 分类型 4 页补齐 · 2026-08-02 编码完成 · CHG-044 · v0.2.5/v0.3.0/v0.3.1/v0.3.2 tag 已 push · v0.3.5 待手工回归 + tag)· 基线序列见 [项目管理](06-项目管理/) · **规划已定** · v0.3.0 SOCK-1 出站 ✅ · v0.3.1 中间收官 5/7 ✅ · v0.3.2 SOCK-5 入站 lcpt-bank ✅ · **v0.3.5 分类型 4 页补齐**(Query/Insert/Update/Delete 加字段加工/分片/字典键/edit 回填 · CHG-044) · v0.3.7 前端 INBOUND_SOCKET wizard + SOCK-2 wizard 深度集成 + Oracle/Docker + Eureka selfRegister · v0.4.0 REL-1B · v0.5.0 FN-BIZ · 详见 [路线图](06-项目管理/路线图.md)
 
 **反馈入口**：[docs/06-项目管理/反馈簿.md](06-项目管理/反馈簿.md) · 详见 [pg-feedback-flow](../.claude/skills/pg-feedback-flow/SKILL.md) skill
 
