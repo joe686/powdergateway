@@ -182,12 +182,22 @@ const router = createRouter({
           component: () => import('@/views/tools/RegistryManagement.vue'),
           meta: { title: '注册中心管理' }
         },
-        // FN-12 字典映射管理（阶段七）
+        // FN-12 字典映射管理 · v0.2.5 CR-004 拆两侧
+        // /transform/dict scope=1 M1 侧 (挂"接口转换配置"菜单)
         {
-          path: 'tools/dict',
-          name: 'DictMappingList',
+          path: 'transform/dict',
+          name: 'TransformDictMappingList',
           component: () => import('@/views/tools/DictMappingList.vue'),
-          meta: { title: '字典映射管理' }
+          props: { scope: 1 },
+          meta: { title: '字典映射管理 · 接口转换' }
+        },
+        // /interface/dict scope=2 M2 侧 (挂"可视化接口开发"菜单)
+        {
+          path: 'interface/dict',
+          name: 'InterfaceDictMappingList',
+          component: () => import('@/views/tools/DictMappingList.vue'),
+          props: { scope: 2 },
+          meta: { title: '字典映射管理 · 可视化接口' }
         },
         // TEST-1 测试模块（阶段七，仅 TESTER 角色可见；生产不预置 tester 用户则不可达）
         ...testkitRoutes,

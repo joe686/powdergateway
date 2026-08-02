@@ -207,10 +207,11 @@
       <el-link type="primary" style="margin-top:12px;display:block" @click="skipTestToPublish">跳过测试直接发布</el-link>
     </div>
 
-    <!-- DictMappingParamDialog · 字典转换参数编辑 -->
+    <!-- DictMappingParamDialog · 字典转换参数编辑 · v0.2.5 CR-004:scope=1 M1 转换向导 -->
     <DictMappingParamDialog
       v-model:visible="dictParamVisible"
       :model-value="currentDictParams"
+      :scope="1"
       @confirm="onDictParamsConfirm"
     />
 

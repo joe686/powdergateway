@@ -70,6 +70,11 @@
             index="/interface/formula"
             data-ux-c-formula
           >字段公式管理</el-menu-item>
+          <!-- v0.2.5 CR-004 · 字典映射(M1 侧 · scope=1) -->
+          <el-menu-item
+            v-if="can('/transform/dict')"
+            index="/transform/dict"
+          >字典映射管理</el-menu-item>
         </el-menu-item-group>
 
         <!-- 发布测试 -->
@@ -123,6 +128,8 @@
           <el-menu-item v-if="can('/interface/delete')" index="/interface/delete">删除接口配置</el-menu-item>
           <el-menu-item v-if="can('/interface/shard')" index="/interface/shard">分库分表配置</el-menu-item>
           <el-menu-item v-if="can('/interface/cache')" index="/interface/cache">缓存查询管理</el-menu-item>
+          <!-- v0.2.5 CR-004 · 字典映射(M2 侧 · scope=2) -->
+          <el-menu-item v-if="can('/interface/dict')" index="/interface/dict">字典映射管理</el-menu-item>
         </el-menu-item-group>
 
         <!-- 发布运维 -->
@@ -148,7 +155,8 @@
         <el-menu-item v-if="can('/system/config')" index="/system/config">系统配置</el-menu-item>
       </el-sub-menu>
 
-      <!-- 辅助工具 · Wave11：接口文档、配置导入/导出 从"可视化接口开发"迁入 -->
+      <!-- 辅助工具 · Wave11：接口文档、配置导入/导出 从"可视化接口开发"迁入
+           · v0.2.5 CR-004: /tools/dict 拆到业务侧(接口转换 · 可视化接口 各自一份) · 此处下线 -->
       <el-sub-menu v-if="hasTools" index="tools">
         <template #title>
           <el-icon><Tools /></el-icon>
@@ -158,7 +166,6 @@
         <el-menu-item v-if="can('/interface/doc')" index="/interface/doc">接口文档</el-menu-item>
         <el-menu-item v-if="can('/interface/import-export')" index="/interface/import-export">配置导入/导出</el-menu-item>
         <el-menu-item v-if="can('/tools/registry')" index="/tools/registry">注册中心管理</el-menu-item>
-        <el-menu-item v-if="can('/tools/dict')" index="/tools/dict">字典映射管理</el-menu-item>
         <el-menu-item v-if="can('/tools/swagger')" index="/tools/swagger">Swagger 文档</el-menu-item>
       </el-sub-menu>
 
@@ -197,16 +204,19 @@ function can(path) {
 }
 
 // Wave6 修：/interface/formula 归属接口转换分组下的"转换规则"小节（UX-C 语义归位）
+// v0.2.5 CR-004: 加 /transform/dict (M1 侧字典)
 var CONVERT_PATHS  = ['/convert/wizard', '/convert/template', '/convert/channel',
                       '/convert/field-mapping', '/convert/field-process',
-                      '/interface/formula',
+                      '/interface/formula', '/transform/dict',
                       '/convert/port-route', '/convert/format']
 // Wave11：/interface/doc、/interface/import-export 从「接口开发」路径组挪到「辅助工具」组
+// v0.2.5 CR-004: 加 /interface/dict (M2 侧字典)
 var INTERFACE_PATHS = ['/interface/wizard', '/interface/db', '/interface/table', '/interface/dev',
                        '/interface/insert', '/interface/update', '/interface/delete',
-                       '/interface/list', '/interface/shard', '/interface/cache']
+                       '/interface/list', '/interface/shard', '/interface/cache', '/interface/dict']
 var SYSTEM_PATHS   = ['/system/log', '/system/stats', '/system/user', '/system/config']
-var TOOLS_PATHS    = ['/tools/debug', '/tools/swagger', '/interface/doc', '/interface/import-export', '/tools/registry', '/tools/dict']
+// v0.2.5 CR-004: 移除 /tools/dict (拆到业务侧)
+var TOOLS_PATHS    = ['/tools/debug', '/tools/swagger', '/interface/doc', '/interface/import-export', '/tools/registry']
 var TESTKIT_PATHS  = ['/testkit/demo-db', '/testkit/mock-rules', '/testkit/mock-history']
 
 const hasConvert   = computed(function() { return CONVERT_PATHS.some(function(p) { return can(p) }) })
@@ -216,12 +226,14 @@ const hasTools     = computed(function() { return TOOLS_PATHS.some(function(p) {
 const hasTestkit   = computed(function() { return TESTKIT_PATHS.some(function(p) { return can(p) }) })
 
 const hasGroupBaseConfig     = computed(function() { return ['/convert/template', '/convert/channel'].some(function(p) { return can(p) }) })
-const hasGroupTransformRules = computed(function() { return ['/convert/field-mapping', '/convert/field-process', '/interface/formula'].some(function(p) { return can(p) }) })
+// v0.2.5 CR-004: 加 /transform/dict 到"转换规则"分组
+const hasGroupTransformRules = computed(function() { return ['/convert/field-mapping', '/convert/field-process', '/interface/formula', '/transform/dict'].some(function(p) { return can(p) }) })
 const hasGroupPublishTest    = computed(function() { return ['/convert/port-route', '/convert/format'].some(function(p) { return can(p) }) })
 
 // Wave8：可视化接口开发的 3 小节（数据源 / 接口定义 / 发布运维）
 const hasGroupInterfaceDataSource = computed(function() { return ['/interface/db', '/interface/table'].some(function(p) { return can(p) }) })
-const hasGroupInterfaceDefine     = computed(function() { return ['/interface/dev', '/interface/insert', '/interface/update', '/interface/delete', '/interface/shard', '/interface/cache'].some(function(p) { return can(p) }) })
+// v0.2.5 CR-004: 加 /interface/dict 到"接口定义"分组
+const hasGroupInterfaceDefine     = computed(function() { return ['/interface/dev', '/interface/insert', '/interface/update', '/interface/delete', '/interface/shard', '/interface/cache', '/interface/dict'].some(function(p) { return can(p) }) })
 const hasGroupInterfaceOps        = computed(function() { return ['/interface/list'].some(function(p) { return can(p) }) })
 </script>
 

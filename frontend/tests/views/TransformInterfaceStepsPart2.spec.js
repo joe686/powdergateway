@@ -22,7 +22,9 @@ vi.mock('@/api/request', () => ({
   default: { post: vi.fn().mockResolvedValue('{"result":"ok"}') }
 }))
 vi.mock('vue-router', () => ({
-  useRouter: vi.fn(() => ({ push: vi.fn() }))
+  useRouter: vi.fn(() => ({ push: vi.fn() })),
+  // v0.2.5 CR-004: DictMappingParamDialog 现在需要 useRoute
+  useRoute:  vi.fn(() => ({ fullPath: '/convert/wizard' }))
 }))
 
 let store

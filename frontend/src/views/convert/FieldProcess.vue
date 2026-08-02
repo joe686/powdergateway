@@ -193,10 +193,11 @@
       </el-collapse>
     </el-card>
 
-    <!-- DictMappingParamDialog · 字典转换参数编辑 -->
+    <!-- DictMappingParamDialog · 字典转换参数编辑 · v0.2.5 CR-004:scope=1 M1 转换字段加工 -->
     <DictMappingParamDialog
       v-model:visible="dictParamVisible"
       :model-value="currentRule ? currentRule.params : {}"
+      :scope="1"
       @confirm="onDictConfirm"
     />
   </div>

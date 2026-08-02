@@ -307,10 +307,11 @@
         <el-button type="primary" :loading="publishing" @click="doPublish">保存并发布</el-button>
       </div>
     </div>
-    <!-- DictMappingParamDialog · 字典转换参数编辑 -->
+    <!-- DictMappingParamDialog · 字典转换参数编辑 · v0.2.5 CR-004:scope=2 M2 可视化接口 -->
     <DictMappingParamDialog
       v-model:visible="dictParamVisible"
       :model-value="currentDictParams"
+      :scope="2"
       @confirm="onDictRuleConfirm"
     />
   </div>
