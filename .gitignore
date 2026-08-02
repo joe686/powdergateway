@@ -13,3 +13,18 @@ pg-testkit/target/
 .playwright-mcp/
 logs/
 *.stackdump
+
+# 本地运行日志(v0.2.5 收尾追加)
+backend.log
+frontend.log
+*.log
+
+# 本地临时归档/截图(不入库)
+server.rar
+frontend/theme-drawer*.png
+
+# 根目录 dist(便携版本地打包产物,不入库)
+/dist/
+
+# 非项目主干内容(用户本地存放的对接资料,不入库)
+非项目主干内容/
