@@ -180,6 +180,9 @@ class M15TemplateControllerTest {
 | TEST-1 | pg-testkit 测试工具增强 + PG 前端嵌入 + TESTER 角色 + DemoDbController 骨架 · v1.1:Faker 10 万条数据 + 完整 10 表 DDL + Mock 规则持久化 · CHG-024 |
 | REL-1 | 打包发布形态：Maven profile + Caffeine 降级 + `scripts/build/build-portable.sh`/`build-standard.sh` + `jlink-jre.sh` + `verify-artifacts.sh` 本地冒烟 · 便携版 + 标准版 · 去 CI 化 · git tag 手动版本管理 · CHG-025 + CHG-027 |
 | SOCK-1 | v0.3.0 · TCP Socket + XML 报文出站接入:Netty TCP Client + 三分帧(XML_BOUNDARY / LENGTH_PREFIX_BE4/BE8)+ 双编码(UTF-8/GBK)+ SocketClient(全局共享 EventLoopGroup · 短连接)+ SocketExecutor 编排(解析 socket 段 → renderTemplate → send → parseXml + flattenMap)+ ExecController.dispatchByType 加 SOCKET 分支 + MessageDebug 扁平化 tab + pg-testkit SocketMockServer · CHG-037 + CHG-038 · **connectionMode 仅 short 实装 · long/pooled 预留 · Eureka selfRegister 延到 v0.3.2 SOCK-5-B** |
+| CR-007 | v0.3.1 · 双层功能号路由:`interface_config.function_id UNIQUE` + `ChannelFunctionIdMapper`(走 FN-12 字典 scope=3 · systemCode=ROUTE) + `FunctionIdRouteService`(Redis 缓存 · negative caching) + `RouteController POST /api/route`(免登 · **_originalFunctionId 透传下游联机**) + `ExecDispatchService`(抽 ExecController.dispatchByType 供 exec + route 共享) · CHG-039 · **前端 wizard 元数据 step 加 functionId 输入延到 v0.3.7** |
+| CR-003 | v0.3.1 · 版本显示:`sys_app_info` H2 表(防篡改) + `SysAppInfoInitializer @PostConstruct` 启动 upsert + `AppInfoController GET /api/app-info`(免登) + 前端 `AppInfoBadge` 组件(SideMenu 底部 + LoginView footer · 光斓 + 中文日期 + 测试版本注) · CHG-040 |
+| trace_id | v0.3.1 · 跨表追溯:sys_log/sql_audit_log/perf_stat 三表加 trace_id + 索引 · `TraceIdFilter @Order HIGHEST`(生成 UUID 或沿用上游 X-Trace-Id · MDC + 响应头 · finally 清理) · 三 AOP(SqlAuditAspect/SysLogAspect/PerfStatAspect)从 MDC 读写实体 · **v0.5.0 补 business_op_log 第四表** · CHG-041 |
 
 ## 关键代码地标（跨单元复用组件 · 禁重复实现）
 
