@@ -1,0 +1,10 @@
+[{
+  "head": {
+    "FunctionId": "unknown",
+    "ErrorNo": "0000",
+    "ErrorInfo": "default mock response"
+  },
+  "body": {
+    "message": "pg-testkit HTTP Mock 默认应答 · 无对应 functionId 的 mocks/http/{fn}.json 时兜底"
+  }
+}]

@@ -1,0 +1,24 @@
+[{
+  "head": {
+    "FunctionId": "180345",
+    "SysTime": "84129",
+    "ExSerial": "0586202607200841392513869",
+    "ErrorInfo": "交易成功",
+    "ErrorNo": "0000",
+    "SysDate": "20260717"
+  },
+  "body": {
+    "TotNum": "1",
+    "RetNum": "1",
+    "OffSet": "0",
+    "list": [{
+      "GroupName": "测试组合宝",
+      "GroupCode": "CSZHB001",
+      "ClientNo": "1021530253",
+      "BankAcc": "6231891100152858291",
+      "Amtlimit": "389885.58",
+      "ChildPrdCode": "ZHBCP016,ZHBCP017,ZHBCP018",
+      "ChildPrdName": "组合宝产品16,组合宝产品17,组合宝产品18"
+    }]
+  }
+}]
