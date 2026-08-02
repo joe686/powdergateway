@@ -5,6 +5,7 @@
       <el-radio-group v-model="mode" @change="onModeChange">
         <el-radio-button value="convert">格式转换调试</el-radio-button>
         <el-radio-button value="exec">接口调用调试</el-radio-button>
+        <el-radio-button value="xml-flatten">XML 扁平化(SOCK)</el-radio-button>
       </el-radio-group>
     </div>
 
@@ -27,7 +28,7 @@
           />
         </el-select>
       </template>
-      <template v-else>
+      <template v-else-if="mode === 'exec'">
         <span class="config-label">选择接口：</span>
         <el-select
           v-model="selectedInterfaceId"
@@ -44,6 +45,19 @@
           />
         </el-select>
       </template>
+      <template v-else>
+        <!-- xml-flatten 模式 -->
+        <span class="config-label">扁平化前缀(可选)：</span>
+        <el-input
+          v-model="flattenPrefix"
+          placeholder="如 resp. 或留空"
+          style="width: 200px"
+          clearable
+        />
+        <el-tooltip content="用于 SOCK-1 出站 XML 应答字段调试 · 与 SocketExecutor 输出格式一致" placement="top">
+          <el-icon style="margin-left: 6px; color: var(--pg-text-secondary)"><QuestionFilled /></el-icon>
+        </el-tooltip>
+      </template>
       <el-button
         type="primary"
         :loading="executing"
@@ -59,14 +73,25 @@
       <!-- 左区：输入 -->
       <div class="panel">
         <div class="panel-header">
-          {{ mode === 'convert' ? '源报文' : '请求参数' }}
-          <el-radio-group v-model="inputLang" size="small" style="margin-left:12px">
+          {{ inputPanelTitle }}
+          <el-radio-group
+            v-if="mode !== 'xml-flatten'"
+            v-model="inputLang"
+            size="small"
+            style="margin-left:12px"
+          >
             <el-radio-button value="json">JSON</el-radio-button>
             <el-radio-button value="xml">XML</el-radio-button>
             <el-radio-button value="csv">CSV</el-radio-button>
           </el-radio-group>
+          <span
+            v-else
+            style="margin-left:12px; font-size:12px; color:var(--pg-text-secondary)"
+          >
+            仅 XML
+          </span>
         </div>
-        <CodeEditor v-model="inputText" :language="inputLang" />
+        <CodeEditor v-model="inputText" :language="mode === 'xml-flatten' ? 'xml' : inputLang" />
       </div>
 
       <!-- 右区：结果 -->
@@ -87,11 +112,13 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import { QuestionFilled } from '@element-plus/icons-vue'
 import hljs from 'highlight.js'
 import 'highlight.js/styles/github-dark.css'
 import { listTemplates } from '@/api/template'
 import { listInterfaces, execInterface } from '@/api/interface'
 import { convertMessage } from '@/api/convert'
+import { xmlFlatten } from '@/api/tools'
 import CodeEditor from '@/components/tools/CodeEditor.vue'
 
 const mode = ref('convert')
@@ -107,6 +134,9 @@ const publishedInterfaces = computed(() =>
   allInterfaces.value.filter(i => i.status === 'published')
 )
 
+// XML 扁平化模式(v0.3.0 SOCK-3)
+const flattenPrefix = ref('')
+
 // 公共状态
 const inputText = ref('')
 const inputLang = ref('json')  // FN-08 CodeEditor 语言切换：json / xml / csv
@@ -114,10 +144,18 @@ const resultHtml = ref(null)
 const costMs = ref(null)
 const executing = ref(false)
 
+const inputPanelTitle = computed(() => {
+  if (mode.value === 'convert') return '源报文'
+  if (mode.value === 'xml-flatten') return 'XML 报文(SOCK 出站应答样本)'
+  return '请求参数'
+})
+
 const inputPlaceholder = computed(() =>
   mode.value === 'convert'
     ? '输入源报文（JSON / XML / CSV 均可）'
-    : '输入请求参数（JSON 格式，如 {"status": 1}）'
+    : mode.value === 'xml-flatten'
+      ? '粘贴 XML 报文 · 输出扁平化 JSON(嵌套字段用 . 拼接)'
+      : '输入请求参数（JSON 格式，如 {"status": 1}）'
 )
 
 async function loadTemplates() {
@@ -172,6 +210,13 @@ async function execute() {
       })
       renderResult(res.result)
       costMs.value = res.costMs
+    } else if (mode.value === 'xml-flatten') {
+      // v0.3.0 SOCK-3 · XML 扁平化预览
+      const t0 = Date.now()
+      const res = await xmlFlatten(inputText.value, flattenPrefix.value || '')
+      costMs.value = Date.now() - t0
+      const text = JSON.stringify(res.flattened, null, 2) + `\n\n// 共 ${res.keyCount} 个字段`
+      renderResult(text)
     } else {
       let body
       try {
