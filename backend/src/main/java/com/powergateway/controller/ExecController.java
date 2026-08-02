@@ -9,6 +9,7 @@ import com.powergateway.exception.BusinessException;
 import com.powergateway.model.InterfaceConfig;
 import com.powergateway.model.dto.ExecRequest;
 import com.powergateway.service.InterfaceConfigService;
+import com.powergateway.socket.SocketExecutor;
 import com.powergateway.utils.AcceptNegotiator;
 import com.powergateway.utils.FormatConverter;
 import com.powergateway.utils.FormatType;
@@ -37,6 +38,7 @@ public class ExecController {
     @Autowired private InterfaceConfigService service;
     @Autowired private FormatConverter formatConverter;
     @Autowired private ObjectMapper objectMapper;
+    @Autowired private SocketExecutor socketExecutor;
 
     @PerfStat
     @PostMapping(value = "/{interfaceId}",
@@ -102,6 +104,12 @@ public class ExecController {
                         .setTargetDb(config.getDbConnectionId() != null
                                 ? config.getDbConnectionId().toString() : "unknown"));
                 return service.executeDelete(id, params);
+            case "SOCKET":
+                // v0.3.0 SOCK-1 · TCP Socket + XML 报文出站
+                AuditContextHolder.set(new AuditContext()
+                        .setInterfaceId(id).setOpType("SOCKET_EXEC")
+                        .setTargetDb("socket"));
+                return socketExecutor.execute(config, params);
             default:
                 throw new BusinessException(400, "不支持的接口类型: " + config.getType());
         }

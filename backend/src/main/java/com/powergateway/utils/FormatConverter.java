@@ -212,10 +212,13 @@ public class FormatConverter {
 
     /**
      * 嵌套 Map 展平：{a: {b: "v"}} → {"a.b": "v"}
-     * FormData / CSV 序列化时使用，保证兼容嵌套 JSON/XML。
+     * FormData / CSV 序列化时使用,保证兼容嵌套 JSON/XML。
+     *
+     * <p>v0.3.0 SOCK-1 起改为 public static · 供 SocketExecutor 将 XML 应答扁平化为 JSON 输出复用
+     * (见 backend/CLAUDE.md 关键代码地标)。</p>
      */
     @SuppressWarnings("unchecked")
-    private Map<String, String> flattenMap(Map<String, Object> data, String prefix) {
+    public static Map<String, String> flattenMap(Map<String, Object> data, String prefix) {
         Map<String, String> result = new LinkedHashMap<>();
         for (Map.Entry<String, Object> entry : data.entrySet()) {
             String key   = prefix.isEmpty() ? entry.getKey() : prefix + "." + entry.getKey();

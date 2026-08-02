@@ -53,10 +53,15 @@ public class EurekaRegistryClient implements RegistryClient {
 
     @Override
     public void register(ServiceInstance self) {
-        // Netflix Eureka 的注册通过 ApplicationInfoManager 触发，非当前接口范式；
-        // 本类目前只缓存实例信息用于 deregister 匹配，真实注册留待 Task 6 深度集成。
+        // Netflix Eureka 的注册通过 ApplicationInfoManager 触发,非当前接口范式;
+        // 本类目前只缓存实例信息用于 deregister 匹配。
+        // ---
+        // v0.3.0 SOCK-1(2026-08-02 用户 Q8=A 拍板):selfRegister 实装延到 v0.3.2 SOCK-5-B。
+        // 详见 docs/03-开发/任务计划/2026-07-28-FB-052-part2-lcpt-bank-inbound.md § SOCK-5-B
+        // 理由:v0.3.0 只做出站(host 场景),不需 PG 被 Eureka 发现;v0.3.2 入站 lcpt-bank
+        // 场景需联机通过 Eureka 找到 PG,那时一并补齐 ApplicationInfoManager + eurekaClient.register。
         lastRegistered.put(self.getServiceName(), self);
-        log.info("Eureka register 占位（未调 SDK）: svc={} ip={}:{}",
+        log.info("Eureka register 占位(未调 SDK · v0.3.2 SOCK-5-B 补齐): svc={} ip={}:{}",
                 self.getServiceName(), self.getIp(), self.getPort());
     }
 
