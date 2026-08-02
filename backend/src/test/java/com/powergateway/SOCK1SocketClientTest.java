@@ -1,7 +1,6 @@
 package com.powergateway;
 
 import com.powergateway.exception.BusinessException;
-import com.powergateway.socket.SocketClient;
 import com.powergateway.socket.codec.CharsetSupport;
 import com.powergateway.socket.codec.FramingType;
 import org.junit.jupiter.api.DisplayName;
@@ -9,7 +8,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -26,23 +24,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @ActiveProfiles("test")
 class SOCK1SocketClientTest {
 
-    // ============ SocketClient 骨架(Red) ============
-
-    @Test
-    @DisplayName("SocketClient.send 未实装 · 抛 UnsupportedOperationException(Task 1 骨架 · 待 Task 4 实装)")
-    void send_未实装_抛UOE() {
-        SocketClient client = new SocketClient();
-        UnsupportedOperationException ex = assertThrows(
-                UnsupportedOperationException.class,
-                () -> client.send(
-                        "127.0.0.1", 65500,
-                        "<Req/>".getBytes(StandardCharsets.UTF_8),
-                        FramingType.XML_BOUNDARY,
-                        StandardCharsets.UTF_8,
-                        3000, 10000)
-        );
-        assertTrue(ex.getMessage().contains("尚未实装"), "错误消息应说明骨架状态");
-    }
+    // ============ SocketClient checkConnectionMode 契约 ============
+    // (send 完整语义走 SOCK1SocketClientIntegrationTest · Task 4 已实装)
 
     // ============ FramingType 枚举 ============
 
