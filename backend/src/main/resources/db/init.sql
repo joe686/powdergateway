@@ -201,10 +201,12 @@ CREATE TABLE IF NOT EXISTS sql_audit_log (
   target_table    VARCHAR(128),
   result          VARCHAR(32)  COMMENT 'SUCCESS/FAIL',
   error_msg       TEXT,
-  before_snapshot JSON         COMMENT '修改前数据快照'
+  before_snapshot JSON         COMMENT '修改前数据快照',
+  trace_id        VARCHAR(64)  NULL COMMENT 'v0.3.1 · 跨表追溯 UUID'
 );
 CREATE INDEX IF NOT EXISTS idx_sql_audit_op_time ON sql_audit_log(op_time);
 CREATE INDEX IF NOT EXISTS idx_sql_audit_interface_id ON sql_audit_log(interface_id);
+CREATE INDEX IF NOT EXISTS idx_sql_audit_log_trace_id ON sql_audit_log(trace_id);
 
 -- SYS-1 操作日志表（配置库）
 CREATE TABLE IF NOT EXISTS sys_log (
@@ -216,8 +218,10 @@ CREATE TABLE IF NOT EXISTS sys_log (
   op_time   DATETIME     DEFAULT CURRENT_TIMESTAMP,
   level     VARCHAR(16)  COMMENT 'INFO / ERROR',
   error_msg TEXT         COMMENT '失败时的错误信息',
-  cost_ms   INT          COMMENT '执行耗时（ms）'
+  cost_ms   INT          COMMENT '执行耗时（ms）',
+  trace_id  VARCHAR(64)  NULL COMMENT 'v0.3.1 · 跨表追溯 UUID'
 );
+CREATE INDEX IF NOT EXISTS idx_sys_log_trace_id ON sys_log(trace_id);
 
 -- SYS-1 操作日志历史归档表（CHG-006）
 CREATE TABLE IF NOT EXISTS sys_log_history (
@@ -241,8 +245,10 @@ CREATE TABLE IF NOT EXISTS perf_stat (
   cost_ms      INT          COMMENT '耗时（毫秒）',
   success      TINYINT      COMMENT '1=成功 0=失败',
   stat_time    DATETIME     DEFAULT CURRENT_TIMESTAMP,
+  trace_id     VARCHAR(64)  NULL COMMENT 'v0.3.1 · 跨表追溯 UUID',
   INDEX idx_perf_stat_time (stat_time),
-  INDEX idx_perf_interface (interface_id)
+  INDEX idx_perf_interface (interface_id),
+  INDEX idx_perf_stat_trace_id (trace_id)
 );
 
 -- SYS-2 告警记录表

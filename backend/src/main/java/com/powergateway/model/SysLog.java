@@ -23,4 +23,7 @@ public class SysLog {
     private String level;
     private String errorMsg;
     private Integer costMs;
+
+    /** v0.3.1 · 跨表追溯 UUID(TraceIdFilter 生成 · AOP 从 MDC 读)*/
+    private String traceId;
 }

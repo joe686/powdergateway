@@ -17,4 +17,7 @@ public class PerfStatRecord {
     private Integer costMs;
     private Integer success;
     private LocalDateTime statTime;
+
+    /** v0.3.1 · 跨表追溯 UUID(TraceIdFilter 生成 · AOP 从 MDC 读)*/
+    private String traceId;
 }

@@ -68,6 +68,9 @@ public class SqlAuditAspect {
         log.setResult(result);
         log.setErrorMsg(errorMsg);
         log.setBeforeSnapshot(ctx.getBeforeSnapshot());
+        // v0.3.1 Task 6 · 从 MDC 读 traceId(TraceIdFilter 塞入)· ctx 覆盖优先
+        log.setTraceId(ctx.getTraceId() != null ? ctx.getTraceId()
+                : org.slf4j.MDC.get(com.powergateway.config.TraceIdFilter.MDC_KEY));
         return log;
     }
 

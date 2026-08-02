@@ -60,6 +60,8 @@ public class SysLogAspect {
         log.setCostMs(costMs);
         log.setLevel(level);
         log.setErrorMsg(errorMsg);
+        // v0.3.1 Task 6 · 从 MDC 读 traceId(TraceIdFilter 塞入)
+        log.setTraceId(org.slf4j.MDC.get(com.powergateway.config.TraceIdFilter.MDC_KEY));
         return log;
     }
 

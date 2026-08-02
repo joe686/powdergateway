@@ -44,6 +44,13 @@
           </el-table-column>
           <el-table-column prop="costMs" label="耗时(ms)" width="90" />
           <el-table-column prop="errorMsg" label="错误信息" min-width="200" show-overflow-tooltip />
+          <!-- v0.3.1 Task 6 · trace_id 列(跨表追溯) -->
+          <el-table-column prop="traceId" label="Trace" width="130" show-overflow-tooltip>
+            <template #default="{ row }">
+              <span v-if="row.traceId" class="trace-id-cell" :title="row.traceId">{{ row.traceId.substring(0, 8) }}…</span>
+              <span v-else style="color:var(--pg-text-secondary)">—</span>
+            </template>
+          </el-table-column>
         </el-table>
 
         <el-pagination
@@ -103,6 +110,13 @@
             </template>
           </el-table-column>
           <el-table-column prop="sqlText" label="SQL" min-width="200" show-overflow-tooltip />
+          <!-- v0.3.1 Task 6 · trace_id 列(跨表追溯) -->
+          <el-table-column prop="traceId" label="Trace" width="130" show-overflow-tooltip>
+            <template #default="{ row }">
+              <span v-if="row.traceId" class="trace-id-cell" :title="row.traceId">{{ row.traceId.substring(0, 8) }}…</span>
+              <span v-else style="color:var(--pg-text-secondary)">—</span>
+            </template>
+          </el-table-column>
         </el-table>
 
         <el-pagination
@@ -249,5 +263,12 @@ onMounted(loadOpLogs)
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
+}
+/* v0.3.1 Task 6 · trace_id 单元 · monospace 便于比对 */
+.trace-id-cell {
+  font-family: monospace;
+  font-size: 12px;
+  color: var(--pg-purple, #8B5CF6);
+  cursor: help;
 }
 </style>

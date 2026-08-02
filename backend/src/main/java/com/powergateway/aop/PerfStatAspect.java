@@ -87,6 +87,8 @@ public class PerfStatAspect {
         record.setCostMs(costMs);
         record.setSuccess(success);
         record.setStatTime(LocalDateTime.now());
+        // v0.3.1 Task 6 · 从 MDC 读 traceId(TraceIdFilter 塞入)
+        record.setTraceId(org.slf4j.MDC.get(com.powergateway.config.TraceIdFilter.MDC_KEY));
         perfStatService.enqueue(record);
     }
 }

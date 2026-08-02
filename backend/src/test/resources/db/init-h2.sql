@@ -199,7 +199,8 @@ CREATE TABLE sql_audit_log (
   target_table    VARCHAR(128),
   result          VARCHAR(32),
   error_msg       TEXT,
-  before_snapshot TEXT
+  before_snapshot TEXT,
+  trace_id        VARCHAR(64) NULL
 );
 
 -- SYS-1 操作日志表（H2）
@@ -212,7 +213,8 @@ CREATE TABLE sys_log (
   op_time   DATETIME DEFAULT CURRENT_TIMESTAMP,
   level     VARCHAR(16),
   error_msg TEXT,
-  cost_ms   INT
+  cost_ms   INT,
+  trace_id  VARCHAR(64) NULL
 );
 
 -- SYS-1 操作日志历史归档表（H2，CHG-006）
@@ -236,7 +238,8 @@ CREATE TABLE perf_stat (
   op_type      VARCHAR(32),
   cost_ms      INT,
   success      TINYINT,
-  stat_time    DATETIME      DEFAULT CURRENT_TIMESTAMP
+  stat_time    DATETIME      DEFAULT CURRENT_TIMESTAMP,
+  trace_id     VARCHAR(64)   NULL
 );
 
 -- SYS-2 告警记录表（H2）

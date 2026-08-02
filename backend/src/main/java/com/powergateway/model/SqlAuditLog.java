@@ -50,4 +50,7 @@ public class SqlAuditLog {
 
     /** 修改前数据快照（JSON 字符串，UPDATE/DELETE 时由执行器填充到 AuditContext） */
     private String beforeSnapshot;
+
+    /** v0.3.1 · 跨表追溯 UUID(TraceIdFilter 生成 · AOP 从 MDC 读)*/
+    private String traceId;
 }

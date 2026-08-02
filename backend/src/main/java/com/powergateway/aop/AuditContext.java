@@ -31,4 +31,7 @@ public class AuditContext {
      * UPDATE / DELETE 场景由执行器在操作前查询并填充
      */
     private String beforeSnapshot;
+
+    /** v0.3.1 · 跨表追溯 UUID(通常由 TraceIdFilter 塞入 MDC · AOP 从 MDC 读优先 · 允许 dispatch 显式设)*/
+    private String traceId;
 }
