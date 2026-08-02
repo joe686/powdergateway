@@ -1,1 +1,0 @@
-import{G as e}from"./index-BZNrIVXt.js";function n(r,s=1,t=100){return e.get("/shard/list",{params:{name:r,page:s,size:t}})}function o(r){return e.post("/shard/save",r)}function i(r){return e.delete(`/shard/${r}`)}function d(r,s){return e.post(`/shard/${r}/preview`,{params:s})}export{i as d,n as l,d as p,o as s};

@@ -1,6 +1,6 @@
 <template>
   <WizardShell
-    title="接口配置向导"
+    :title="wizardTitle"
     :steps="visibleSteps"
     v-model:current-step="wizard.currentStep"
     :draft-saved="draftSaved"
@@ -16,16 +16,27 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import WizardShell from '@/components/wizard/WizardShell.vue'
 import SelectInterfaceSteps from '@/views/interface/SelectInterfaceSteps.vue'
 import { useWizardStore } from '@/store/wizard'
 import { useDraft } from '@/composables/useWizardShell'
+import { useInterfaceEdit } from '@/composables/useInterfaceEdit'
 
 const router = useRouter()
+const route = useRoute()
 const wizard = useWizardStore()
 const stepsRef = ref(null)
 const { draftSaved, promptRestoreDraft } = useDraft(wizard)
+const { loadForEdit, isEditMode } = useInterfaceEdit(wizard)
+
+// v0.3.1 FB-054 · edit 模式顶部指示
+const wizardTitle = computed(() => {
+  if (isEditMode(route) && wizard.savedId) {
+    return `编辑接口 #${wizard.savedId} · ${wizard.interfaceName || '(未命名)'}`
+  }
+  return '接口配置向导'
+})
 
 const STEP_DEFS = [
   { key: 'type',    label: '接口类型',  skipFor: [],         tip: '选择要创建的接口类型：查询(SELECT)/插入(INSERT)/修改(UPDATE)/删除(DELETE)' },
@@ -57,7 +68,13 @@ function goList() {
 }
 
 onMounted(async () => {
-  if (wizard.interfaceType === '') await promptRestoreDraft()
+  // v0.3.1 FB-054 · edit 模式回填(URL query 带 id)
+  if (isEditMode(route)) {
+    wizard.reset()  // 先清 draft · 避免 draft 干扰
+    await loadForEdit(route.query.id)
+  } else if (wizard.interfaceType === '') {
+    await promptRestoreDraft()
+  }
   // UPDATE/DELETE tables[0] 兜底（CHG-011 E2E-6 教训）
   if ((wizard.interfaceType === 'UPDATE' || wizard.interfaceType === 'DELETE') && wizard.tables.length === 0) {
     wizard.tables = [{ tableName: '' }]
