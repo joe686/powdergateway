@@ -23,6 +23,12 @@
           <el-tag :type="typeTagType(row.type)" size="small">{{ row.type }}</el-tag>
         </template>
       </el-table-column>
+      <el-table-column label="PG 功能号" width="140">
+        <template #default="{ row }">
+          <span v-if="row.functionId" class="fn-id-text">{{ row.functionId }}</span>
+          <span v-else style="color:var(--pg-text-secondary)">—</span>
+        </template>
+      </el-table-column>
       <el-table-column label="状态" width="100">
         <template #default="{ row }">
           <el-tag :type="statusTagType(row.status)" size="small">{{ statusLabel(row.status) }}</el-tag>
@@ -302,4 +308,5 @@ onMounted(loadList)
 .interface-list { padding: 16px; }
 .toolbar { display: flex; gap: 8px; align-items: center; }
 .path-text { font-family: monospace; font-size: 12px; color: var(--pg-primary); }
+.fn-id-text { font-family: monospace; font-size: 12px; color: var(--pg-warning, #E6A23C); font-weight: 500; }
 </style>

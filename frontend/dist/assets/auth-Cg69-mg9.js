@@ -1,0 +1,1 @@
+import{G as t}from"./index-Kyh4EDr4.js";function e(o,n){return t.post("/auth/login",{username:o,password:n})}function r(){return t.post("/auth/logout")}function s(){return t.get("/auth/menu")}export{r as a,s as g,e as l};

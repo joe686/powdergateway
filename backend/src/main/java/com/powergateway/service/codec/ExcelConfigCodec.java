@@ -126,6 +126,8 @@ public class ExcelConfigCodec {
         r = putMeta(sheet, r, "name", "接口名称", cfg.getName());
         r = putMeta(sheet, r, "path", "访问路径", cfg.getPath());
         r = putMeta(sheet, r, "type", "接口类型", cfg.getType());
+        // v0.3.1 CR-007 · PG 功能号(用于渠道方走 /api/route 路由)
+        r = putMeta(sheet, r, "functionId", "PG 功能号", cfg.getFunctionId());
         r = putMeta(sheet, r, "dbConnectionId", "数据库连接ID", cfg.getDbConnectionId());
         r = putMeta(sheet, r, "status", "状态", cfg.getStatus());
         r = putMeta(sheet, r, "responseFormat", "响应格式", cfg.getResponseFormat());
@@ -461,6 +463,7 @@ public class ExcelConfigCodec {
                 case "name": cfg.setName(value); break;
                 case "path": cfg.setPath(value); break;
                 case "type": cfg.setType(value); break;
+                case "functionId": cfg.setFunctionId(value); break;
                 case "dbConnectionId": cfg.setDbConnectionId(parseLong(value)); break;
                 case "status": cfg.setStatus(value); break;
                 case "responseFormat": cfg.setResponseFormat(value); break;

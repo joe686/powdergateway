@@ -209,6 +209,9 @@ public class InterfaceDocumentService {
         LinkedHashMap<String, String> info = new LinkedHashMap<>();
         info.put("接口名称", cfg.getName());
         info.put("接口类型", cfg.getType());
+        // v0.3.1 CR-007 · PG 功能号(用于渠道方走 /api/route 路由)
+        info.put("PG 功能号", cfg.getFunctionId() != null && !cfg.getFunctionId().isEmpty()
+                ? cfg.getFunctionId() : "(未配置)");
         info.put("状态",    cfg.getStatus());
         info.put("响应格式", cfg.getResponseFormat() != null ? cfg.getResponseFormat() : "JSON");
         if (cfg.getPath() != null) info.put("访问路径", cfg.getPath());
