@@ -60,6 +60,23 @@
           >缓存</el-button>
           <el-button size="small" @click="openShardDialog(row)">分片</el-button>
           <el-button size="small" @click="handleExportFields(row)">导出字段</el-button>
+          <!-- v0.2.5 CR-008 · 接口调用体验 -->
+          <el-tooltip content="查看 curl / Postman / HTTP Raw / Python 调用示例" placement="top">
+            <el-button size="small" type="info" @click="openCallSample(row)">调用示例</el-button>
+          </el-tooltip>
+          <el-tooltip content="复制 curl 到剪贴板" placement="top">
+            <el-button size="small" @click="copyCurl(row)">📋 curl</el-button>
+          </el-tooltip>
+          <el-tooltip
+            :content="row.status === 'published' ? '在 Swagger UI 直接调用' : '接口未发布 · 请先发布'"
+            placement="top"
+          >
+            <el-button
+              size="small"
+              :disabled="row.status !== 'published'"
+              @click="openSwagger(row)"
+            >🔗 Swagger</el-button>
+          </el-tooltip>
           <el-button type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
           <el-popconfirm
             :title="row.status === 'published' ? '已发布接口请先禁用再删除' : '确认删除该接口？'"
@@ -98,6 +115,12 @@
       <el-button type="primary" :loading="shardSaving" @click="handleBindShard">保存</el-button>
     </template>
   </el-dialog>
+
+  <!-- v0.2.5 CR-008 · 调用示例侧抽屉 -->
+  <InterfaceCallSampleDrawer
+    v-model:visible="callSampleVisible"
+    :interface-info="callSampleTarget"
+  />
   </div>
 </template>
 
@@ -118,6 +141,8 @@ import { listShardConfigs } from '@/api/shardConfig'
 import { useWizardStore } from '@/store/wizard'
 import { exportFieldSchema } from '@/api/interfaceFieldSchema'
 import { downloadBlob } from '@/utils/download'
+// v0.2.5 CR-008
+import InterfaceCallSampleDrawer from '@/components/interface/InterfaceCallSampleDrawer.vue'
 
 const router = useRouter()
 const wizardStore = useWizardStore()
@@ -130,6 +155,9 @@ const total = ref(0)
 const shardDialogVisible = ref(false)
 const shardSaving = ref(false)
 const shardList = ref([])
+// v0.2.5 CR-008 · 调用示例侧抽屉状态
+const callSampleVisible = ref(false)
+const callSampleTarget = ref(null)
 const shardForm = ref({ interfaceId: null, shardConfigId: null })
 
 const TYPE_ROUTE = {
@@ -195,6 +223,34 @@ async function handleExportFields(row) {
   } catch {
     ElMessage.error('导出字段清单失败')
   }
+}
+
+// v0.2.5 CR-008 · 接口调用体验综合专题
+function openCallSample(row) {
+  callSampleTarget.value = row
+  callSampleVisible.value = true
+}
+
+async function copyCurl(row) {
+  const isSelect = row.type === 'SELECT'
+  const body = isSelect
+    ? { params: {}, page: 1, pageSize: 20 }
+    : { params: {} }
+  const bodyStr = JSON.stringify(body)
+  const url = `${location.protocol}//${location.host}/api/exec/${row.id}`
+  const curl = `curl -X POST '${url}' -H 'Content-Type: application/json' -d '${bodyStr}'`
+  try {
+    await navigator.clipboard.writeText(curl)
+    ElMessage.success('curl 已复制到剪贴板')
+  } catch (e) {
+    ElMessage.error('复制失败,请从"调用示例"抽屉里手动复制')
+  }
+}
+
+function openSwagger(row) {
+  // 打开 Swagger UI 并深链到接口执行 tag · execute 接口
+  const swaggerUrl = `${location.protocol}//${location.host}/swagger-ui/index.html#/%E6%8E%A5%E5%8F%A3%E6%89%A7%E8%A1%8C/execute_${row.id}`
+  window.open(swaggerUrl, '_blank')
 }
 
 async function handleExportReport() {

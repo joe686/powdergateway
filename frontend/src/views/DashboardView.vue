@@ -86,6 +86,39 @@
       <el-button @click="$router.push('/convert/format')">格式转换</el-button>
       <el-button @click="$router.push('/tools/debug')">报文调试</el-button>
     </el-card>
+
+    <!-- v0.2.5 CR-008 · 接口调用体验引导 · FB-055 用户误把接口路径输入 Swagger URL 栏 -->
+    <el-card shadow="never" class="guide-card">
+      <template #header>
+        <div class="guide-header">
+          <span>📢 如何调用你配置的接口</span>
+          <el-tag type="info" size="small">v0.2.5 新增</el-tag>
+        </div>
+      </template>
+      <div class="guide-content">
+        <div class="guide-item">
+          <strong>1. 发布接口</strong>
+          <p>在「可视化接口开发 → 接口管理」页面找到接口,点击"发布"按钮。未发布的接口不能被外部调用。</p>
+        </div>
+        <div class="guide-item">
+          <strong>2. 获取调用示例</strong>
+          <p>在接口列表点击每行的
+            <el-tag size="small">调用示例</el-tag> 按钮 · 会弹出
+            <strong>curl / Postman / HTTP Raw / Python</strong>
+            四种调用示例,一键复制。或点
+            <el-tag size="small">📋 curl</el-tag> 快速复制 curl 命令。
+          </p>
+        </div>
+        <div class="guide-item">
+          <strong>3. 用 Swagger UI 直接测试</strong>
+          <p>点击接口列表每行的 <el-tag size="small">🔗 Swagger</el-tag> 按钮直接跳到 Swagger 中对应接口。
+            <el-alert type="warning" :closable="false" show-icon style="margin-top: 6px">
+              ⚠️ 不要把 <code>/api/exec/{id}</code> 输入到 Swagger UI 顶部的 URL 栏 —— 那是 OpenAPI 定义文件 URL,输入接口路径会报 "Unable to render this definition" 错误。已发布接口在页面下方的"接口执行"分组里。
+            </el-alert>
+          </p>
+        </div>
+      </div>
+    </el-card>
   </div>
 </template>
 
@@ -263,6 +296,38 @@ function formatTime(t) {
   font-weight: 600;
   color: var(--pg-text-primary);
   margin-right: 8px;
+}
+/* v0.2.5 CR-008 · 接口调用引导卡片 */
+.guide-card {
+  margin-top: 12px;
+  border-radius: 8px;
+}
+.guide-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 600;
+}
+.guide-content {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.guide-item strong {
+  color: var(--pg-text-primary);
+  font-size: 14px;
+}
+.guide-item p {
+  margin: 4px 0 0;
+  color: var(--pg-text-secondary);
+  line-height: 1.6;
+  font-size: 13px;
+}
+.guide-item code {
+  background: var(--el-fill-color-lighter);
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-family: 'Courier New', monospace;
 }
 .alert-badge {
   margin-left: 8px;
