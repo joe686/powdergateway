@@ -1,13 +1,16 @@
 <template>
   <div class="update-config-page">
     <div class="page-header">
-      <h2>修改接口配置</h2>
+      <h2>{{ pageTitle }}</h2>
       <el-button @click="router.push('/interface/dev')">返回列表</el-button>
     </div>
 
+    <!-- v0.3.5 · 4 → 6 步 -->
     <el-steps :active="step" finish-status="success" align-center style="margin-bottom: 24px">
       <el-step title="基本信息" />
       <el-step title="修改字段配置" />
+      <el-step title="字段加工(可选)" />
+      <el-step title="分库分表(可选)" />
       <el-step title="修改条件配置" />
       <el-step title="保存配置" />
     </el-steps>
@@ -133,6 +136,16 @@
                 <el-input v-else-if="row.sourceType === 'CALC'" v-model="row.expression" size="small" placeholder="四则运算表达式" />
               </template>
             </el-table-column>
+            <!-- v0.3.5 · 字典键列 -->
+            <el-table-column label="字典键" width="180">
+              <template #default="{ row }">
+                <el-select v-model="row.dictKey" placeholder="不使用" size="small" clearable filterable style="width:100%">
+                  <el-option-group v-for="sys in dictSystems" :key="sys.systemCode" :label="sys.systemCode">
+                    <el-option v-for="k in sys.dictKeys" :key="k" :label="k" :value="sys.systemCode + ':' + k" />
+                  </el-option-group>
+                </el-select>
+              </template>
+            </el-table-column>
             <el-table-column label="操作" width="80" align="center">
               <template #default="{ $index }">
                 <el-button size="small" type="danger" link @click="removeField(tIdx, $index)">删除</el-button>
@@ -150,11 +163,53 @@
       </div>
     </div>
 
-    <!-- Step 3：修改条件配置 -->
+    <!-- v0.3.5 · Step 3:字段加工(可选) -->
     <div v-show="step === 2">
       <el-card>
+        <template #header>Step 3 · 字段加工(可选)</template>
+        <el-alert type="info" :closable="false" style="margin-bottom:12px">
+          M1-3 FieldProcessor · <el-button type="primary" link @click="openFieldProcessPage">独立编辑器</el-button>
+        </el-alert>
+        <el-form label-width="120px">
+          <el-form-item label="processRules JSON">
+            <el-input v-model="processRulesText" type="textarea" :rows="8" />
+          </el-form-item>
+          <el-form-item label="当前规则数"><el-tag>{{ processRulesCount }} 条</el-tag></el-form-item>
+        </el-form>
+        <div class="step-footer">
+          <el-button @click="step = 1">上一步</el-button>
+          <el-button type="primary" @click="step = 3">下一步</el-button>
+        </div>
+      </el-card>
+    </div>
+
+    <!-- v0.3.5 · Step 4:分库分表(可选) -->
+    <div v-show="step === 3">
+      <el-card>
+        <template #header>Step 4 · 分库分表(可选)</template>
+        <el-alert type="info" :closable="false" style="margin-bottom:12px">
+          M2-8 分片 · <el-button type="primary" link @click="openShardConfigPage">新建分片</el-button>
+        </el-alert>
+        <el-form label-width="140px">
+          <el-form-item label="分片配置">
+            <el-select v-model="form.shardConfigId" placeholder="不启用" clearable filterable style="width:400px">
+              <el-option v-for="sc in shardConfigList" :key="sc.id" :label="sc.name + ' · ' + (sc.moduleName || '')" :value="sc.id" />
+            </el-select>
+            <el-button link @click="loadShardConfigs" style="margin-left:8px">刷新</el-button>
+          </el-form-item>
+        </el-form>
+        <div class="step-footer">
+          <el-button @click="step = 2">上一步</el-button>
+          <el-button type="primary" @click="step = 4">下一步</el-button>
+        </div>
+      </el-card>
+    </div>
+
+    <!-- Step 5：修改条件配置 -->
+    <div v-show="step === 4">
+      <el-card>
         <template #header>
-          Step 3 · 修改条件配置
+          Step 5 · 修改条件配置
           <span style="font-size: 12px; color: #909399; margin-left: 8px">★ = 主键或唯一索引，至少需要一个</span>
         </template>
 
@@ -177,10 +232,10 @@
       </div>
     </div>
 
-    <!-- Step 4：保存配置 -->
-    <div v-show="step === 3">
+    <!-- Step 6：保存配置 -->
+    <div v-show="step === 5">
       <el-card>
-        <template #header>Step 4 · 保存配置</template>
+        <template #header>Step 6 · 保存配置</template>
         <el-descriptions :column="1" border style="margin-bottom: 16px">
           <el-descriptions-item label="接口名称">{{ form.name }}</el-descriptions-item>
           <el-descriptions-item label="接口类型">UPDATE（修改）</el-descriptions-item>
@@ -195,7 +250,7 @@
         </el-collapse>
 
         <div class="step-footer">
-          <el-button @click="step = 2">上一步</el-button>
+          <el-button @click="step = 4">上一步</el-button>
           <el-button type="primary" :loading="saving" @click="saveConfig">保存</el-button>
         </div>
       </el-card>
@@ -205,30 +260,48 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { QuestionFilled } from '@element-plus/icons-vue'
 import ConditionBuilder from '@/components/ConditionBuilder.vue'
 import { listConnections } from '@/api/dbConnection'
 import { getTableStructure } from '@/api/tableStructure'
-import { saveInterface } from '@/api/interface'
+import { saveInterface, getInterface } from '@/api/interface'
+import { listShardConfigs } from '@/api/shardConfig'
+import { listDictMappings } from '@/api/dictMapping'
 import ResponseHeadersEditor from '@/components/interface/ResponseHeadersEditor.vue'
 
 const router = useRouter()
+const route  = useRoute()
 const step = ref(0)
 
 const dbList       = ref([])
 const tableList    = ref([])
 const tableColumns = ref({})
 
-const form       = ref({ name: '', dbConnectionId: null, responseFormat: 'JSON', responseHeaders: '' })
+const form       = ref({ name: '', dbConnectionId: null, responseFormat: 'JSON', responseHeaders: '', shardConfigId: null })
 const tables     = ref([{ tableName: '', fields: [newField()] }])
 const conditions = ref([])
 const conditionError = ref('')
 const saving     = ref(false)
 
+// v0.3.5
+const savedId = ref(route.query.id ? Number(route.query.id) : null)
+const editMode = computed(() => !!savedId.value)
+const pageTitle = computed(() => editMode.value
+    ? `编辑修改接口 #${savedId.value} · ${form.value.name || '(未命名)'}`
+    : '修改接口配置')
+const processRules = ref([])
+const processRulesText = computed({
+  get: () => JSON.stringify(processRules.value, null, 2),
+  set: (v) => { try { processRules.value = JSON.parse(v) } catch { /* 中间态 */ } }
+})
+const processRulesCount = computed(() => processRules.value.length)
+const dictSystems = ref([])
+const shardConfigList = ref([])
+
 function newField() {
-  return { column: '', columnType: '', sourceType: 'REQUEST', paramKey: '', constValue: '', expression: '' }
+  return { column: '', columnType: '', sourceType: 'REQUEST', paramKey: '', constValue: '', expression: '', dictKey: '' }
 }
 
 function addTable()           { if (tables.value.length < 3) tables.value.push({ tableName: '', fields: [newField()] }) }
@@ -291,7 +364,7 @@ function validateAndNext() {
     conditionError.value = '条件中必须包含至少一个主键（★）或唯一索引（★）字段'
     return
   }
-  step.value = 3
+  step.value = 5   // v0.3.5 · Step 5 → 6(原 2→3)
 }
 
 const configJsonPreview = computed(() => JSON.stringify(buildConfigJson(), null, 2))
@@ -305,12 +378,14 @@ function buildConfigJson() {
         if (f.sourceType === 'REQUEST') field.paramKey   = f.paramKey
         if (f.sourceType === 'CONST')   field.constValue = f.constValue
         if (f.sourceType === 'CALC')    field.expression = f.expression
+        if (f.dictKey) field.dictKey = f.dictKey   // v0.3.5
         return field
       })
     })),
     conditions: conditions.value.map(c => ({
       tableName: c.tableName, field: c.field, op: c.op, paramKey: c.paramKey
-    }))
+    })),
+    processRules: processRules.value   // v0.3.5
   }
 }
 
@@ -318,24 +393,79 @@ async function saveConfig() {
   saving.value = true
   try {
     await saveInterface({
+      id: savedId.value || undefined,
       name: form.value.name,
       dbConnectionId: form.value.dbConnectionId,
       type: 'UPDATE',
       configJson: JSON.stringify(buildConfigJson()),
       responseFormat: form.value.responseFormat,
-      responseHeaders: form.value.responseHeaders
+      responseHeaders: form.value.responseHeaders,
+      shardConfigId: form.value.shardConfigId || undefined   // v0.3.5
     })
     ElMessage.success('保存成功')
     router.push('/interface/dev')
-  } catch {
-    // request.js 拦截器已处理报错提示
-  } finally {
-    saving.value = false
-  }
+  } catch { /* request.js 已处理 */ } finally { saving.value = false }
 }
+
+// v0.3.5 · edit 回填
+async function loadForEdit(id) {
+  try {
+    const cfg = await getInterface(id)
+    form.value.name = cfg.name || ''
+    form.value.dbConnectionId = cfg.dbConnectionId || null
+    form.value.responseFormat = cfg.responseFormat || 'JSON'
+    form.value.responseHeaders = cfg.responseHeaders || ''
+    form.value.shardConfigId = cfg.shardConfigId || null
+    if (form.value.dbConnectionId) await onDbChange(form.value.dbConnectionId)
+    if (cfg.configJson) {
+      try {
+        const j = JSON.parse(cfg.configJson)
+        if (j.tables && j.tables.length) {
+          tables.value = j.tables.map(t => ({
+            tableName: t.tableName,
+            fields: (t.fields || []).map(f => ({
+              column: f.column || '', columnType: '',
+              sourceType: f.sourceType || 'REQUEST',
+              paramKey: f.paramKey || '', constValue: f.constValue || '', expression: f.expression || '',
+              dictKey: f.dictKey || ''
+            }))
+          }))
+        }
+        if (j.conditions) conditions.value = j.conditions
+        if (j.processRules) processRules.value = j.processRules
+      } catch (e) { ElMessage.warning('configJson 解析失败:' + e.message) }
+    }
+  } catch { /* request.js 已提示 */ }
+}
+
+async function loadDictSystems() {
+  try {
+    const res = await listDictMappings({ scope: 2, page: 1, size: 500 })
+    const records = res?.records || res || []
+    const bySystem = new Map()
+    for (const r of records) {
+      const sys = r.systemCode || 'default'
+      if (!bySystem.has(sys)) bySystem.set(sys, new Set())
+      bySystem.get(sys).add(r.dictKey)
+    }
+    dictSystems.value = Array.from(bySystem.entries()).map(([systemCode, keys]) =>
+      ({ systemCode, dictKeys: Array.from(keys).sort() }))
+  } catch { /* ignore */ }
+}
+
+async function loadShardConfigs() {
+  try { const res = await listShardConfigs('', 1, 200); shardConfigList.value = res?.records || res || [] }
+  catch { /* ignore */ }
+}
+
+function openFieldProcessPage() { window.open('/convert/field-process', '_blank') }
+function openShardConfigPage() { window.open('/interface/shard', '_blank') }
 
 onMounted(async () => {
   try { dbList.value = (await listConnections()) || [] } catch { ElMessage.error('加载数据库连接失败') }
+  loadDictSystems()
+  loadShardConfigs()
+  if (savedId.value) await loadForEdit(savedId.value)
 })
 </script>
 
