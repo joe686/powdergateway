@@ -71,6 +71,7 @@ CREATE TABLE IF NOT EXISTS interface_config (
   name VARCHAR(128) NOT NULL,
   path VARCHAR(256) COMMENT '发布后的访问路径',
   type VARCHAR(32) COMMENT 'SELECT/INSERT/UPDATE/DELETE/SOCKET(v0.3.0 起 SOCK-1)',
+  function_id VARCHAR(64) NULL COMMENT 'v0.3.1 CR-007 · PG 内部功能号(建议 PG- 前缀 · 与渠道 functionId 区分)',
   db_connection_id BIGINT,
   config_json JSON COMMENT '完整接口配置（表、字段、条件、加工规则等）',
   shard_config_id BIGINT COMMENT '关联分库分表配置',

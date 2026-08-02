@@ -81,6 +81,7 @@ CREATE TABLE interface_config (
   name VARCHAR(128) NOT NULL,
   path VARCHAR(256),
   type VARCHAR(32),
+  function_id VARCHAR(64) NULL,
   db_connection_id BIGINT,
   config_json TEXT,
   shard_config_id BIGINT,

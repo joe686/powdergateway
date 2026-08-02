@@ -17,8 +17,11 @@ public class InterfaceSaveRequest {
     /** 关联数据库连接 id，必填 */
     private Long dbConnectionId;
 
-    /** 接口类型：SELECT / INSERT / UPDATE / DELETE，默认 SELECT */
+    /** 接口类型：SELECT / INSERT / UPDATE / DELETE / SOCKET(v0.3.0 SOCK-1),默认 SELECT */
     private String type = "SELECT";
+
+    /** v0.3.1 CR-007 · PG 内部功能号(可选 · 建议 PG- 前缀 · 全库唯一) */
+    private String functionId;
 
     /** 完整接口配置 JSON 字符串，必填 */
     private String configJson;

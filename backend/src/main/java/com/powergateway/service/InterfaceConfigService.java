@@ -97,10 +97,25 @@ public class InterfaceConfigService {
             throw new BusinessException(400, "配置内容不能为空");
         }
 
+        // v0.3.1 CR-007 · function_id 唯一性校验(可空 · 填了才校验)
+        if (req.getFunctionId() != null && !req.getFunctionId().trim().isEmpty()) {
+            String fnId = req.getFunctionId().trim();
+            LambdaQueryWrapper<InterfaceConfig> dup = new LambdaQueryWrapper<>();
+            dup.eq(InterfaceConfig::getFunctionId, fnId);
+            if (req.getId() != null) {
+                dup.ne(InterfaceConfig::getId, req.getId());
+            }
+            if (interfaceConfigMapper.selectCount(dup) > 0) {
+                throw new BusinessException(400, "PG 功能号 " + fnId + " 已被其他接口占用");
+            }
+        }
+
         InterfaceConfig entity = new InterfaceConfig();
         entity.setName(req.getName());
         entity.setDbConnectionId(req.getDbConnectionId());
         entity.setType(req.getType() != null ? req.getType() : "SELECT");
+        entity.setFunctionId(req.getFunctionId() != null && !req.getFunctionId().trim().isEmpty()
+                ? req.getFunctionId().trim() : null);
         entity.setConfigJson(req.getConfigJson());
         entity.setStatus("draft");
         entity.setLogEnabled(1);

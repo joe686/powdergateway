@@ -21,8 +21,11 @@ public class InterfaceConfig {
     /** 发布后的访问路径 */
     private String path;
 
-    /** 接口类型：SELECT / INSERT / UPDATE / DELETE */
+    /** 接口类型：SELECT / INSERT / UPDATE / DELETE / SOCKET(v0.3.0 SOCK-1) */
     private String type;
+
+    /** v0.3.1 CR-007 · PG 内部功能号(建议 PG- 前缀 · 与渠道 functionId 区分)· 可空 · 唯一 */
+    private String functionId;
 
     /** 关联数据库连接 db_connection.id */
     private Long dbConnectionId;
