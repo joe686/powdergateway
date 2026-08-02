@@ -41,10 +41,11 @@ class UxBMenuPermissionOrderTest {
             "/system/log", "/system/stats", "/system/user", "/system/config",
             "/tools/debug", "/tools/swagger",
             "/tools/registry",                               // REG-1 append
-            "/tools/dict"                                    // FN-12 append
+            "/transform/dict",                               // v0.2.5 CR-004: FN-12 拆两侧 · 接口转换字典
+            "/interface/dict"                                // v0.2.5 CR-004: FN-12 拆两侧 · 接口开发字典
         ));
         assertEquals(expected, new HashSet<>(MenuPermission.ADMIN_MENUS));
-        assertEquals(29, MenuPermission.ADMIN_MENUS.size(), "ADMIN 白名单元素个数 = 24 SYS-3 基线 + 3 UX-D/E + 1 REG-1 + 1 FN-12");
+        assertEquals(30, MenuPermission.ADMIN_MENUS.size(), "ADMIN 白名单元素个数 = 24 SYS-3 基线 + 3 UX-D/E + 1 REG-1 + 2 FN-12(v0.2.5 CR-004 拆两侧)");
     }
 
     @Test
@@ -72,19 +73,20 @@ class UxBMenuPermissionOrderTest {
             "/interface/doc", "/interface/import-export",   // UX-E append
             "/system/log", "/system/stats",
             "/tools/debug",                                  // CHG-026: /tools/swagger 收归 admin 独有
-            "/tools/dict"                                    // FN-12 append
+            "/transform/dict",                               // v0.2.5 CR-004: FN-12 拆两侧 · 接口转换字典
+            "/interface/dict"                                // v0.2.5 CR-004: FN-12 拆两侧 · 接口开发字典
         ));
         assertEquals(expected, new HashSet<>(MenuPermission.USER_MENUS));
     }
 
     @Test
-    @DisplayName("READONLY_MENUS: 5 项集合（CHG-026 后移除 /tools/swagger；FN-12 新增 /tools/dict）")
+    @DisplayName("READONLY_MENUS: 5 项集合（CHG-026 后移除 /tools/swagger；v0.2.5 CR-004 用 /interface/dict 替代 /tools/dict）")
     void readonlyMenus_只含5项() {
         Set<String> expected = new HashSet<>(Arrays.asList(
             "/dashboard",
             "/interface/list", "/interface/cache",
             "/tools/debug",                                  // CHG-026: /tools/swagger 收归 admin 独有
-            "/tools/dict"                                    // FN-12 append
+            "/interface/dict"                                // v0.2.5 CR-004: /tools/dict 下线 · readonly 走接口开发侧
         ));
         assertEquals(expected, new HashSet<>(MenuPermission.READONLY_MENUS));
         assertEquals(5, MenuPermission.READONLY_MENUS.size());

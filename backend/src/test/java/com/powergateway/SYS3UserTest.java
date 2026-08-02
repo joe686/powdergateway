@@ -130,7 +130,7 @@ class SYS3UserTest {
         assertThat(menus).containsExactlyInAnyOrder(
             "/dashboard", "/interface/list", "/interface/cache",
             "/tools/debug",                                   // CHG-026: /tools/swagger 收归 admin 独有
-            "/tools/dict"                                     // FN-12 append
+            "/interface/dict"                                 // v0.2.5 CR-004: /tools/dict 下线 · readonly 走接口开发侧
         );
     }
 
