@@ -36,6 +36,44 @@
   box-shadow: var(--pg-glass-shadow);
 }
 
+/* v0.3.1 FB-046 · 弹窗类专门加强对比:更实底色 + 强边框 + footer 分隔 · 亮暗双主题都受益 */
+.el-dialog, .el-message-box {
+  background: var(--pg-dialog-bg) !important;
+  border: 1px solid var(--pg-border-strong) !important;
+  box-shadow: var(--pg-shadow-dialog) !important;
+}
+.el-dialog__header {
+  background: var(--pg-dialog-header-bg);
+  border-bottom: 1px solid var(--pg-border-strong);
+  padding: 16px 20px;
+  margin-right: 0;
+}
+.el-dialog__title {
+  color: var(--pg-text-primary);
+  font-weight: 600;
+}
+.el-dialog__body {
+  color: var(--pg-text-primary);
+  padding: 20px;
+}
+.el-dialog__footer {
+  border-top: 1px solid var(--pg-dialog-footer-border);
+  padding: 12px 20px;
+}
+.el-drawer {
+  background: var(--pg-dialog-bg) !important;
+  box-shadow: var(--pg-shadow-dialog) !important;
+}
+.el-drawer__header {
+  background: var(--pg-dialog-header-bg);
+  border-bottom: 1px solid var(--pg-border-strong);
+  padding: 16px 20px;
+  margin-bottom: 0;
+}
+.el-drawer__body {
+  color: var(--pg-text-primary);
+}
+
 /* UX-A Wave6 补：Element Plus 容器/菜单变量强覆盖（避免 el-menu 深色主题、el-aside/el-main 硬底色）
    MainLayout.vue 已把 side-aside / main-content 改为 transparent，
    这里同步 el-menu 相关变量，确保 SideMenu 无论亮/暗主题都跟随 tokens 而非固化深色。 */

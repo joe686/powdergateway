@@ -7,12 +7,19 @@
   --pg-bg-blob-3: #D5FFEA;
   --pg-stars-opacity: 0;
 
-  --pg-glass-bg: rgba(255, 255, 255, 0.66);
-  --pg-glass-bg-strong: rgba(255, 255, 255, 0.82);
-  --pg-glass-border: rgba(255, 255, 255, 0.75);
+  /* v0.3.1 FB-046 · 亮色弹窗从灰调升级为近白半透明 · 提高内容对比度 */
+  --pg-glass-bg: rgba(255, 255, 255, 0.88);
+  --pg-glass-bg-strong: rgba(255, 255, 255, 0.96);
+  --pg-glass-border: rgba(180, 195, 230, 0.55);
   --pg-glass-blur: 24px;
-  --pg-glass-shadow: 0 8px 32px rgba(60, 79, 148, 0.10), 0 2px 8px rgba(60, 79, 148, 0.06);
+  --pg-glass-shadow: 0 12px 40px rgba(60, 79, 148, 0.16), 0 4px 12px rgba(60, 79, 148, 0.08);
   --pg-glow: none;
+  /* v0.3.1 FB-046 · 弹窗专用变量(供 element-plus-override 消费)*/
+  --pg-dialog-bg: #FFFFFF;
+  --pg-dialog-header-bg: #F7F9FF;
+  --pg-dialog-footer-border: rgba(0, 0, 0, 0.06);
+  --pg-border-strong: rgba(0, 0, 0, 0.10);
+  --pg-shadow-dialog: 0 20px 60px rgba(60, 79, 148, 0.18), 0 6px 16px rgba(60, 79, 148, 0.10);
 
   --pg-primary: #5B7CFA;
   --pg-primary-soft: rgba(91, 124, 250, 0.12);
@@ -50,6 +57,12 @@
   --pg-glass-blur: 28px;
   --pg-glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
   --pg-glow: 0 0 20px rgba(123, 148, 214, 0.12);
+  /* v0.3.1 FB-046 · 暗色弹窗保持毛玻璃基调 · 只加边框强化 */
+  --pg-dialog-bg: rgba(20, 25, 45, 0.75);
+  --pg-dialog-header-bg: rgba(30, 40, 70, 0.85);
+  --pg-dialog-footer-border: rgba(255, 255, 255, 0.06);
+  --pg-border-strong: rgba(255, 255, 255, 0.10);
+  --pg-shadow-dialog: 0 20px 60px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
 
   /* Wave10 · 暗色降饱和：原 #6DA0FF/#22D3AA 等纯亮色在深底 blob 上刺眼、
      长时间看眼疲劳。改用蓝灰紫低饱和色阶，跟深色底更协调。 */

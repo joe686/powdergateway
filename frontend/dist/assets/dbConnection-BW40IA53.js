@@ -1,0 +1,1 @@
+import{G as e}from"./index-BZNrIVXt.js";function o(){return e.get("/db/list")}function s(t){return e.post("/db/save",t)}function r(t){return e.delete(`/db/${t}`)}function i(t){return e.post(`/db/${t}/test`)}function u(t){return e.get("/db/list/export",{params:{keyword:t},responseType:"blob"})}export{r as d,u as e,o as l,s,i as t};
