@@ -72,6 +72,7 @@ CREATE TABLE IF NOT EXISTS interface_config (
   path VARCHAR(256) COMMENT '发布后的访问路径',
   type VARCHAR(32) COMMENT 'SELECT/INSERT/UPDATE/DELETE/SOCKET(v0.3.0 起 SOCK-1)',
   function_id VARCHAR(64) NULL COMMENT 'v0.3.1 CR-007 · PG 内部功能号(建议 PG- 前缀 · 与渠道 functionId 区分)',
+  UNIQUE KEY uk_interface_function_id (function_id),
   db_connection_id BIGINT,
   config_json JSON COMMENT '完整接口配置（表、字段、条件、加工规则等）',
   shard_config_id BIGINT COMMENT '关联分库分表配置',
@@ -271,4 +272,15 @@ CREATE TABLE IF NOT EXISTS dict_mapping (
   update_time   DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   UNIQUE KEY uk_src (scope, system_code, dict_key, direction, source_value),
   KEY idx_lookup (scope, system_code, dict_key, direction, source_value)
+);
+
+-- v0.3.1 CR-003 · 程序版本信息(H2 + MySQL 双兼容 · 存"防篡改")
+CREATE TABLE IF NOT EXISTS sys_app_info (
+    id           BIGINT       NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    version      VARCHAR(32)  NOT NULL COMMENT '语义化版本 · 如 v0.3.1',
+    build_time   DATETIME     NOT NULL COMMENT '构建时间',
+    git_sha      VARCHAR(64)  NULL COMMENT 'git commit id 短哈希',
+    author       VARCHAR(64)  NOT NULL DEFAULT '光斓' COMMENT '作者(默认光斓)',
+    release_note VARCHAR(255) NULL COMMENT '发布注 · 如 当前仅为测试版本',
+    created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

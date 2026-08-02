@@ -18,6 +18,7 @@ DROP TABLE IF EXISTS shard_config;
 DROP TABLE IF EXISTS field_formula;
 DROP TABLE IF EXISTS registry_config;
 DROP TABLE IF EXISTS sys_config;
+DROP TABLE IF EXISTS sys_app_info;
 
 -- 1. 用户表
 CREATE TABLE sys_user (
@@ -264,4 +265,15 @@ CREATE TABLE IF NOT EXISTS dict_mapping (
   create_time   DATETIME     DEFAULT CURRENT_TIMESTAMP,
   update_time   DATETIME     DEFAULT CURRENT_TIMESTAMP,
   UNIQUE (scope, system_code, dict_key, direction, source_value)
+);
+
+-- v0.3.1 CR-003 · 程序版本信息(H2 · 存"防篡改")
+CREATE TABLE sys_app_info (
+  id           BIGINT PRIMARY KEY AUTO_INCREMENT,
+  version      VARCHAR(32)  NOT NULL,
+  build_time   DATETIME     NOT NULL,
+  git_sha      VARCHAR(64)  NULL,
+  author       VARCHAR(64)  NOT NULL DEFAULT '光斓',
+  release_note VARCHAR(255) NULL,
+  created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

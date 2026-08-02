@@ -180,6 +180,11 @@
         <el-menu-item v-if="can('/testkit/mock-history')" index="/testkit/mock-history">Mock 请求历史</el-menu-item>
       </el-sub-menu>
     </el-menu>
+
+    <!-- v0.3.1 CR-003 · sidebar 底部微小版本徽章(不起眼 · 点击弹版本卡片) -->
+    <div class="side-footer" :class="{ collapsed: collapsed }">
+      <AppInfoBadge />
+    </div>
   </div>
 </template>
 
@@ -187,6 +192,7 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useUserStore } from '@/store/user'
+import AppInfoBadge from '@/components/layout/AppInfoBadge.vue'
 
 defineProps({
   collapsed: {
@@ -238,7 +244,18 @@ const hasGroupInterfaceOps        = computed(function() { return ['/interface/li
 </script>
 
 <style scoped>
+.side-footer {
+  position: absolute;
+  bottom: 8px;
+  left: 0;
+  right: 0;
+  text-align: center;
+}
+.side-footer.collapsed {
+  padding: 0 4px;
+}
 .side-menu {
+  position: relative;
   height: 100%;
   display: flex;
   flex-direction: column;

@@ -40,6 +40,7 @@ public class SaTokenConfig implements WebMvcConfigurer {
         .addPathPatterns("/api/**")
         .excludePathPatterns("/api/auth/login", "/api/auth/logout", "/api/health",
                 "/api/exec/**",
-                "/api/route/**");    // v0.3.1 CR-007 · 渠道路由入口 · 与 exec 同免登范式
+                "/api/route/**",     // v0.3.1 CR-007 · 渠道路由入口 · 与 exec 同免登范式
+                "/api/app-info");    // v0.3.1 CR-003 · 版本信息 · LoginView 未登录也要能看
     }
 }

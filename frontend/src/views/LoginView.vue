@@ -50,6 +50,11 @@
       </el-form>
 
       <p class="login-hint">默认账号：admin / Admin@123</p>
+
+      <!-- v0.3.1 CR-003 · 登录页也显示微小版本徽章(不起眼 · 点击弹版本卡片) -->
+      <div class="login-app-info">
+        <AppInfoBadge />
+      </div>
     </div>
   </div>
 </template>
@@ -61,6 +66,7 @@ import { ElMessage } from 'element-plus'
 import { User, Lock, Connection } from '@element-plus/icons-vue'
 import { useUserStore } from '@/store/user'
 import { login, getMenuPermissions } from '@/api/auth'
+import AppInfoBadge from '@/components/layout/AppInfoBadge.vue'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -218,5 +224,9 @@ async function handleLogin() {
   font-size: 12px;
   color: var(--pg-text-placeholder);
   margin-top: 8px;
+}
+.login-app-info {
+  text-align: center;
+  margin-top: 12px;
 }
 </style>
