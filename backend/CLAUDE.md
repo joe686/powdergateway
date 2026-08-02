@@ -183,6 +183,7 @@ class M15TemplateControllerTest {
 | CR-007 | v0.3.1 · 双层功能号路由:`interface_config.function_id UNIQUE` + `ChannelFunctionIdMapper`(走 FN-12 字典 scope=3 · systemCode=ROUTE) + `FunctionIdRouteService`(Redis 缓存 · negative caching) + `RouteController POST /api/route`(免登 · **_originalFunctionId 透传下游联机**) + `ExecDispatchService`(抽 ExecController.dispatchByType 供 exec + route 共享) · CHG-039 · **前端 wizard 元数据 step 加 functionId 输入延到 v0.3.7** |
 | CR-003 | v0.3.1 · 版本显示:`sys_app_info` H2 表(防篡改) + `SysAppInfoInitializer @PostConstruct` 启动 upsert + `AppInfoController GET /api/app-info`(免登) + 前端 `AppInfoBadge` 组件(SideMenu 底部 + LoginView footer · 光斓 + 中文日期 + 测试版本注) · CHG-040 |
 | trace_id | v0.3.1 · 跨表追溯:sys_log/sql_audit_log/perf_stat 三表加 trace_id + 索引 · `TraceIdFilter @Order HIGHEST`(生成 UUID 或沿用上游 X-Trace-Id · MDC + 响应头 · finally 清理) · 三 AOP(SqlAuditAspect/SysLogAspect/PerfStatAspect)从 MDC 读写实体 · **v0.5.0 补 business_op_log 第四表** · CHG-041 |
+| SOCK-5 | v0.3.2 · lcpt-bank 入站场景闭环:SOCK-5-A 入站 Netty ServerSocket + Server/Manager/Handler/Context/Config(复用 v0.3.0 codec · Q20=C 短连接) · SOCK-5-B HttpOutboundExecutor 复用 REG-1 discover + X-Trace-Id/X-Original-Function-Id 透传 · SOCK-5-C InboundSocketOrchestrator 编排(dom4j 手工递归提 //FunctionId → v0.3.1 双层路由 → XML→JSON→HTTP→XML → Channel 回写) · SOCK-5-D JsonSkeletonRenderer 手工简化 JSONPath(host flat + bank 数组包) · Task 7 整合(SocketInboundServerManager @PostConstruct + ExecDispatchService case INBOUND_SOCKET + Service 校验) · **前端 3 step 拆 v0.3.5/7** · **Eureka selfRegister 独立 minor** · CHG-042 |
 
 ## 关键代码地标（跨单元复用组件 · 禁重复实现）
 
