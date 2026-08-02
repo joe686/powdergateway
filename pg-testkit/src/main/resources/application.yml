@@ -24,6 +24,10 @@ pg-testkit:
     username: root
     password: qwe12345
     driver-class-name: com.mysql.cj.jdbc.Driver
+    # 样例业务库（DemoDb）—— 供 /testkit/demo-db/init 建 10 张 demo_* 表用
+    demo-url: jdbc:mysql://localhost:3306/pg_demo?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf8
+    demo-user: root
+    demo-password: qwe12345
 
 logging:
   level:
