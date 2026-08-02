@@ -176,26 +176,30 @@ class M15TemplateControllerTest {
 | FN-09 | 接口文档下载：`InterfaceDocumentService.buildVisualModel/buildTransformModel`,md/html/xlsx 三格式,zip 批量导出 · v0.2.0 CHG-032 加字典 key 列 + xlsx 4-sheet |
 | FN-11 | 配置导入导出扩展：`ConfigImportService/ConfigExportService`,Excel/Markdown/Zip 三格式,菜单合并,循环报文路径,manifest.json 元数据 · CHG-022 |
 | FN-12 | 字典映射管理全链路：`dict_mapping` 表 + `DictMappingController/Service` + Redis 缓存 · `DictMappingProcessor`（M1-3 集成 · `ProcessRuleType.DICT_MAP`）· POI Excel 导入导出 · 三级联动嵌入 M1-3/M1-6/M2-3/4/5/6 · FN-09 联动生成 xlsx 4-sheet · CHG-028/029/031/032 |
-| REG-1 | 注册中心集成：`RegistryClient` 接口抽象 + `RegistryFacade` 门面 + `NacosRegistryClient`/`EurekaRegistryClient` 双实现 + `service://` 协议解析 + `RegistryHeartbeatScheduler` 心跳骨架 · **注意**:`EurekaRegistryClient.selfRegister` 目前仅日志占位（L55-60）,v0.3.0 SOCK-1 补齐 · CHG-023 |
+| REG-1 | 注册中心集成：`RegistryClient` 接口抽象 + `RegistryFacade` 门面 + `NacosRegistryClient`/`EurekaRegistryClient` 双实现 + `service://` 协议解析 + `RegistryHeartbeatScheduler` 心跳骨架 · **注意**:`EurekaRegistryClient.selfRegister` 目前仅日志占位(L55-60),Q8=A **延到 v0.3.2 SOCK-5-B 补齐** · CHG-023 |
 | TEST-1 | pg-testkit 测试工具增强 + PG 前端嵌入 + TESTER 角色 + DemoDbController 骨架 · v1.1:Faker 10 万条数据 + 完整 10 表 DDL + Mock 规则持久化 · CHG-024 |
 | REL-1 | 打包发布形态：Maven profile + Caffeine 降级 + `scripts/build/build-portable.sh`/`build-standard.sh` + `jlink-jre.sh` + `verify-artifacts.sh` 本地冒烟 · 便携版 + 标准版 · 去 CI 化 · git tag 手动版本管理 · CHG-025 + CHG-027 |
+| SOCK-1 | v0.3.0 · TCP Socket + XML 报文出站接入:Netty TCP Client + 三分帧(XML_BOUNDARY / LENGTH_PREFIX_BE4/BE8)+ 双编码(UTF-8/GBK)+ SocketClient(全局共享 EventLoopGroup · 短连接)+ SocketExecutor 编排(解析 socket 段 → renderTemplate → send → parseXml + flattenMap)+ ExecController.dispatchByType 加 SOCKET 分支 + MessageDebug 扁平化 tab + pg-testkit SocketMockServer · CHG-037 + CHG-038 · **connectionMode 仅 short 实装 · long/pooled 预留 · Eureka selfRegister 延到 v0.3.2 SOCK-5-B** |
 
 ## 关键代码地标（跨单元复用组件 · 禁重复实现）
 
 | 组件 | 路径 | 首实现单元 | 被复用方 |
 |---|---|:-:|---|
 | `FieldProcessor` 字段加工引擎（策略模式）| `service/FieldProcessor.java` | M1-3 | M2-3/4/5,FN-12 DictMappingProcessor |
-| `FormatConverter`（JSON/XML/CSV 互转 + `flattenMap`) | `utils/FormatConverter.java` (L218-230 flattenMap) | M1-1 | M1-6/7,AUX-1,v0.3.0 SOCK-1 |
+| `FormatConverter`(JSON/XML/CSV 互转 + `flattenMap`) | `utils/FormatConverter.java` (L218-230 flattenMap · v0.3.0 起 public static) | M1-1 | M1-6/7,AUX-1,SOCK-1 SocketExecutor,MessageToolsController /api/tools/xml-flatten |
 | `DataSourceResolver`（REQUEST/CONST/CALC 解析）| `utils/DataSourceResolver.java` | M2-4 | M2-5 |
 | `ColumnValidator`（元数据字段校验）| `utils/ColumnValidator.java` | M2-4 | M2-5 |
 | `TableMetaService` 表结构 + Redis 缓存 | `service/TableMetaService.java` | M2-2 | M2-3/4/5/6 |
 | `SysConfigService` KV 配置 + 热更新广播 | `service/SysConfigService.java` | SYS-4 | M2-9,M2-10,SYS-1,SYS-3 |
 | `ShardRouter` 分片路由（取模/范围/补查/补零）| `utils/ShardRouter.java` | M2-8 | M2-8 exec 集成 |
 | `MenuPermission` 三角色菜单白名单 | `config/MenuPermission.java` | SYS-3 | `AuthService.getMenuForCurrentUser()` |
-| `RegistryFacade` 注册中心门面 | `service/registry/RegistryFacade.java` | REG-1 | v0.3.0 SOCK-1 |
+| `RegistryFacade` 注册中心门面 | `service/registry/RegistryFacade.java` | REG-1 | v0.3.2 SOCK-5-B(Eureka selfRegister 补齐) |
 | `SqlAuditAspect` / `SysLogAspect` / `PerfStatAspect` AOP 异步审计 | `aop/` | M2-9 / SYS-1 / SYS-2 | AOP 拦截全站 |
 | `DictMappingProcessor` 字典映射策略 | `service/processor/DictMappingProcessor.java` | FN-12 | M1-3 集成 |
-| `ExecController.dispatchByType` 接口执行分发 | `controller/ExecController.java` (L82-108) | M2-7 | 当前仅 DB CRUD,v0.3.0 SOCK-1 加 SOCKET 分支 |
+| `ExecController.dispatchByType` 接口执行分发 | `controller/ExecController.java` (L82-108) | M2-7 | v0.3.0 SOCK-1 已加 SOCKET 分支 · v0.3.2 SOCK-5 加 INBOUND_SOCKET 分支(入站编排) |
+| `SocketClient` Netty TCP Client 门面 | `socket/SocketClient.java` | SOCK-1(v0.3.0) | SocketExecutor · v0.3.2 SOCK-5-A 入站服务端可复用 codec |
+| `SocketExecutor` 出站编排 | `socket/SocketExecutor.java` | SOCK-1(v0.3.0) | ExecController case SOCKET |
+| `socket.codec.*`(XmlBoundaryCodec + LengthPrefixCodec + FramingType + CharsetSupport) | `socket/codec/` | SOCK-1(v0.3.0) | v0.3.2 SOCK-5-A 入站服务端复用同一 codec 集 |
 
 ## 单元变更后同步文档规约（2026-07-28 复盘落实）
 
