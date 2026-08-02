@@ -1,13 +1,15 @@
 <template>
   <div class="delete-config-page">
     <div class="page-header">
-      <h2>删除接口配置</h2>
+      <h2>{{ pageTitle }}</h2>
       <el-button @click="router.push('/interface/dev')">返回列表</el-button>
     </div>
 
+    <!-- v0.3.5 · 3 → 4 步 · 加分库分表(delete 无字段加工/字典键 · 场景无意义) -->
     <el-steps :active="step" finish-status="success" align-center style="margin-bottom: 24px">
       <el-step title="基本信息" />
       <el-step title="多表条件配置" />
+      <el-step title="分库分表(可选)" />
       <el-step title="预览与保存" />
     </el-steps>
 
@@ -123,10 +125,32 @@
       </div>
     </div>
 
-    <!-- Step 3：预览与保存 -->
+    <!-- v0.3.5 · Step 3:分库分表(可选) -->
     <div v-show="step === 2">
       <el-card>
-        <template #header>Step 3 · 预览与保存</template>
+        <template #header>Step 3 · 分库分表(可选)</template>
+        <el-alert type="info" :closable="false" style="margin-bottom:12px">
+          M2-8 分片配置 · <el-button type="primary" link @click="openShardConfigPage">新建分片</el-button>
+        </el-alert>
+        <el-form label-width="140px">
+          <el-form-item label="分片配置">
+            <el-select v-model="form.shardConfigId" placeholder="不启用" clearable filterable style="width:400px">
+              <el-option v-for="sc in shardConfigList" :key="sc.id" :label="sc.name + ' · ' + (sc.moduleName || '')" :value="sc.id" />
+            </el-select>
+            <el-button link @click="loadShardConfigs" style="margin-left:8px">刷新</el-button>
+          </el-form-item>
+        </el-form>
+        <div class="step-footer">
+          <el-button @click="step = 1">上一步</el-button>
+          <el-button type="primary" @click="step = 3">下一步</el-button>
+        </div>
+      </el-card>
+    </div>
+
+    <!-- Step 4：预览与保存 -->
+    <div v-show="step === 3">
+      <el-card>
+        <template #header>Step 4 · 预览与保存</template>
 
         <el-descriptions :column="1" border style="margin-bottom: 16px">
           <el-descriptions-item label="接口名称">{{ form.name }}</el-descriptions-item>
@@ -151,7 +175,7 @@
         </div>
 
         <div class="step-footer">
-          <el-button @click="step = 1">上一步</el-button>
+          <el-button @click="step = 2">上一步</el-button>
           <el-button type="primary" :loading="saving" @click="saveConfig">保存</el-button>
         </div>
       </el-card>
@@ -183,30 +207,39 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { QuestionFilled } from '@element-plus/icons-vue'
 import ConditionBuilder from '@/components/ConditionBuilder.vue'
 import { listConnections } from '@/api/dbConnection'
 import { getTableStructure } from '@/api/tableStructure'
-import { saveInterface, deletePreview } from '@/api/interface'
+import { saveInterface, deletePreview, getInterface } from '@/api/interface'
+import { listShardConfigs } from '@/api/shardConfig'
 import ResponseHeadersEditor from '@/components/interface/ResponseHeadersEditor.vue'
 
 const router = useRouter()
+const route  = useRoute()
 const step = ref(0)
 
 const dbList       = ref([])
 const tableList    = ref([])
 const tableColumns = ref({})
 
-const form   = ref({ name: '', dbConnectionId: null, allowBatchDelete: 0, responseFormat: 'JSON', responseHeaders: '' })
+const form   = ref({ name: '', dbConnectionId: null, allowBatchDelete: 0, responseFormat: 'JSON', responseHeaders: '', shardConfigId: null })
 const tables = ref([{ tableName: '', conditions: [] }])
 
 const saving         = ref(false)
 const previewing     = ref(false)
 const previewVisible = ref(false)
 const previewData    = ref({})
-const savedId        = ref(null)
+const savedId        = ref(route.query.id ? Number(route.query.id) : null)
+
+// v0.3.5 · edit + 分片
+const editMode = computed(() => !!savedId.value)
+const pageTitle = computed(() => editMode.value
+    ? `编辑删除接口 #${savedId.value} · ${form.value.name || '(未命名)'}`
+    : '删除接口配置')
+const shardConfigList = ref([])
 
 function addTable()       { if (tables.value.length < 3) tables.value.push({ tableName: '', conditions: [] }) }
 function removeTable(idx) { tables.value.splice(idx, 1) }
@@ -258,22 +291,54 @@ async function saveConfig() {
   saving.value = true
   try {
     const id = await saveInterface({
+      id: savedId.value || undefined,
       name: form.value.name,
       dbConnectionId: form.value.dbConnectionId,
       type: 'DELETE',
       allowBatchDelete: form.value.allowBatchDelete,
       configJson: JSON.stringify(buildConfigJson()),
       responseFormat: form.value.responseFormat,
-      responseHeaders: form.value.responseHeaders
+      responseHeaders: form.value.responseHeaders,
+      shardConfigId: form.value.shardConfigId || undefined   // v0.3.5
     })
     savedId.value = id
     ElMessage.success('保存成功，可点击「预览待删数据」测试')
-  } catch {
-    // request.js 拦截器已处理报错提示
-  } finally {
-    saving.value = false
-  }
+  } catch { /* request.js 已处理 */ } finally { saving.value = false }
 }
+
+// v0.3.5 · edit 回填
+async function loadForEdit(id) {
+  try {
+    const cfg = await getInterface(id)
+    form.value.name = cfg.name || ''
+    form.value.dbConnectionId = cfg.dbConnectionId || null
+    form.value.allowBatchDelete = cfg.allowBatchDelete || 0
+    form.value.responseFormat = cfg.responseFormat || 'JSON'
+    form.value.responseHeaders = cfg.responseHeaders || ''
+    form.value.shardConfigId = cfg.shardConfigId || null
+    if (form.value.dbConnectionId) await onDbChange(form.value.dbConnectionId)
+    if (cfg.configJson) {
+      try {
+        const j = JSON.parse(cfg.configJson)
+        if (j.tables && j.tables.length) {
+          tables.value = j.tables.map(t => ({
+            tableName: t.tableName,
+            conditions: (t.conditions || []).map(c => ({
+              field: c.field, op: c.op, paramKey: c.paramKey, tableName: t.tableName
+            }))
+          }))
+        }
+      } catch (e) { ElMessage.warning('configJson 解析失败:' + e.message) }
+    }
+  } catch { /* request.js 已提示 */ }
+}
+
+async function loadShardConfigs() {
+  try { const res = await listShardConfigs('', 1, 200); shardConfigList.value = res?.records || res || [] }
+  catch { /* ignore */ }
+}
+
+function openShardConfigPage() { window.open('/interface/shard', '_blank') }
 
 async function doPreview() {
   if (!savedId.value) {
@@ -298,6 +363,8 @@ async function doPreview() {
 
 onMounted(async () => {
   try { dbList.value = (await listConnections()) || [] } catch { ElMessage.error('加载数据库连接失败') }
+  loadShardConfigs()
+  if (savedId.value) await loadForEdit(savedId.value)
 })
 </script>
 
