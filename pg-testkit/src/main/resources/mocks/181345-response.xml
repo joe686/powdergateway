@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <FunctionId>181345</FunctionId>
+    <Result>
+        <Code>0</Code>
+        <Msg>SUCCESS</Msg>
+    </Result>
+    <Data>
+        <CustomerId>C001</CustomerId>
+        <CustomerName>示例客户</CustomerName>
+        <ProductList>
+            <Product>
+                <ProductCode>P001</ProductCode>
+                <ProductName>货币组合产品 A</ProductName>
+                <Currency>CNY</Currency>
+                <Amount>10000.00</Amount>
+            </Product>
+        </ProductList>
+    </Data>
+</Response>

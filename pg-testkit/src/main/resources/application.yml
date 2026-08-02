@@ -29,6 +29,15 @@ pg-testkit:
     demo-user: root
     demo-password: qwe12345
 
+# v0.3.0 SOCK-4 · TCP Socket Mock 服务(默认关闭 · 需时手动 enabled=true)
+# 仅支持 XML_BOUNDARY 分帧 + UTF-8 编码 · length_prefix + GBK 留 v0.3.7
+socket-mock:
+  enabled: false
+  port: 6500
+  rules:
+    - function-id: "181345"
+      response-file: "mocks/181345-response.xml"
+
 logging:
   level:
     com.powergateway.testkit: INFO
