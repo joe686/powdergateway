@@ -8,6 +8,7 @@ import com.powergateway.common.Result;
 import com.powergateway.exception.BusinessException;
 import com.powergateway.model.InterfaceConfig;
 import com.powergateway.model.dto.ExecRequest;
+import com.powergateway.route.ExecDispatchService;
 import com.powergateway.service.InterfaceConfigService;
 import com.powergateway.socket.SocketExecutor;
 import com.powergateway.utils.AcceptNegotiator;
@@ -39,6 +40,7 @@ public class ExecController {
     @Autowired private FormatConverter formatConverter;
     @Autowired private ObjectMapper objectMapper;
     @Autowired private SocketExecutor socketExecutor;
+    @Autowired private ExecDispatchService execDispatchService;
 
     @PerfStat
     @PostMapping(value = "/{interfaceId}",
@@ -83,36 +85,8 @@ public class ExecController {
 
     private Object dispatchByType(InterfaceConfig config, Long id,
                                   Map<String, Object> params, ExecRequest req) {
-        switch (config.getType()) {
-            case "SELECT":
-                return service.executeQuery(id, params, req.getPage(), req.getPageSize());
-            case "INSERT":
-                AuditContextHolder.set(new AuditContext()
-                        .setInterfaceId(id).setOpType("INSERT")
-                        .setTargetDb(config.getDbConnectionId() != null
-                                ? config.getDbConnectionId().toString() : "unknown"));
-                return service.executeInsert(id, params);
-            case "UPDATE":
-                AuditContextHolder.set(new AuditContext()
-                        .setInterfaceId(id).setOpType("UPDATE")
-                        .setTargetDb(config.getDbConnectionId() != null
-                                ? config.getDbConnectionId().toString() : "unknown"));
-                return service.executeUpdate(id, params);
-            case "DELETE":
-                AuditContextHolder.set(new AuditContext()
-                        .setInterfaceId(id).setOpType("DELETE")
-                        .setTargetDb(config.getDbConnectionId() != null
-                                ? config.getDbConnectionId().toString() : "unknown"));
-                return service.executeDelete(id, params);
-            case "SOCKET":
-                // v0.3.0 SOCK-1 · TCP Socket + XML 报文出站
-                AuditContextHolder.set(new AuditContext()
-                        .setInterfaceId(id).setOpType("SOCKET_EXEC")
-                        .setTargetDb("socket"));
-                return socketExecutor.execute(config, params);
-            default:
-                throw new BusinessException(400, "不支持的接口类型: " + config.getType());
-        }
+        // v0.3.1 CR-007 Task 1.4 · 抽到 ExecDispatchService 供 RouteController 复用
+        return execDispatchService.dispatch(config, id, params, req);
     }
 
     @SuppressWarnings("unchecked")
