@@ -82,6 +82,36 @@ public class InterfaceConfigService {
     // ─── 保存 ──────────────────────────────────────────────────────────────────
 
     /**
+     * v0.3.2 SOCK-5-A/C · INBOUND_SOCKET 类型必填 inbound + outbound 校验。
+     */
+    @SuppressWarnings("unchecked")
+    private void validateInboundSocketConfig(String configJson) {
+        try {
+            java.util.Map<String, Object> cfg = objectMapper.readValue(configJson, java.util.LinkedHashMap.class);
+            Object inbound = cfg.get("inbound");
+            Object outbound = cfg.get("outbound");
+            if (!(inbound instanceof java.util.Map) || ((java.util.Map<?, ?>) inbound).isEmpty()) {
+                throw new BusinessException(400, "INBOUND_SOCKET 接口 config_json 必填 inbound 段");
+            }
+            if (!(outbound instanceof java.util.Map) || ((java.util.Map<?, ?>) outbound).isEmpty()) {
+                throw new BusinessException(400, "INBOUND_SOCKET 接口 config_json 必填 outbound 段");
+            }
+            java.util.Map<String, Object> inMap = (java.util.Map<String, Object>) inbound;
+            java.util.Map<String, Object> outMap = (java.util.Map<String, Object>) outbound;
+            if (inMap.get("port") == null || inMap.get("framing") == null || inMap.get("charset") == null) {
+                throw new BusinessException(400, "INBOUND_SOCKET inbound 段必填 port/framing/charset");
+            }
+            if (outMap.get("applicationName") == null || outMap.get("path") == null) {
+                throw new BusinessException(400, "INBOUND_SOCKET outbound 段必填 applicationName/path");
+            }
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new BusinessException(400, "INBOUND_SOCKET config_json 解析失败:" + e.getMessage());
+        }
+    }
+
+    /**
      * 保存接口配置（新建或更新）。
      *
      * @return 接口 id
@@ -90,11 +120,18 @@ public class InterfaceConfigService {
         if (req.getName() == null || req.getName().trim().isEmpty()) {
             throw new BusinessException(400, "接口名称不能为空");
         }
-        if (req.getDbConnectionId() == null) {
+        String type = req.getType() != null ? req.getType() : "SELECT";
+        boolean isNonDbType = "SOCKET".equals(type) || "INBOUND_SOCKET".equals(type);
+        // v0.3.0 SOCKET / v0.3.2 INBOUND_SOCKET 类型不需要 DB 连接 · 其他类型必填
+        if (!isNonDbType && req.getDbConnectionId() == null) {
             throw new BusinessException(400, "数据库连接不能为空");
         }
         if (req.getConfigJson() == null || req.getConfigJson().trim().isEmpty()) {
             throw new BusinessException(400, "配置内容不能为空");
+        }
+        // v0.3.2 SOCK-5 · INBOUND_SOCKET 类型必填 inbound + outbound + type=INBOUND_SOCKET(SOCK-5-C)
+        if ("INBOUND_SOCKET".equals(type)) {
+            validateInboundSocketConfig(req.getConfigJson());
         }
 
         // v0.3.1 CR-007 · function_id 唯一性校验(可空 · 填了才校验)

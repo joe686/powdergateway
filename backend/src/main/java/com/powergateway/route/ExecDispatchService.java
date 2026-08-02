@@ -62,6 +62,10 @@ public class ExecDispatchService {
                         .setInterfaceId(id).setOpType("SOCKET_EXEC")
                         .setTargetDb("socket"));
                 return socketExecutor.execute(config, params);
+            case "INBOUND_SOCKET":
+                // v0.3.2 SOCK-5-A · 入站接口通过 TCP 端口触发 · 不走 HTTP /api/exec
+                throw new BusinessException(400,
+                        "INBOUND_SOCKET 类型接口通过 TCP 端口触发 · 请渠道方连接接口配置的 port · 不能走 /api/exec HTTP 入口");
             default:
                 throw new BusinessException(400, "不支持的接口类型: " + config.getType());
         }

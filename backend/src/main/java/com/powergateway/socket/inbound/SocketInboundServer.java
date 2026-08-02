@@ -4,6 +4,7 @@ import com.powergateway.exception.BusinessException;
 import com.powergateway.socket.codec.FramingType;
 import com.powergateway.socket.codec.LengthPrefixCodec;
 import com.powergateway.socket.codec.XmlBoundaryCodec;
+import com.powergateway.socket.route.InboundSocketOrchestrator;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -32,12 +33,18 @@ public class SocketInboundServer {
     private static final Logger log = LoggerFactory.getLogger(SocketInboundServer.class);
 
     private final SocketInboundConfig config;
+    private final InboundSocketOrchestrator orchestrator;
     private EventLoopGroup bossGroup;
     private EventLoopGroup workerGroup;
     private Channel serverChannel;
 
     public SocketInboundServer(SocketInboundConfig config) {
+        this(config, null);
+    }
+
+    public SocketInboundServer(SocketInboundConfig config, InboundSocketOrchestrator orchestrator) {
         this.config = config;
+        this.orchestrator = orchestrator;
         validateConnectionMode();
     }
 
@@ -84,7 +91,7 @@ public class SocketInboundServer {
                             ch.pipeline().addLast(LengthPrefixCodec.decoder(config.getFraming()));
                             ch.pipeline().addLast(LengthPrefixCodec.encoder(config.getFraming()));
                         }
-                        ch.pipeline().addLast(new SocketInboundHandler(config.getCharset()));
+                        ch.pipeline().addLast(new SocketInboundHandler(config.getCharset(), orchestrator));
                     }
                 });
         ChannelFuture cf = sb.bind(config.getPort()).sync();
