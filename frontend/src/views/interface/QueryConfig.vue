@@ -1,14 +1,16 @@
 <template>
   <div class="query-config-page">
     <div class="page-header">
-      <h2>查询接口配置</h2>
+      <h2>{{ pageTitle }}</h2>
       <el-button @click="goList">返回列表</el-button>
     </div>
 
-    <!-- 步骤条 -->
+    <!-- v0.3.5 · 步骤条 4 → 6 · 加字段加工 + 分片(参考 v0.3.1 Task 5) -->
     <el-steps :active="step" finish-status="success" align-center style="margin-bottom: 24px">
       <el-step title="选择数据库与表" />
       <el-step title="选择返回字段" />
+      <el-step title="字段加工(可选)" />
+      <el-step title="分库分表(可选)" />
       <el-step title="配置查询条件" />
       <el-step title="预览与保存" />
     </el-steps>
@@ -156,6 +158,30 @@
               <span v-else style="color: #999">—</span>
             </template>
           </el-table-column>
+          <!-- v0.3.5 · 字典键下拉(可选 · 复用 FN-12 scope=2 · 接口开发侧) -->
+          <el-table-column label="字典键" min-width="180">
+            <template #default="{ row }">
+              <el-select
+                v-if="row.selected"
+                v-model="row.dictKey"
+                placeholder="不使用字典"
+                size="small"
+                clearable
+                filterable
+                style="width:100%"
+              >
+                <el-option-group v-for="sys in dictSystems" :key="sys.systemCode" :label="sys.systemCode">
+                  <el-option
+                    v-for="k in sys.dictKeys"
+                    :key="k"
+                    :label="k"
+                    :value="sys.systemCode + ':' + k"
+                  />
+                </el-option-group>
+              </el-select>
+              <span v-else style="color:#999">—</span>
+            </template>
+          </el-table-column>
         </el-table>
 
         <div style="text-align: right; margin-top: 16px">
@@ -165,10 +191,60 @@
       </el-card>
     </div>
 
-    <!-- 步骤3：配置查询条件 -->
+    <!-- v0.3.5 · 步骤3:字段加工(可选) -->
     <div v-show="step === 2">
       <el-card>
-        <template #header>Step 3 · 配置查询条件</template>
+        <template #header>Step 3 · 字段加工(可选)</template>
+        <el-alert type="info" :closable="false" style="margin-bottom:12px">
+          字段加工规则(截位/补位/大小写/字典映射等)· 复用 M1-3 FieldProcessor · 详见
+          <el-button type="primary" link @click="openFieldProcessPage">
+            独立编辑器(/convert/field-process)
+          </el-button>
+        </el-alert>
+        <el-form label-width="120px">
+          <el-form-item label="processRules JSON">
+            <el-input v-model="processRulesText" type="textarea" :rows="8"
+              placeholder='示例:[{"field":"amount","type":"PAD_LEFT","params":{"len":"12","char":"0"}}]' />
+          </el-form-item>
+          <el-form-item label="当前规则数">
+            <el-tag>{{ processRulesCount }} 条</el-tag>
+          </el-form-item>
+        </el-form>
+        <div style="text-align:right; margin-top:16px">
+          <el-button @click="step--">上一步</el-button>
+          <el-button type="primary" @click="nextStep">下一步</el-button>
+        </div>
+      </el-card>
+    </div>
+
+    <!-- v0.3.5 · 步骤4:分库分表(可选) -->
+    <div v-show="step === 3">
+      <el-card>
+        <template #header>Step 4 · 分库分表(可选)</template>
+        <el-alert type="info" :closable="false" style="margin-bottom:12px">
+          M2-8 分片配置 · 未配则不启用分片。
+          <el-button type="primary" link @click="openShardConfigPage">新建分片(/interface/shard)</el-button>
+        </el-alert>
+        <el-form label-width="140px">
+          <el-form-item label="分片配置">
+            <el-select v-model="form.shardConfigId" placeholder="不启用分片" clearable filterable style="width:400px">
+              <el-option v-for="sc in shardConfigList" :key="sc.id"
+                :label="sc.name + ' · ' + (sc.moduleName || '')" :value="sc.id" />
+            </el-select>
+            <el-button link @click="loadShardConfigs" style="margin-left:8px">刷新</el-button>
+          </el-form-item>
+        </el-form>
+        <div style="text-align:right; margin-top:16px">
+          <el-button @click="step--">上一步</el-button>
+          <el-button type="primary" @click="nextStep">下一步</el-button>
+        </div>
+      </el-card>
+    </div>
+
+    <!-- 步骤5：配置查询条件 -->
+    <div v-show="step === 4">
+      <el-card>
+        <template #header>Step 5 · 配置查询条件</template>
 
         <ConditionBuilder
           v-model="conditions"
@@ -182,10 +258,10 @@
       </el-card>
     </div>
 
-    <!-- 步骤4：预览与保存 -->
-    <div v-show="step === 3">
+    <!-- 步骤6：预览与保存 -->
+    <div v-show="step === 5">
       <el-card>
-        <template #header>Step 4 · 预览与保存</template>
+        <template #header>Step 6 · 预览与保存</template>
 
         <!-- 预览参数输入 -->
         <div v-if="conditions.length > 0">
@@ -240,7 +316,9 @@ import { ElMessage } from 'element-plus'
 import { QuestionFilled } from '@element-plus/icons-vue'
 import { listConnections } from '@/api/dbConnection'
 import { getTableStructure } from '@/api/tableStructure'
-import { saveInterface, previewInterface } from '@/api/interface'
+import { saveInterface, previewInterface, getInterface } from '@/api/interface'
+import { listShardConfigs } from '@/api/shardConfig'
+import { listDictMappings } from '@/api/dictMapping'
 import ConditionBuilder from '@/components/ConditionBuilder.vue'
 import ResponseHeadersEditor from '@/components/interface/ResponseHeadersEditor.vue'
 
@@ -253,7 +331,7 @@ const step = ref(0)
 // ─── 表单数据（持久化到 localStorage 防丢失） ──────────────────────────────────
 const STORAGE_KEY = 'query_config_draft'
 
-const form = reactive({ name: '', dbConnectionId: null, responseFormat: 'JSON', responseHeaders: '' })
+const form = reactive({ name: '', dbConnectionId: null, responseFormat: 'JSON', responseHeaders: '', shardConfigId: null })
 const mainTable = reactive({ name: '', alias: 'a' })
 const joinConfigs = ref([])  // [{ rightTableName, rightAlias, type, leftCol, rightCol }]
 const conditions = ref([])
@@ -271,6 +349,23 @@ const tableColumns = ref({})  // { tableName: [ColumnMeta] }
 const saving = ref(false)
 const previewing = ref(false)
 const savedId = ref(route.query.id ? Number(route.query.id) : null)
+
+// v0.3.5 · edit 回填 + header + 字典键 + processRules + shardConfigId
+const editMode = computed(() => !!savedId.value)
+const pageTitle = computed(() => editMode.value
+    ? `编辑查询接口 #${savedId.value} · ${form.name || '(未命名)'}`
+    : '查询接口配置')
+const processRules = ref([])
+const processRulesText = computed({
+  get: () => JSON.stringify(processRules.value, null, 2),
+  set: (v) => {
+    try { processRules.value = JSON.parse(v) } catch { /* 允许用户中间态无效 · 保存前 verify */ }
+  }
+})
+const processRulesCount = computed(() => processRules.value.length)
+const dictSystems = ref([])          // [{ systemCode, dictKeys: [] }]
+const shardConfigList = ref([])
+// form 加 shardConfigId
 
 // ─── 计算属性 ─────────────────────────────────────────────────────────────────
 
@@ -318,8 +413,93 @@ onMounted(async () => {
   } catch {
     ElMessage.error('加载数据库连接失败')
   }
-  loadDraft()
+  // v0.3.5 · 预加载字典系统 + 分片列表(供字段区 + 分片 step 用)
+  loadDictSystems()
+  loadShardConfigs()
+  // v0.3.5 · edit 分支优先 draft
+  if (savedId.value) {
+    await loadForEdit(savedId.value)
+  } else {
+    loadDraft()
+  }
 })
+
+// v0.3.5 · edit 回填:拉接口 → 反解 form + mainTable + joinConfigs + allColumns + conditions + processRules + shardConfigId
+async function loadForEdit(id) {
+  try {
+    const cfg = await getInterface(id)
+    form.name = cfg.name || ''
+    form.dbConnectionId = cfg.dbConnectionId || null
+    form.responseFormat = cfg.responseFormat || 'JSON'
+    form.responseHeaders = cfg.responseHeaders || ''
+    form.shardConfigId = cfg.shardConfigId || null
+    if (form.dbConnectionId) await onDbChange(form.dbConnectionId)
+    if (cfg.configJson) {
+      try {
+        const j = JSON.parse(cfg.configJson)
+        if (j.tables && j.tables.length) {
+          mainTable.name = j.tables[0].name
+          mainTable.alias = j.tables[0].alias || 'a'
+        }
+        if (j.joins) {
+          joinConfigs.value = j.joins.map((jn, idx) => ({
+            rightTableName: (j.tables[idx + 1] || {}).name || '',
+            rightAlias: jn.rightTable || '',
+            type: jn.type || 'LEFT',
+            leftCol: jn.leftCol || '',
+            rightCol: jn.rightCol || ''
+          }))
+        }
+        rebuildAllColumns()
+        if (j.fields) {
+          for (const f of j.fields) {
+            const col = allColumns.value.find(c => c.tableAlias === f.table && c.name === f.column)
+            if (col) { col.selected = true; col.alias = f.alias; col.dictKey = f.dictKey || '' }
+          }
+        }
+        if (j.conditions) conditions.value = j.conditions
+        if (j.processRules) processRules.value = j.processRules
+      } catch (e) {
+        ElMessage.warning('configJson 解析失败:' + e.message)
+      }
+    }
+  } catch {
+    // request.js 已提示
+  }
+}
+
+async function loadDictSystems() {
+  try {
+    // v0.3.5 · 拉 scope=2(接口开发侧)所有字典条目 · 前端聚合 systemCode → dictKeys · 避免多次网络调用
+    const res = await listDictMappings({ scope: 2, page: 1, size: 500 })
+    const records = res?.records || res || []
+    const bySystem = new Map()
+    for (const r of records) {
+      const sys = r.systemCode || 'default'
+      if (!bySystem.has(sys)) bySystem.set(sys, new Set())
+      bySystem.get(sys).add(r.dictKey)
+    }
+    dictSystems.value = Array.from(bySystem.entries()).map(([systemCode, keys]) => ({
+      systemCode,
+      dictKeys: Array.from(keys).sort()
+    }))
+  } catch { /* ignore · 无字典系统不影响主流程 */ }
+}
+
+async function loadShardConfigs() {
+  try {
+    const res = await listShardConfigs('', 1, 200)
+    shardConfigList.value = res?.records || res || []
+  } catch { /* ignore */ }
+}
+
+function openFieldProcessPage() {
+  window.open('/convert/field-process', '_blank')
+}
+
+function openShardConfigPage() {
+  window.open('/interface/shard', '_blank')
+}
 
 // 状态变化时自动保存草稿
 watch([form, mainTable, joinConfigs, conditions, allColumns], saveDraft, { deep: true })
@@ -370,7 +550,8 @@ function rebuildAllColumns() {
         name: col.name,
         type: col.type,
         selected: existing ? existing.selected : true,
-        alias: existing ? existing.alias : col.name
+        alias: existing ? existing.alias : col.name,
+        dictKey: existing ? existing.dictKey : ''   // v0.3.5 · 字典键 · 空表示不使用
       })
     }
   }
@@ -479,14 +660,19 @@ function buildPayload() {
 
   const fields = allColumns.value
     .filter(c => c.selected)
-    .map(c => ({ table: c.tableAlias, column: c.name, alias: c.alias || c.name }))
+    .map(c => ({
+      table: c.tableAlias,
+      column: c.name,
+      alias: c.alias || c.name,
+      dictKey: c.dictKey || undefined   // v0.3.5 · 字典键 · 空则忽略
+    }))
 
   const configJson = JSON.stringify({
     tables,
     joins,
     fields,
     conditions: conditions.value,
-    processRules: []
+    processRules: processRules.value   // v0.3.5 · 从 state 取
   })
 
   return {
@@ -496,7 +682,8 @@ function buildPayload() {
     type: 'SELECT',
     configJson,
     responseFormat: form.responseFormat,
-    responseHeaders: form.responseHeaders
+    responseHeaders: form.responseHeaders,
+    shardConfigId: form.shardConfigId || undefined   // v0.3.5 · 分片配置
   }
 }
 
