@@ -83,6 +83,26 @@ public class MultiAppSelfRegister {
         return ok;
     }
 
+    /**
+     * v0.3.13 CHG-056 · 全量续约 · 供 HeartbeatScheduler 定时调用。
+     *
+     * <p>遍历 registered · 逐个 renew · 若 404 则自动 register(自愈)· 返成功数(含 renewed + re-registered)。</p>
+     */
+    public int renewAll() {
+        if (client == null || registered.isEmpty()) return 0;
+        int ok = 0;
+        for (EurekaAppConfig.AppInstance app : registered) {
+            EurekaClient.RenewResult r = client.renew(app);
+            if (r == EurekaClient.RenewResult.RENEWED) {
+                ok++;
+            } else if (r == EurekaClient.RenewResult.NOT_FOUND) {
+                log.info("[pg-testkit] renew 404 触发 re-register app={}", app.getName());
+                if (client.register(app)) ok++;
+            }
+        }
+        return ok;
+    }
+
     /** 手工注册单个应用(按名称匹配 config.applications) · 未找到返 false */
     public boolean registerOne(String name) {
         if (client == null && config.isEnabled()) {

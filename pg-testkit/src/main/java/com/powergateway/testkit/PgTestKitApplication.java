@@ -3,6 +3,7 @@ package com.powergateway.testkit;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
  * PG-TestKit 独立测试工具启动类。
@@ -13,6 +14,7 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
  * 排除 {@link DataSourceAutoConfiguration}：测试工具通过自定义 DriverManagerDataSource
  * 手动创建 JdbcTemplate 直连配置库/审计库，不使用 Spring Boot 的数据源自动配置。
  */
+@EnableScheduling  // v0.3.13 CHG-056 · 供 HeartbeatScheduler @Scheduled 生效
 @SpringBootApplication(exclude = {DataSourceAutoConfiguration.class})
 public class PgTestKitApplication {
 

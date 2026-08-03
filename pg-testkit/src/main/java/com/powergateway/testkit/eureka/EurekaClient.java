@@ -3,8 +3,11 @@ package com.powergateway.testkit.eureka;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
@@ -61,6 +64,43 @@ public class EurekaClient {
             return false;
         }
     }
+
+    /**
+     * v0.3.13 CHG-056 · 续约(Netflix Eureka lease renewal · 每 30s 一次)。
+     *
+     * <p>PUT /apps/{APP}/{instanceId} · 语义:</p>
+     * <ul>
+     *   <li>200 OK - 续约成功 · 返 {@link RenewResult#RENEWED}</li>
+     *   <li>404 Not Found - 实例已被 Server evict · 返 {@link RenewResult#NOT_FOUND}(调方应重新 register)</li>
+     *   <li>其他 - 返 {@link RenewResult#FAILED} · log warn</li>
+     * </ul>
+     */
+    public RenewResult renew(EurekaAppConfig.AppInstance app) {
+        String appName = app.getName().toUpperCase();
+        String instanceId = buildInstanceId(app);
+        String url = joinPath(serverUrl, "/apps/" + appName + "/" + instanceId);
+        try {
+            ResponseEntity<String> resp = restTemplate.exchange(url, HttpMethod.PUT, HttpEntity.EMPTY, String.class);
+            if (resp.getStatusCode().is2xxSuccessful()) {
+                log.debug("[pg-testkit] Eureka renew OK app={} inst={}", appName, instanceId);
+                return RenewResult.RENEWED;
+            }
+            log.warn("[pg-testkit] Eureka renew 非 2xx app={} status={}", appName, resp.getStatusCode());
+            return RenewResult.FAILED;
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
+                log.warn("[pg-testkit] Eureka renew 404 · 需 re-register app={} inst={}", appName, instanceId);
+                return RenewResult.NOT_FOUND;
+            }
+            log.warn("[pg-testkit] Eureka renew 客户端错 app={} status={}: {}", appName, e.getStatusCode(), e.getMessage());
+            return RenewResult.FAILED;
+        } catch (Exception e) {
+            log.warn("[pg-testkit] Eureka renew 失败 app={}: {}", appName, e.getMessage());
+            return RenewResult.FAILED;
+        }
+    }
+
+    public enum RenewResult { RENEWED, NOT_FOUND, FAILED }
 
     public boolean deregister(EurekaAppConfig.AppInstance app) {
         String appName = app.getName().toUpperCase();

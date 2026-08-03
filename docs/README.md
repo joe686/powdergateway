@@ -2,7 +2,7 @@
 
 > **单一入口**：任何 Claude 会话首次进入项目，先读本文件定位需要的文档，**不要**递归读 `docs/` 整个目录。这份索引本身控制在 ~200 行，读一次覆盖全景。
 
-**当前版本**：`v0.3.12`(PATCH EurekaRegistryClient 全 REST + 自动装配 · 2026-08-03 · CHG-055 · v0.3.9 CHG-051 死代码修 · E2E backend↔lcpt-register 联机通)· 基线序列见 [项目管理](06-项目管理/) · **规划已定** · v0.3.0~v0.3.11 均已交付 · **v0.3.12 patch**(EurekaRegistryClient 全 REST · discover/heartbeat/register/deregister 都走 REST · Registrar 真装配) · v0.3.13 pg-testkit heartbeat renew · v0.4.0 REL-1B helm/CI · v0.5.0 FN-BIZ · 详见 [路线图](06-项目管理/路线图.md)
+**当前版本**：`v0.3.13`(MINOR pg-testkit Eureka heartbeat 续约 · 2026-08-03 · CHG-056 · v0.3.11 短板补齐 · REG-1 完备最后一环)· 基线序列见 [项目管理](06-项目管理/) · **规划已定** · v0.3.0~v0.3.12 均已交付 · **v0.3.13 pg-testkit heartbeat**(EurekaClient.renew + renewAll 404 自愈 + HeartbeatScheduler 30s + @EnableScheduling · 60s 联机验证 3 应用仍 UP) · v0.4.0 REL-1B helm/CI · v0.5.0 FN-BIZ · 详见 [路线图](06-项目管理/路线图.md)
 
 **反馈入口**：[docs/06-项目管理/反馈簿.md](06-项目管理/反馈簿.md) · 详见 [pg-feedback-flow](../.claude/skills/pg-feedback-flow/SKILL.md) skill
 

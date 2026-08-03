@@ -52,6 +52,9 @@ pg-testkit.eureka:
   # 联机测试手册见 docs/04-测试/pg-testkit-Eureka联机测试手册.md(lcpt-register 8091 已验证)
   enabled: false
   server-url: http://127.0.0.1:8091/eureka
+  # v0.3.13 CHG-056 · HeartbeatScheduler 心跳续约间隔(ms · 默认 30000 · Netflix Eureka 惯例)
+  # 若 < server 端 lease-expiration(默认 90s) · 应用不会被 evict
+  heartbeat-interval-ms: 30000
   applications:
     - name: pg-internal
       ip: 127.0.0.1
