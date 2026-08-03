@@ -38,9 +38,9 @@ docker compose logs -f backend
 #    - Redis:        localhost:6379
 ```
 
-前端目前不打包进 compose(Vite 开发 vs 生产 nginx serve 静态,需要另建 nginx 镜像)· 用户自行选择:
-- **本地 dev**:`cd frontend && npm run dev` · 5173 端口 · 代理到 backend 容器 8080
-- **生产**:`npm run build` 后把 `dist/` 部署到 nginx / 静态服务器
+**v0.3.9 CHG-050 起 · frontend nginx 镜像已集成** · compose 一键起四服务(mysql/redis/backend/frontend)· 访问 http://localhost:5173 即可,`/api` `/swagger-ui` 已配置代理转 backend:8080。
+
+若不想用容器 · 本地 dev 仍可 `cd frontend && npm run dev`(vite 5173 直接代理 8080)。
 
 ## Oracle 场景
 

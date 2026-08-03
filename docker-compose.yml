@@ -1,20 +1,25 @@
-# PowerGateway v0.3.7 · Docker Compose 一键部署(REL-1 补齐)
+# PowerGateway v0.3.9 · Docker Compose 一键部署(REL-1 完备 · CHG-047+050)
 #
 # 依赖:
-#   - Docker 20.10+
-#   - Docker Compose v2+
-#   - backend/target/backend-1.0.0-SNAPSHOT.jar 已 mvn package(见 backend/Dockerfile)
+#   - Docker 20.10+ · Docker Compose v2+
+#   - backend/target/backend-1.0.0-SNAPSHOT.jar 已 mvn package
+#   - frontend 无需预 build(nginx 镜像内多阶段 build 会自动跑 npm ci + vite build)
 #
-# 启动:  docker compose up -d
-# 停止:  docker compose down
-# 日志:  docker compose logs -f backend
-# 重建:  docker compose build --no-cache backend && docker compose up -d
+# 启动:      docker compose up -d
+# 停止:      docker compose down
+# 日志:      docker compose logs -f frontend backend
+# 重建后端:  docker compose build --no-cache backend && docker compose up -d
+# 重建前端:  docker compose build --no-cache frontend && docker compose up -d
 #
-# 网络:  三服务同一 bridge · backend 通过服务名 mysql / redis 访问
+# 访问:
+#   - Frontend(nginx):  http://localhost:5173(所有 /api /swagger-ui 已代理到 backend)
+#   - Backend 直连:      http://localhost:8080(可选 · dev 调试用)
+#   - MySQL:            localhost:3306 · root / qwe12345
+#   - Redis:            localhost:6379
+#   - 默认管理员账号:    admin / Admin@123(见 CLAUDE.md)
+#
+# 网络:  四服务同一 bridge · frontend nginx 通过服务名 backend:8080 转发 · backend 走 mysql/redis
 # 数据:  mysql-data / redis-data 卷持久化 · docker compose down -v 会清空
-#
-# 注:MySQL 首启会执行 backend/src/main/resources/db/init.sql
-#    默认管理员账号 admin / Admin@123(见 CLAUDE.md)
 
 services:
   mysql:
@@ -63,7 +68,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    image: powergateway-backend:0.3.7
+    image: powergateway-backend:0.3.9
     container_name: pg-backend
     restart: unless-stopped
     ports:
@@ -80,6 +85,23 @@ services:
       SPRING_REDIS_HOST: redis
       SPRING_REDIS_PORT: 6379
       SPRING_PROFILES_ACTIVE: prod
+      TZ: Asia/Shanghai
+    networks:
+      - pg-net
+
+  # v0.3.9 CHG-050 · 前端 nginx 镜像(多阶段 build · SPA + /api 代理)· 与本地 :5173 端口对齐
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: powergateway-frontend:0.3.9
+    container_name: pg-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    environment:
       TZ: Asia/Shanghai
     networks:
       - pg-net
