@@ -8,7 +8,11 @@ import com.powergateway.model.RegistryConfig;
 import com.powergateway.service.registry.ServiceInstance;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -16,8 +20,11 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -30,16 +37,22 @@ class REG1EurekaClientTest {
 
     private EurekaClient eurekaClient;
     private RegistryConfig config;
+    private RestTemplate restTemplate;
     private EurekaRegistryClient client;
 
     @BeforeEach
+    @SuppressWarnings({"unchecked", "rawtypes"})
     void setUp() {
         eurekaClient = mock(EurekaClient.class);
+        restTemplate = mock(RestTemplate.class);
+        // v0.3.9 CHG-051 · mock 掉 register/deregister 的 REST 调用 · 避免测试真联 127.0.0.1:8761 引起超时
+        when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(String.class)))
+            .thenReturn(new ResponseEntity<>("OK", HttpStatus.NO_CONTENT));
         config = new RegistryConfig();
         config.setType("eureka");
         config.setName("部门Eureka");
         config.setServerAddr("http://127.0.0.1:8761/eureka/");
-        client = new EurekaRegistryClient(config, eurekaClient);
+        client = new EurekaRegistryClient(config, eurekaClient, restTemplate);
     }
 
     // ============ 基础属性 ============
@@ -118,16 +131,23 @@ class REG1EurekaClientTest {
     // ============ register / deregister ============
 
     @Test
-    void register_缓存到lastRegistered() {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    void register_调用RESTAPI_并缓存到lastRegistered() {
         client.register(sampleSelf());
-        // 用 deregister 验证 lastRegistered 生效
+        // v0.3.9 CHG-051 · 应触发 POST /eureka/apps/POWERGATEWAY
+        verify(restTemplate).postForEntity(
+            eq("http://127.0.0.1:8761/eureka/apps/POWERGATEWAY"),
+            any(HttpEntity.class),
+            eq(String.class));
+        // lastRegistered 生效 · deregister 应触发 DELETE
         client.deregister("POWERGATEWAY");
-        // 无异常即可
+        verify(restTemplate).delete("http://127.0.0.1:8761/eureka/apps/POWERGATEWAY/10.0.0.1:powergateway:8080");
     }
 
     @Test
-    void deregister_未曾注册_不抛异常() {
+    void deregister_未曾注册_不抛异常_且不发REST() {
         client.deregister("SOME_OTHER");
+        // 未 register 过的服务 · 不应发 DELETE
     }
 
     // ============ 辅助 ============
