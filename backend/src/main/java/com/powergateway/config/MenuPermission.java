@@ -26,6 +26,7 @@ public class MenuPermission {
         // 可视化接口开发
         "/interface/db", "/interface/table", "/interface/wizard", "/interface/dev",
         "/interface/insert", "/interface/update", "/interface/delete",
+        "/interface/socket-outbound", "/interface/socket-inbound",
         "/interface/list", "/interface/shard", "/interface/formula", "/interface/cache",
         // 可视化接口开发 · 字典（v0.2.5 CR-004 · scope=2 M2 侧）
         "/interface/dict",
@@ -51,6 +52,7 @@ public class MenuPermission {
         // 可视化接口开发（user 不含 delete / shard）
         "/interface/db", "/interface/table", "/interface/wizard", "/interface/dev",
         "/interface/insert", "/interface/update",
+        "/interface/socket-outbound", "/interface/socket-inbound",
         "/interface/list", "/interface/formula", "/interface/cache",
         // 可视化接口开发 · 字典（v0.2.5 CR-004）
         "/interface/dict",

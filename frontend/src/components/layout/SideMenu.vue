@@ -126,6 +126,8 @@
           <el-menu-item v-if="can('/interface/insert')" index="/interface/insert">插入接口配置</el-menu-item>
           <el-menu-item v-if="can('/interface/update')" index="/interface/update">修改接口配置</el-menu-item>
           <el-menu-item v-if="can('/interface/delete')" index="/interface/delete">删除接口配置</el-menu-item>
+          <el-menu-item v-if="can('/interface/socket-outbound')" index="/interface/socket-outbound">SOCKET 出站配置</el-menu-item>
+          <el-menu-item v-if="can('/interface/socket-inbound')" index="/interface/socket-inbound">SOCKET 入站配置</el-menu-item>
           <el-menu-item v-if="can('/interface/shard')" index="/interface/shard">分库分表配置</el-menu-item>
           <el-menu-item v-if="can('/interface/cache')" index="/interface/cache">缓存查询管理</el-menu-item>
           <!-- v0.2.5 CR-004 · 字典映射(M2 侧 · scope=2) -->
@@ -219,6 +221,7 @@ var CONVERT_PATHS  = ['/convert/wizard', '/convert/template', '/convert/channel'
 // v0.2.5 CR-004: 加 /interface/dict (M2 侧字典)
 var INTERFACE_PATHS = ['/interface/wizard', '/interface/db', '/interface/table', '/interface/dev',
                        '/interface/insert', '/interface/update', '/interface/delete',
+                       '/interface/socket-outbound', '/interface/socket-inbound',
                        '/interface/list', '/interface/shard', '/interface/cache', '/interface/dict']
 var SYSTEM_PATHS   = ['/system/log', '/system/stats', '/system/user', '/system/config']
 // v0.2.5 CR-004: 移除 /tools/dict (拆到业务侧)
@@ -239,7 +242,7 @@ const hasGroupPublishTest    = computed(function() { return ['/convert/port-rout
 // Wave8：可视化接口开发的 3 小节（数据源 / 接口定义 / 发布运维）
 const hasGroupInterfaceDataSource = computed(function() { return ['/interface/db', '/interface/table'].some(function(p) { return can(p) }) })
 // v0.2.5 CR-004: 加 /interface/dict 到"接口定义"分组
-const hasGroupInterfaceDefine     = computed(function() { return ['/interface/dev', '/interface/insert', '/interface/update', '/interface/delete', '/interface/shard', '/interface/cache', '/interface/dict'].some(function(p) { return can(p) }) })
+const hasGroupInterfaceDefine     = computed(function() { return ['/interface/dev', '/interface/insert', '/interface/update', '/interface/delete', '/interface/socket-outbound', '/interface/socket-inbound', '/interface/shard', '/interface/cache', '/interface/dict'].some(function(p) { return can(p) }) })
 const hasGroupInterfaceOps        = computed(function() { return ['/interface/list'].some(function(p) { return can(p) }) })
 </script>
 

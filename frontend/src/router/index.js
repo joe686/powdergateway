@@ -112,6 +112,19 @@ const router = createRouter({
           component: () => import('@/views/interface/DeleteConfig.vue'),
           meta: { title: '删除接口配置' }
         },
+        // v0.3.7 · SOCKET 出站/入站独立配置页(SOCK-2 深度集成简化版)
+        {
+          path: 'interface/socket-outbound',
+          name: 'SocketOutboundConfig',
+          component: () => import('@/views/interface/SocketOutboundConfig.vue'),
+          meta: { title: 'SOCKET 出站接口配置' }
+        },
+        {
+          path: 'interface/socket-inbound',
+          name: 'SocketInboundConfig',
+          component: () => import('@/views/interface/SocketInboundConfig.vue'),
+          meta: { title: 'INBOUND_SOCKET 入站接口配置' }
+        },
         {
           path: 'interface/list',
           name: 'InterfaceList',

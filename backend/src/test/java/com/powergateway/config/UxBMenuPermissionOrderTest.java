@@ -36,6 +36,7 @@ class UxBMenuPermissionOrderTest {
             "/convert/wizard",                              // UX-D append
             "/interface/db", "/interface/table", "/interface/wizard", "/interface/dev",
             "/interface/insert", "/interface/update", "/interface/delete",
+            "/interface/socket-outbound", "/interface/socket-inbound",  // v0.3.7 CHG-045 SOCK-2/5 独立配置页
             "/interface/list", "/interface/shard", "/interface/formula", "/interface/cache",
             "/interface/doc", "/interface/import-export",   // UX-E append
             "/system/log", "/system/stats", "/system/user", "/system/config",
@@ -45,7 +46,7 @@ class UxBMenuPermissionOrderTest {
             "/interface/dict"                                // v0.2.5 CR-004: FN-12 拆两侧 · 接口开发字典
         ));
         assertEquals(expected, new HashSet<>(MenuPermission.ADMIN_MENUS));
-        assertEquals(30, MenuPermission.ADMIN_MENUS.size(), "ADMIN 白名单元素个数 = 24 SYS-3 基线 + 3 UX-D/E + 1 REG-1 + 2 FN-12(v0.2.5 CR-004 拆两侧)");
+        assertEquals(32, MenuPermission.ADMIN_MENUS.size(), "ADMIN 白名单元素个数 = 30 v0.3.5 基线 + 2 v0.3.7 CHG-045 SOCK 独立配置页");
     }
 
     @Test
@@ -69,6 +70,7 @@ class UxBMenuPermissionOrderTest {
             "/convert/wizard",                              // UX-D append
             "/interface/db", "/interface/table", "/interface/wizard", "/interface/dev",
             "/interface/insert", "/interface/update",
+            "/interface/socket-outbound", "/interface/socket-inbound",  // v0.3.7 CHG-045 SOCK-2/5 独立配置页
             "/interface/list", "/interface/formula", "/interface/cache",
             "/interface/doc", "/interface/import-export",   // UX-E append
             "/system/log", "/system/stats",
