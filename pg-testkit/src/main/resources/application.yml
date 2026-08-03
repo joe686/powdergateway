@@ -38,6 +38,32 @@ socket-mock:
     - function-id: "181345"
       response-file: "mocks/181345-response.xml"
 
+# ─── v0.3.11 CHG-054 · pg-testkit Eureka 多应用自注册 ───
+# 默认关闭 · 需外部 Eureka Server(如 http://127.0.0.1:8761/eureka)才有效
+# enabled=true 时 · @PostConstruct 批量 POST /apps/{APP} 注册配置的假应用
+# 关闭时 @PreDestroy 全量 DELETE deregister
+# 手工控制:
+#   GET  /test/eureka/list             -- 查已注册列表 + 配置概览
+#   POST /test/eureka/register-all     -- 手工触发全量注册
+#   POST /test/eureka/register/{name}  -- 单个注册
+#   DELETE /test/eureka/deregister-all -- 全量注销
+pg-testkit.eureka:
+  enabled: false
+  server-url: http://127.0.0.1:8761/eureka
+  applications:
+    - name: pg-internal
+      ip: 127.0.0.1
+      port: 8080
+      scheme: http
+    - name: bank-svc
+      ip: 127.0.0.1
+      port: 9999
+      scheme: http
+    - name: host-svc
+      ip: 127.0.0.1
+      port: 9998
+      scheme: http
+
 logging:
   level:
     com.powergateway.testkit: INFO
