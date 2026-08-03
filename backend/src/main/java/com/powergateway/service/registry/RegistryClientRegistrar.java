@@ -78,10 +78,9 @@ public class RegistryClientRegistrar {
             case "nacos":
                 return new NacosRegistryClient(cfg, decryptPassword(cfg.getPassword()));
             case "eureka":
-                // Eureka 自动装配 v1 未实现（EurekaClient 构造依赖 ApplicationInfoManager，需大量样板）
-                // 客户如需 Eureka 通过 discover 消费老系统，可在后续版本或独立 factory 里手工装配
-                log.warn("REG-1: type=eureka 的注册中心 v1 暂未自动装配（{}），跳过", cfg.getName());
-                return null;
+                // v0.3.12 CHG-055 · EurekaRegistryClient 全 REST 化后 · 无需 ApplicationInfoManager 装配
+                // 直接 new · 内部走 RestTemplate 调 Eureka REST API(register/discover/deregister/heartbeat 全 REST)
+                return new com.powergateway.service.registry.eureka.EurekaRegistryClient(cfg, new org.springframework.web.client.RestTemplate());
             default:
                 log.warn("REG-1: 未知 registry type={} name={}，跳过", cfg.getType(), cfg.getName());
                 return null;

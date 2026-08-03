@@ -1,19 +1,17 @@
 package com.powergateway.service.registry.eureka;
 
-import com.netflix.appinfo.InstanceInfo;
-import com.netflix.discovery.EurekaClient;
-import com.netflix.discovery.shared.Application;
-import com.netflix.discovery.shared.Applications;
 import com.powergateway.model.RegistryConfig;
 import com.powergateway.service.registry.ServiceInstance;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -28,14 +26,14 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * REG-1 Task 4 · EurekaRegistryClient 单元测试
+ * REG-1 Task 4 · EurekaRegistryClient 单元测试(v0.3.12 CHG-055 全 REST 重构)
  *
- * Mockito mock EurekaClient；同包放置以便使用 package-private 测试构造函数。
+ * <p>v0.3.9 CHG-051 register/deregister REST 逻辑保留;discover/heartbeat 从 Netflix EurekaClient
+ * SDK 迁到 RestTemplate REST · 全部 mock RestTemplate 验证。</p>
  */
 @ActiveProfiles("test")
 class REG1EurekaClientTest {
 
-    private EurekaClient eurekaClient;
     private RegistryConfig config;
     private RestTemplate restTemplate;
     private EurekaRegistryClient client;
@@ -43,16 +41,18 @@ class REG1EurekaClientTest {
     @BeforeEach
     @SuppressWarnings({"unchecked", "rawtypes"})
     void setUp() {
-        eurekaClient = mock(EurekaClient.class);
         restTemplate = mock(RestTemplate.class);
-        // v0.3.9 CHG-051 · mock 掉 register/deregister 的 REST 调用 · 避免测试真联 127.0.0.1:8761 引起超时
+        // register 默认返 204
         when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(String.class)))
             .thenReturn(new ResponseEntity<>("OK", HttpStatus.NO_CONTENT));
+        // heartbeat 默认返 200
+        when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+            .thenReturn(new ResponseEntity<>("OK", HttpStatus.OK));
         config = new RegistryConfig();
         config.setType("eureka");
         config.setName("部门Eureka");
         config.setServerAddr("http://127.0.0.1:8761/eureka/");
-        client = new EurekaRegistryClient(config, eurekaClient, restTemplate);
+        client = new EurekaRegistryClient(config, restTemplate);
     }
 
     // ============ 基础属性 ============
@@ -75,18 +75,23 @@ class REG1EurekaClientTest {
     @Test
     void isConfigured_serverAddr为空_返回false() {
         config.setServerAddr("");
-        EurekaRegistryClient bad = new EurekaRegistryClient(config, eurekaClient);
+        EurekaRegistryClient bad = new EurekaRegistryClient(config, restTemplate);
         assertThat(bad.isConfigured()).isFalse();
     }
 
-    // ============ discover ============
+    // ============ discover(v0.3.12 CHG-055 全 REST) ============
 
     @Test
-    void discover_返回实例列表() {
-        Application app = new Application("LEGACY_SVC");
-        app.addInstance(buildInstanceInfo("LEGACY_SVC", "10.0.0.1", 8001));
-        app.addInstance(buildInstanceInfo("LEGACY_SVC", "10.0.0.2", 8002));
-        when(eurekaClient.getApplication("LEGACY_SVC")).thenReturn(app);
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    void discover_返回实例列表_多实例() {
+        Map<String, Object> body = buildDiscoverBody(Arrays.asList(
+            makeInstance("10.0.0.1", 8001, "UP"),
+            makeInstance("10.0.0.2", 8002, "UP")
+        ));
+        when(restTemplate.exchange(
+            eq("http://127.0.0.1:8761/eureka/apps/LEGACY_SVC"),
+            eq(HttpMethod.GET), any(HttpEntity.class), eq(Map.class)))
+            .thenReturn(new ResponseEntity<Map>(body, HttpStatus.OK));
 
         List<ServiceInstance> found = client.discover("LEGACY_SVC");
         assertThat(found).hasSize(2);
@@ -96,59 +101,78 @@ class REG1EurekaClientTest {
     }
 
     @Test
-    void discover_Application为null_返回空List() {
-        when(eurekaClient.getApplication(anyString())).thenReturn(null);
-        assertThat(client.discover("UNKNOWN")).isEmpty();
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    void discover_单实例_instance为Map非List() {
+        Map<String, Object> body = buildDiscoverBody(Collections.singletonList(
+            makeInstance("10.0.0.1", 8080, "UP")
+        ));
+        // Netflix 单实例时 instance 是对象非数组
+        Map<String, Object> app = (Map<String, Object>) body.get("application");
+        app.put("instance", makeInstance("10.0.0.1", 8080, "UP"));
+        when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), any(HttpEntity.class), eq(Map.class)))
+            .thenReturn(new ResponseEntity<Map>(body, HttpStatus.OK));
+
+        List<ServiceInstance> found = client.discover("SINGLE_SVC");
+        assertThat(found).hasSize(1);
+        assertThat(found.get(0).getPort()).isEqualTo(8080);
     }
 
     @Test
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    void discover_DOWN实例被过滤() {
+        Map<String, Object> body = buildDiscoverBody(Arrays.asList(
+            makeInstance("10.0.0.1", 8001, "UP"),
+            makeInstance("10.0.0.2", 8002, "DOWN")
+        ));
+        when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), any(HttpEntity.class), eq(Map.class)))
+            .thenReturn(new ResponseEntity<Map>(body, HttpStatus.OK));
+
+        List<ServiceInstance> found = client.discover("MIXED_SVC");
+        assertThat(found).hasSize(1);
+        assertThat(found.get(0).getIp()).isEqualTo("10.0.0.1");
+    }
+
+    @Test
+    @SuppressWarnings({"unchecked", "rawtypes"})
     void discover_异常_返回空List_不抛出() {
-        when(eurekaClient.getApplication(anyString())).thenThrow(new RuntimeException("network"));
+        when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), any(HttpEntity.class), eq(Map.class)))
+            .thenThrow(new RuntimeException("network"));
         assertThat(client.discover("ANY")).isEmpty();
     }
 
-    // ============ heartbeat ============
+    // ============ heartbeat(v0.3.12 REST) ============
 
     @Test
-    void heartbeat_Applications非空_返回true() {
-        Applications apps = new Applications();
-        when(eurekaClient.getApplications()).thenReturn(apps);
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    void heartbeat_2xx_返回true() {
         assertThat(client.heartbeat()).isTrue();
     }
 
     @Test
-    void heartbeat_Applications为null_返回false() {
-        when(eurekaClient.getApplications()).thenReturn(null);
-        assertThat(client.heartbeat()).isFalse();
-    }
-
-    @Test
+    @SuppressWarnings({"unchecked", "rawtypes"})
     void heartbeat_异常_返回false() {
-        when(eurekaClient.getApplications()).thenThrow(new RuntimeException("down"));
+        when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+            .thenThrow(new RuntimeException("down"));
         assertThat(client.heartbeat()).isFalse();
     }
 
-    // ============ register / deregister ============
+    // ============ register / deregister(v0.3.9 CHG-051 REST · v0.3.10 CHG-052 URL 修) ============
 
     @Test
     @SuppressWarnings({"unchecked", "rawtypes"})
     void register_调用RESTAPI_并缓存到lastRegistered() {
         client.register(sampleSelf());
-        // v0.3.9 CHG-051 · 应触发 POST /eureka/apps/POWERGATEWAY
         verify(restTemplate).postForEntity(
             eq("http://127.0.0.1:8761/eureka/apps/POWERGATEWAY"),
             any(HttpEntity.class),
             eq(String.class));
-        // lastRegistered 生效 · deregister 应触发 DELETE
         client.deregister("POWERGATEWAY");
         verify(restTemplate).delete("http://127.0.0.1:8761/eureka/apps/POWERGATEWAY/10.0.0.1:powergateway:8080");
-        // v0.3.10 CHG-052 · joinPath 约定:serverAddr 以 /eureka/ 结尾 + path /apps/... · 不重复 /eureka
     }
 
     @Test
     void deregister_未曾注册_不抛异常_且不发REST() {
         client.deregister("SOME_OTHER");
-        // 未 register 过的服务 · 不应发 DELETE
     }
 
     // ============ 辅助 ============
@@ -162,16 +186,28 @@ class REG1EurekaClientTest {
         return si;
     }
 
-    private InstanceInfo buildInstanceInfo(String appName, String ip, int port) {
-        Map<String, String> meta = new LinkedHashMap<>();
-        return InstanceInfo.Builder.newBuilder()
-                .setAppName(appName)
-                .setInstanceId(ip + ":" + port)
-                .setIPAddr(ip)
-                .setPort(port)
-                .setHostName(ip)
-                .setStatus(InstanceInfo.InstanceStatus.UP)
-                .setMetadata(meta)
-                .build();
+    private Map<String, Object> buildDiscoverBody(List<Map<String, Object>> instances) {
+        Map<String, Object> app = new LinkedHashMap<>();
+        app.put("name", "TEST_APP");
+        app.put("instance", instances);
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("application", app);
+        return body;
+    }
+
+    private Map<String, Object> makeInstance(String ip, int port, String status) {
+        Map<String, Object> inst = new LinkedHashMap<>();
+        inst.put("hostName", ip);
+        inst.put("ipAddr", ip);
+        inst.put("status", status);
+        Map<String, Object> portMap = new LinkedHashMap<>();
+        portMap.put("$", port);
+        portMap.put("@enabled", "true");
+        inst.put("port", portMap);
+        Map<String, Object> secMap = new LinkedHashMap<>();
+        secMap.put("$", 443);
+        secMap.put("@enabled", "false");
+        inst.put("securePort", secMap);
+        return inst;
     }
 }

@@ -1,9 +1,5 @@
 package com.powergateway.service.registry.eureka;
 
-import com.netflix.appinfo.InstanceInfo;
-import com.netflix.discovery.EurekaClient;
-import com.netflix.discovery.shared.Application;
-import com.netflix.discovery.shared.Applications;
 import com.powergateway.model.RegistryConfig;
 import com.powergateway.service.registry.RegistryClient;
 import com.powergateway.service.registry.ServiceInstance;
@@ -23,10 +19,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- * REG-1 · Eureka 注册中心客户端（老系统兼容方向）
+ * REG-1 · Eureka 注册中心客户端(全 REST · v0.3.12 重构)
  *
- * <p><b>v0.3.9 CHG-051 · selfRegister 已实装</b>:通过 Eureka REST API(POST /eureka/apps/{APP})
- * 手工构造 InstanceInfo JSON 触发注册 · 不依赖 ApplicationInfoManager 装配 · discover 走原有 EurekaClient SDK。
+ * <p>v0.3.9 CHG-051 加了 register/deregister REST · 但 discover 仍走 Netflix EurekaClient SDK(需
+ * ApplicationInfoManager 装配 · RegistryClientRegistrar 因此 case eureka return null 未自动装配)。
+ *
+ * <p><b>v0.3.12 CHG-055 · 全 REST 化</b>:discover 也走 REST(GET /apps/{APP} + Accept: application/json)
+ * 完全去除 Netflix SDK 依赖 · RegistryClientRegistrar 可 new EurekaRegistryClient(cfg, new RestTemplate())
+ * 直接装配 · v0.3.9 的 register 功能真正可用。</p>
  *
  * <p>REST API 参考:{@code https://github.com/Netflix/eureka/wiki/Eureka-REST-operations}</p>
  */
@@ -34,22 +34,18 @@ import java.util.concurrent.ConcurrentMap;
 public class EurekaRegistryClient implements RegistryClient {
 
     private final RegistryConfig config;
-    private final EurekaClient eurekaClient;
     private final RestTemplate restTemplate;
     private final ConcurrentMap<String, ServiceInstance> lastRegistered = new ConcurrentHashMap<>();
 
-    /** 生产用构造：需上层提供 EurekaClient（由 factory 层构造，Task 5/6 集成）。 */
-    public EurekaRegistryClient(RegistryConfig config, EurekaClient eurekaClient) {
+    /** 生产用构造。 */
+    public EurekaRegistryClient(RegistryConfig config, RestTemplate restTemplate) {
         this.config = config;
-        this.eurekaClient = eurekaClient;
-        this.restTemplate = new RestTemplate();
+        this.restTemplate = restTemplate;
     }
 
-    /** 测试用构造 · 允许注入 mock RestTemplate。 */
-    public EurekaRegistryClient(RegistryConfig config, EurekaClient eurekaClient, RestTemplate restTemplate) {
-        this.config = config;
-        this.eurekaClient = eurekaClient;
-        this.restTemplate = restTemplate;
+    /** 单参构造 · 默认新建 RestTemplate。 */
+    public EurekaRegistryClient(RegistryConfig config) {
+        this(config, new RestTemplate());
     }
 
     @Override
@@ -64,14 +60,12 @@ public class EurekaRegistryClient implements RegistryClient {
 
     @Override
     public boolean isConfigured() {
-        return notEmpty(config.getServerAddr()) && eurekaClient != null;
+        return notEmpty(config.getServerAddr());
     }
 
     /**
      * v0.3.9 CHG-051 · 走 Eureka REST API 手工注册。
-     *
-     * <p>不引入 spring-cloud-starter-netflix-eureka-client(避免与现有 netflix eureka-client 版本冲突);
-     * 用 RestTemplate 直接 POST /eureka/apps/{APP} 构造 InstanceInfo JSON 完成注册。</p>
+     * POST /apps/{APP} + body: InstanceInfo JSON。
      */
     @Override
     public void register(ServiceInstance self) {
@@ -90,7 +84,7 @@ public class EurekaRegistryClient implements RegistryClient {
                 log.warn("Eureka register 非 2xx svc={} status={} body={}", appName, resp.getStatusCode(), resp.getBody());
             }
         } catch (Exception e) {
-            log.warn("Eureka register 失败 svc={} url={}:{}(仍缓存本地 · 稍后 heartbeat 兜底重试)", appName, url, e.getMessage());
+            log.warn("Eureka register 失败 svc={} url={}:{}(仍缓存本地 · heartbeat 兜底重试)", appName, url, e.getMessage());
         }
     }
 
@@ -109,13 +103,95 @@ public class EurekaRegistryClient implements RegistryClient {
         }
     }
 
+    /**
+     * v0.3.12 CHG-055 · discover 走 REST · GET /apps/{APP} + Accept: application/json。
+     * 解析响应 application.instance[] 转 List&lt;ServiceInstance&gt; · 只返 status=UP。
+     */
+    @Override
+    @SuppressWarnings("unchecked")
+    public List<ServiceInstance> discover(String serviceName) {
+        String appName = serviceName.toUpperCase();
+        String url = joinPath(config.getServerAddr(), "/apps/" + appName);
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setAccept(java.util.Collections.singletonList(MediaType.APPLICATION_JSON));
+            HttpEntity<Void> req = new HttpEntity<>(headers);
+            ResponseEntity<Map> resp = restTemplate.exchange(url, org.springframework.http.HttpMethod.GET, req, Map.class);
+            if (!resp.getStatusCode().is2xxSuccessful() || resp.getBody() == null) return new ArrayList<>();
+            Map<String, Object> body = resp.getBody();
+            Map<String, Object> app = (Map<String, Object>) body.get("application");
+            if (app == null) return new ArrayList<>();
+            Object instanceObj = app.get("instance");
+            if (instanceObj == null) return new ArrayList<>();
+            List<Map<String, Object>> instances;
+            if (instanceObj instanceof List) {
+                instances = (List<Map<String, Object>>) instanceObj;
+            } else if (instanceObj instanceof Map) {
+                instances = new ArrayList<>();
+                instances.add((Map<String, Object>) instanceObj);
+            } else {
+                return new ArrayList<>();
+            }
+            List<ServiceInstance> result = new ArrayList<>(instances.size());
+            for (Map<String, Object> inst : instances) {
+                if (!"UP".equalsIgnoreCase(String.valueOf(inst.get("status")))) continue;
+                ServiceInstance si = new ServiceInstance();
+                si.setServiceName(serviceName);
+                si.setIp(String.valueOf(inst.get("ipAddr")));
+                Object portObj = inst.get("port");
+                int port = 0;
+                if (portObj instanceof Map) {
+                    Object dollar = ((Map<String, Object>) portObj).get("$");
+                    if (dollar != null) port = Integer.parseInt(String.valueOf(dollar));
+                }
+                si.setPort(port);
+                Object secureObj = inst.get("securePort");
+                boolean secure = false;
+                if (secureObj instanceof Map) {
+                    secure = Boolean.parseBoolean(String.valueOf(((Map<String, Object>) secureObj).get("@enabled")));
+                }
+                si.setScheme(secure ? "https" : "http");
+                Object metaObj = inst.get("metadata");
+                if (metaObj instanceof Map) {
+                    Map<String, Object> raw = (Map<String, Object>) metaObj;
+                    Map<String, String> meta = new LinkedHashMap<>();
+                    for (Map.Entry<String, Object> e : raw.entrySet()) meta.put(e.getKey(), String.valueOf(e.getValue()));
+                    si.setMetadata(meta);
+                }
+                result.add(si);
+            }
+            return result;
+        } catch (Exception e) {
+            log.warn("Eureka discover 失败 svc={} url={}: {}", appName, url, e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * v0.3.12 CHG-055 · heartbeat 用 GET /apps · 返 2xx 即通。
+     * 原 SDK 版本用 getApplications() · 现全 REST 直调根路径。
+     */
+    @Override
+    public boolean heartbeat() {
+        String url = joinPath(config.getServerAddr(), "/apps");
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setAccept(java.util.Collections.singletonList(MediaType.APPLICATION_JSON));
+            HttpEntity<Void> req = new HttpEntity<>(headers);
+            ResponseEntity<String> resp = restTemplate.exchange(url, org.springframework.http.HttpMethod.GET, req, String.class);
+            return resp.getStatusCode().is2xxSuccessful();
+        } catch (Exception e) {
+            log.warn("Eureka heartbeat 失败 name={} url={}: {}", config.getName(), url, e.getMessage());
+            return false;
+        }
+    }
+
     private static String buildInstanceId(ServiceInstance si) {
         return si.getIp() + ":" + si.getServiceName().toLowerCase() + ":" + si.getPort();
     }
 
     /**
      * v0.3.10 CHG-052 · URL 拼接:约定 serverAddr 以 /eureka/ 结尾(Netflix 惯例)· path 从 /apps/... 开始 · 不重复 /eureka。
-     * 允许 serverAddr 缺尾斜杠(自动补 /)。
      */
     private static String joinPath(String serverAddr, String path) {
         if (serverAddr == null) return path;
@@ -156,44 +232,6 @@ public class EurekaRegistryClient implements RegistryClient {
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("instance", instance);
         return body;
-    }
-
-    @Override
-    public List<ServiceInstance> discover(String serviceName) {
-        try {
-            Application app = eurekaClient.getApplication(serviceName);
-            if (app == null) return new ArrayList<>();
-            List<InstanceInfo> instances = app.getInstances();
-            if (instances == null || instances.isEmpty()) return new ArrayList<>();
-            List<ServiceInstance> result = new ArrayList<>(instances.size());
-            for (InstanceInfo info : instances) {
-                if (info.getStatus() != InstanceInfo.InstanceStatus.UP) continue;
-                ServiceInstance si = new ServiceInstance();
-                si.setServiceName(serviceName);
-                si.setIp(info.getIPAddr());
-                si.setPort(info.getPort());
-                si.setScheme(info.isPortEnabled(InstanceInfo.PortType.SECURE) ? "https" : "http");
-                if (info.getMetadata() != null) {
-                    si.setMetadata(new LinkedHashMap<>(info.getMetadata()));
-                }
-                result.add(si);
-            }
-            return result;
-        } catch (Exception e) {
-            log.warn("Eureka discover 失败 svc={}: {}", serviceName, e.getMessage());
-            return new ArrayList<>();
-        }
-    }
-
-    @Override
-    public boolean heartbeat() {
-        try {
-            Applications apps = eurekaClient.getApplications();
-            return apps != null;
-        } catch (Exception e) {
-            log.warn("Eureka heartbeat 失败 name={}: {}", config.getName(), e.getMessage());
-            return false;
-        }
     }
 
     private static boolean notEmpty(String s) {
