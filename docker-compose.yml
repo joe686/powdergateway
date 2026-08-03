@@ -1,0 +1,93 @@
+# PowerGateway v0.3.7 · Docker Compose 一键部署(REL-1 补齐)
+#
+# 依赖:
+#   - Docker 20.10+
+#   - Docker Compose v2+
+#   - backend/target/backend-1.0.0-SNAPSHOT.jar 已 mvn package(见 backend/Dockerfile)
+#
+# 启动:  docker compose up -d
+# 停止:  docker compose down
+# 日志:  docker compose logs -f backend
+# 重建:  docker compose build --no-cache backend && docker compose up -d
+#
+# 网络:  三服务同一 bridge · backend 通过服务名 mysql / redis 访问
+# 数据:  mysql-data / redis-data 卷持久化 · docker compose down -v 会清空
+#
+# 注:MySQL 首启会执行 backend/src/main/resources/db/init.sql
+#    默认管理员账号 admin / Admin@123(见 CLAUDE.md)
+
+services:
+  mysql:
+    image: mysql:8.0.35
+    container_name: pg-mysql
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: qwe12345
+      MYSQL_DATABASE: pgw
+      TZ: Asia/Shanghai
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-authentication-plugin=mysql_native_password
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./backend/src/main/resources/db/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-pqwe12345"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - pg-net
+
+  redis:
+    image: redis:6.2.14-alpine
+    container_name: pg-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - pg-net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: powergateway-backend:0.3.7
+    container_name: pg-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/pgw?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf8mb4
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: qwe12345
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      SPRING_PROFILES_ACTIVE: prod
+      TZ: Asia/Shanghai
+    networks:
+      - pg-net
+
+volumes:
+  mysql-data:
+  redis-data:
+
+networks:
+  pg-net:
+    driver: bridge
