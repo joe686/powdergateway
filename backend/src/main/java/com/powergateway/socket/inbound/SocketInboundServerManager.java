@@ -29,10 +29,10 @@ import java.util.concurrent.ConcurrentHashMap;
  *   <li>关闭时优雅停机所有 Server</li>
  * </ul>
  *
- * <p><b>简化范围</b>(v0.3.2 · 后续 minor 精细化):</p>
+ * <p><b>lifecycle hook</b>(v0.3.9 CHG-049 已交付):</p>
  * <ul>
- *   <li>自动 lifecycle hook(接口 publish/disable/delete 事件监听)留后续 minor</li>
- *   <li>v0.3.2 用户可通过重启 backend 让新 INBOUND_SOCKET 接口生效 · 或通过 manager API 手动调</li>
+ *   <li>InterfaceConfigService.publish 后自动调 start(id) · disable/delete 前自动调 stop(id)</li>
+ *   <li>用户在前端 InterfaceList "发布/禁用" 按钮即可完成端口占用/释放 · 无需重启后端</li>
  * </ul>
  */
 @Component

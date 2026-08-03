@@ -79,6 +79,13 @@ public class InterfaceConfigService {
     @Autowired
     private InterfaceOpTypeCache interfaceOpTypeCache;
 
+    /**
+     * v0.3.9 CHG-049 · 入站 Socket Server 生命周期钩子(可选注入)。
+     * 测试环境无 SocketInboundServerManager Bean 时保持 null · 不阻塞 publish/disable/delete 主链路。
+     */
+    @Autowired(required = false)
+    private com.powergateway.socket.inbound.SocketInboundServerManager socketInboundServerManager;
+
     // ─── 保存 ──────────────────────────────────────────────────────────────────
 
     /**
@@ -339,6 +346,15 @@ public class InterfaceConfigService {
         interfaceConfigMapper.updateById(update);
         // BUG-009 修复：发布时预加载 opType 到缓存，避免首次调用时主线程 DB 查询
         interfaceOpTypeCache.preload(id);
+        // v0.3.9 CHG-049 · INBOUND_SOCKET 类型发布时自动拉起 Netty ServerSocket · 无需重启后端
+        if ("INBOUND_SOCKET".equals(config.getType()) && socketInboundServerManager != null) {
+            try {
+                socketInboundServerManager.start(id);
+                log.info("[v0.3.9 CHG-049] INBOUND_SOCKET 接口 id={} 发布后自动拉起 ServerSocket", id);
+            } catch (Exception e) {
+                log.error("[v0.3.9 CHG-049] INBOUND_SOCKET 接口 id={} 拉起 ServerSocket 失败(publish 已提交): {}", id, e.getMessage());
+            }
+        }
         log.info("[M2-7] 接口 id={} 发布成功，path={}", id, update.getPath());
     }
 
@@ -352,6 +368,10 @@ public class InterfaceConfigService {
         interfaceConfigMapper.updateById(update);
         // BUG-009 修复：禁用时清除 opType 缓存
         interfaceOpTypeCache.evict(id);
+        // v0.3.9 CHG-049 · INBOUND_SOCKET 类型禁用时自动停机 ServerSocket · 释放端口
+        if ("INBOUND_SOCKET".equals(config.getType()) && socketInboundServerManager != null) {
+            socketInboundServerManager.stop(id);
+        }
         log.info("[M2-7] 接口 id={} 已禁用", id);
     }
 
@@ -361,6 +381,10 @@ public class InterfaceConfigService {
         if (config == null) throw new BusinessException(404, "接口配置不存在");
         if ("published".equals(config.getStatus())) {
             throw new BusinessException(400, "接口已发布，请先禁用后再删除");
+        }
+        // v0.3.9 CHG-049 · 兜底 · draft/disabled 的 INBOUND_SOCKET 若仍有残留 Server 也一并停机(理论上不会发生 · 防御式编程)
+        if ("INBOUND_SOCKET".equals(config.getType()) && socketInboundServerManager != null) {
+            socketInboundServerManager.stop(id);
         }
         interfaceConfigMapper.deleteById(id);
         // BUG-009 修复：删除时清除 opType 缓存
