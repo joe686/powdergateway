@@ -1,0 +1,1 @@
+import{G as t}from"./index-B7ESF8U6.js";function a(e){return t.get(`/db/${e}/tables`)}function b(e){return t.delete(`/db/${e}/tables/cache`)}function s(e){return t.get(`/db/${e}/tables/export`,{responseType:"blob"})}export{s as e,a as g,b as r};

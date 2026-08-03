@@ -2,7 +2,7 @@
 
 > **单一入口**：任何 Claude 会话首次进入项目，先读本文件定位需要的文档，**不要**递归读 `docs/` 整个目录。这份索引本身控制在 ~200 行，读一次覆盖全景。
 
-**当前版本**：`v0.3.9`(MINOR v0.3.7 3 项顺延收尾 · 2026-08-03 编码完成 · CHG-049~051 · v0.2.5/v0.3.0/v0.3.1/v0.3.2/v0.3.5/v0.3.7 tag 已 push · v0.3.9 待手工回归 + tag)· 基线序列见 [项目管理](06-项目管理/) · **规划已定** · v0.3.0/v0.3.1/v0.3.2/v0.3.5/v0.3.7 均 ✅ · **v0.3.9 顺延收尾**(SocketInboundServerManager lifecycle hook + frontend nginx 镜像 + Eureka selfRegister REST API · CHG-049~051) · v0.3.11+ pg-testkit MultiAppSelfRegister · v0.4.0 REL-1B helm/CI · v0.5.0 FN-BIZ · 详见 [路线图](06-项目管理/路线图.md)
+**当前版本**：`v0.3.10`(PATCH v0.3.9 自主验证发现 2 bug 修复 · 2026-08-03 · CHG-052/053 · v0.3.9 因 Spring 循环依赖启动失败 · @Lazy 打破 + SocketInboundConfig 补 outbound 段 UI)· 基线序列见 [项目管理](06-项目管理/) · **规划已定** · v0.3.0/v0.3.1/v0.3.2/v0.3.5/v0.3.7/v0.3.9 均已交付 · **v0.3.10 patch**(2 bug fix) · v0.3.11+ pg-testkit MultiAppSelfRegister · v0.4.0 REL-1B helm/CI · v0.5.0 FN-BIZ · 详见 [路线图](06-项目管理/路线图.md)
 
 **反馈入口**：[docs/06-项目管理/反馈簿.md](06-项目管理/反馈簿.md) · 详见 [pg-feedback-flow](../.claude/skills/pg-feedback-flow/SKILL.md) skill
 

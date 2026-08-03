@@ -1,1 +1,0 @@
-import{G as n}from"./index-BOuPO2M4.js";function s(){return n.get("/channel/list")}function a(e){return n.post("/channel/save",e)}function r(e){return n.delete(`/channel/${e}`)}function l(e){return n.get("/channel/list/export",{params:{keyword:e},responseType:"blob"})}export{r as d,l as e,s as l,a as s};
