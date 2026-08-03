@@ -48,8 +48,10 @@ socket-mock:
 #   POST /test/eureka/register/{name}  -- 单个注册
 #   DELETE /test/eureka/deregister-all -- 全量注销
 pg-testkit.eureka:
+  # v0.3.11 默认关闭 · 用户联调 backend Eureka discover 时开启 + 起 Eureka Server
+  # 联机测试手册见 docs/04-测试/pg-testkit-Eureka联机测试手册.md(lcpt-register 8091 已验证)
   enabled: false
-  server-url: http://127.0.0.1:8761/eureka
+  server-url: http://127.0.0.1:8091/eureka
   applications:
     - name: pg-internal
       ip: 127.0.0.1
