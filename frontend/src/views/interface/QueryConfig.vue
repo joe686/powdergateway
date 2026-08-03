@@ -202,9 +202,16 @@
           </el-button>
         </el-alert>
         <el-form label-width="120px">
-          <el-form-item label="processRules JSON">
-            <el-input v-model="processRulesText" type="textarea" :rows="8"
-              placeholder='示例:[{"field":"amount","type":"PAD_LEFT","params":{"len":"12","char":"0"}}]' />
+          <el-form-item label="processRules">
+            <el-tabs v-model="processTab" style="width:100%">
+              <el-tab-pane label="编辑 (JSON)" name="edit">
+                <el-input v-model="processRulesText" type="textarea" :rows="8"
+                  placeholder='示例:[{"field":"amount","type":"PAD_LEFT","params":{"len":"12","char":"0"}}]' />
+              </el-tab-pane>
+              <el-tab-pane label="树预览 (折叠)" name="preview">
+                <JsonTree :json="processRulesText" />
+              </el-tab-pane>
+            </el-tabs>
           </el-form-item>
           <el-form-item label="当前规则数">
             <el-tag>{{ processRulesCount }} 条</el-tag>
@@ -321,6 +328,7 @@ import { listShardConfigs } from '@/api/shardConfig'
 import { listDictMappings } from '@/api/dictMapping'
 import ConditionBuilder from '@/components/ConditionBuilder.vue'
 import ResponseHeadersEditor from '@/components/interface/ResponseHeadersEditor.vue'
+import JsonTree from '@/components/JsonTree.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -356,6 +364,7 @@ const pageTitle = computed(() => editMode.value
     ? `编辑查询接口 #${savedId.value} · ${form.name || '(未命名)'}`
     : '查询接口配置')
 const processRules = ref([])
+const processTab = ref('edit')  // v0.3.7 Task 4 · JSON 折叠树预览 tab
 const processRulesText = computed({
   get: () => JSON.stringify(processRules.value, null, 2),
   set: (v) => {

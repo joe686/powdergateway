@@ -171,8 +171,15 @@
           M1-3 FieldProcessor · <el-button type="primary" link @click="openFieldProcessPage">独立编辑器</el-button>
         </el-alert>
         <el-form label-width="120px">
-          <el-form-item label="processRules JSON">
-            <el-input v-model="processRulesText" type="textarea" :rows="8" />
+          <el-form-item label="processRules">
+            <el-tabs v-model="processTab" style="width:100%">
+              <el-tab-pane label="编辑 (JSON)" name="edit">
+                <el-input v-model="processRulesText" type="textarea" :rows="8" />
+              </el-tab-pane>
+              <el-tab-pane label="树预览 (折叠)" name="preview">
+                <JsonTree :json="processRulesText" />
+              </el-tab-pane>
+            </el-tabs>
           </el-form-item>
           <el-form-item label="当前规则数"><el-tag>{{ processRulesCount }} 条</el-tag></el-form-item>
         </el-form>
@@ -270,6 +277,7 @@ import { saveInterface, getInterface } from '@/api/interface'
 import { listShardConfigs } from '@/api/shardConfig'
 import { listDictMappings } from '@/api/dictMapping'
 import ResponseHeadersEditor from '@/components/interface/ResponseHeadersEditor.vue'
+import JsonTree from '@/components/JsonTree.vue'
 
 const router = useRouter()
 const route  = useRoute()
@@ -292,6 +300,7 @@ const pageTitle = computed(() => editMode.value
     ? `编辑修改接口 #${savedId.value} · ${form.value.name || '(未命名)'}`
     : '修改接口配置')
 const processRules = ref([])
+const processTab = ref('edit')  // v0.3.7 Task 4 · JSON 折叠树预览 tab
 const processRulesText = computed({
   get: () => JSON.stringify(processRules.value, null, 2),
   set: (v) => { try { processRules.value = JSON.parse(v) } catch { /* 中间态 */ } }
