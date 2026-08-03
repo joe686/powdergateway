@@ -11,9 +11,9 @@
     <el-alert type="info" :closable="false" show-icon style="max-width:820px;margin-bottom:16px">
       <template #title>入站(渠道方发起)TCP Socket 接口</template>
       <div style="font-size:12px;line-height:1.6">
-        · 保存并<b>发布</b>后 · Manager 会自动拉起 Netty ServerSocket 监听指定端口<br />
+        · 保存并<b>发布</b>后 · Manager 会自动拉起 Netty ServerSocket 监听指定端口(v0.3.9 CHG-049 · publish/disable 即时生效)<br />
         · 接收报文按分帧切帧 · dom4j 手工递归提取 XPath 位置(默认 //FunctionId)<br />
-        · 命中后走 v0.3.1 双层路由(FN-12 字典 scope=3)转对应 PG 接口执行 · 结果按原分帧回写<br />
+        · 命中后走 v0.3.1 双层路由(FN-12 字典 scope=3)+ 出站段 applicationName 走 REG-1 discover 转 PG 内部 HTTP 服务<br />
         · 全链路 trace_id 贯穿 sys_log / sql_audit_log / perf_stat 三表(v0.3.1)
       </div>
     </el-alert>
@@ -70,6 +70,20 @@
           · 从入站 XML 报文提取此位置的功能号值 · 走双层路由映射到 PG 内部功能号并执行
         </div>
       </el-form-item>
+
+      <!-- v0.3.10 · outbound 段(必填 · 之前 v0.3.7 遗漏 UI · 后端 validateInboundSocketConfig 强校验 applicationName + path) -->
+      <el-divider content-position="left">出站转发目标(必填)</el-divider>
+      <el-form-item label="应用名" required>
+        <el-input v-model="outbound.applicationName" placeholder="如 pg-internal · 走 REG-1 discover(Eureka/Nacos)" style="max-width:420px" />
+        <div style="font-size:12px;color:#909399">Eureka/Nacos 注册中心里的服务名 · 大小写需与注册端一致</div>
+      </el-form-item>
+      <el-form-item label="转发路径" required>
+        <el-input v-model="outbound.path" placeholder="如 /api/exec/{{fnId}} 或 /api/route" style="max-width:420px" />
+        <div style="font-size:12px;color:#909399">HTTP POST 目标 path · 支持 {{fnId}} 变量占位 · Orchestrator 自动拼 http://{ip}:{port}{path}</div>
+      </el-form-item>
+      <el-form-item label="请求超时(ms)">
+        <el-input-number v-model="outbound.timeoutMs" :min="500" :max="120000" :step="1000" style="width:200px" />
+      </el-form-item>
     </el-form>
   </div>
 </template>
@@ -100,6 +114,13 @@ const inbound = reactive({
   functionIdXPath: '//FunctionId',
 })
 
+// v0.3.10 CHG-052 · outbound 段(v0.3.7 遗漏 UI · 后端 validateInboundSocketConfig 强校验)
+const outbound = reactive({
+  applicationName: 'pg-internal',
+  path: '/api/exec/{fnId}',
+  timeoutMs: 10000,
+})
+
 const saving = ref(false)
 
 const pageTitle = computed(() => form.id ? `编辑 INBOUND_SOCKET 入站接口 #${form.id} · ${form.name || '(未命名)'}` : '新建 INBOUND_SOCKET 入站接口(TCP)')
@@ -117,6 +138,7 @@ async function loadForEdit(id) {
     if (cfg.configJson) {
       const j = JSON.parse(cfg.configJson)
       Object.assign(inbound, j.inbound || {})
+      Object.assign(outbound, j.outbound || {})
     }
   } catch (e) {
     ElMessage.error('加载失败:' + (e?.message || e))
@@ -130,7 +152,7 @@ function buildPayload() {
     functionId: (form.functionId || '').trim() || undefined,
     type: 'INBOUND_SOCKET',
     logEnabled: form.logEnabled,
-    configJson: JSON.stringify({ inbound: { ...inbound } }),
+    configJson: JSON.stringify({ inbound: { ...inbound }, outbound: { ...outbound } }),
   }
 }
 
@@ -138,6 +160,10 @@ async function doSave() {
   if (!form.name.trim()) { ElMessage.warning('请填接口名称'); return }
   if (!inbound.port || !inbound.framing || !inbound.charset) {
     ElMessage.warning('监听端口/分帧/编码必填')
+    return
+  }
+  if (!outbound.applicationName || !outbound.path) {
+    ElMessage.warning('出站 applicationName/path 必填(后端强校验)')
     return
   }
   saving.value = true
