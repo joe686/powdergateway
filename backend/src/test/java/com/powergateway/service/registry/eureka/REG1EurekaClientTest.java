@@ -142,6 +142,7 @@ class REG1EurekaClientTest {
         // lastRegistered 生效 · deregister 应触发 DELETE
         client.deregister("POWERGATEWAY");
         verify(restTemplate).delete("http://127.0.0.1:8761/eureka/apps/POWERGATEWAY/10.0.0.1:powergateway:8080");
+        // v0.3.10 CHG-052 · joinPath 约定:serverAddr 以 /eureka/ 结尾 + path /apps/... · 不重复 /eureka
     }
 
     @Test

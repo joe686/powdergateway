@@ -78,7 +78,7 @@ public class EurekaRegistryClient implements RegistryClient {
         lastRegistered.put(self.getServiceName(), self);
         String appName = self.getServiceName().toUpperCase();
         String instanceId = buildInstanceId(self);
-        String url = joinPath(config.getServerAddr(), "/eureka/apps/" + appName);
+        String url = joinPath(config.getServerAddr(), "/apps/" + appName);
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -100,7 +100,7 @@ public class EurekaRegistryClient implements RegistryClient {
         if (last == null) return;
         String appName = serviceName.toUpperCase();
         String instanceId = buildInstanceId(last);
-        String url = joinPath(config.getServerAddr(), "/eureka/apps/" + appName + "/" + instanceId);
+        String url = joinPath(config.getServerAddr(), "/apps/" + appName + "/" + instanceId);
         try {
             restTemplate.delete(url);
             log.info("Eureka deregister 成功 svc={} instId={}", appName, instanceId);
@@ -113,6 +113,10 @@ public class EurekaRegistryClient implements RegistryClient {
         return si.getIp() + ":" + si.getServiceName().toLowerCase() + ":" + si.getPort();
     }
 
+    /**
+     * v0.3.10 CHG-052 · URL 拼接:约定 serverAddr 以 /eureka/ 结尾(Netflix 惯例)· path 从 /apps/... 开始 · 不重复 /eureka。
+     * 允许 serverAddr 缺尾斜杠(自动补 /)。
+     */
     private static String joinPath(String serverAddr, String path) {
         if (serverAddr == null) return path;
         String base = serverAddr.endsWith("/") ? serverAddr.substring(0, serverAddr.length() - 1) : serverAddr;

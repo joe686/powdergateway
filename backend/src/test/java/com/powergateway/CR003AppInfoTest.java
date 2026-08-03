@@ -45,10 +45,10 @@ class CR003AppInfoTest {
     }
 
     @Test
-    @DisplayName("SysAppInfoInitializer @PostConstruct 已插入 v0.3.1 记录")
+    @DisplayName("SysAppInfoInitializer @PostConstruct 已插入 CURRENT_VERSION 记录")
     void initializer_已插入() throws Exception {
-        // 依赖 Spring 上下文启动时的自动 upsert · 读到 version=v0.3.1 即验证
+        // 依赖 Spring 上下文启动时的自动 upsert · 读到 CURRENT_VERSION(v0.3.10 起 · CHG-052 修)
         mockMvc.perform(get("/api/app-info"))
-                .andExpect(jsonPath("$.data.version").value("v0.3.1"));
+                .andExpect(jsonPath("$.data.version").value(SysAppInfoInitializer.CURRENT_VERSION));
     }
 }
