@@ -10,6 +10,7 @@ function defaultState() {
 
     // 步骤②
     interfaceName: '',
+    functionId: '',         // v0.3.7 CR-007 · PG 内部功能号 · 唯一 · 可空
     dbConnectionId: null,
     tableColumns: {},       // { tableName: [{ name, type, isPrimary, nullable }] }
 

@@ -41,6 +41,10 @@
         <el-form-item label="接口名称" required>
           <el-input v-model="wizard.interfaceName" placeholder="请输入接口名称" />
         </el-form-item>
+        <el-form-item label="PG 功能号">
+          <el-input v-model="wizard.functionId" placeholder="选填 · 建议 PG- 前缀 · 全局唯一 · 用于渠道 fn 路由(CR-007)" clearable style="max-width:420px" />
+          <div style="font-size:12px;color:#909399;line-height:1.4">留空则不参与双层路由;若填,需全库唯一。渠道 functionId 通过 <router-link to="/transform/dict" target="_blank">字典管理 scope=3</router-link> 映射到此 PG 功能号。</div>
+        </el-form-item>
         <el-form-item label="数据库连接" required>
           <el-select
             v-model="wizard.dbConnectionId"
@@ -561,6 +565,7 @@ function buildPayload() {
   const base = {
     id: wizard.savedId || undefined,
     name: wizard.interfaceName,
+    functionId: (wizard.functionId || '').trim() || undefined,
     dbConnectionId: wizard.dbConnectionId,
     type: wizard.interfaceType,
     logEnabled: wizard.logEnabled,

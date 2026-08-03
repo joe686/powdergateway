@@ -19,6 +19,7 @@ export function useInterfaceEdit(wizardStore) {
       const patch = {
         savedId: cfg.id,
         interfaceName: cfg.name || '',
+        functionId: cfg.functionId || '',
         interfaceType: cfg.type || 'SELECT',
         dbConnectionId: cfg.dbConnectionId || null,
         shardConfigId: cfg.shardConfigId || null,
