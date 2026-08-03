@@ -93,15 +93,31 @@ curl -s http://localhost:8091/eureka/apps -H "Accept: application/json" | jq
 
 或浏览器访问 `http://localhost:8091` · lcpt-register 有内置 Eureka Server dashboard。
 
-### 面 3:backend discover 联动(可选 · 需 backend 起 + 建 registry_config)
+### 面 3:backend discover 联动(v0.3.12 CHG-055 · 已 E2E 验证通)
+
+前提:backend 已起(v0.3.12+ · Registrar 自动装配 case eureka)· 建 Eureka 类型 registry_config:
 
 ```bash
-# 前提:backend 已起 · 已 curl 建 Eureka 类型 registry_config · serverAddr=http://127.0.0.1:8091/eureka/
-curl -s -X POST http://localhost:8080/api/registry/discover \
+TOKEN=$(curl -s -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
-  -H "satoken: $TOKEN" \
-  -d '{"registryName":"部门Eureka","serviceName":"pg-internal"}'
-# 期望返 [{ip:"127.0.0.1", port:8080, scheme:"http"}]
+  -d '{"username":"admin","password":"Admin@123"}' | jq -r '.data.token')
+
+# 建 registry_config(注意 enabled 是 Integer 用 1 · 不是 true)
+curl -s -X POST http://localhost:8080/api/registry/save \
+  -H "Content-Type: application/json" -H "satoken: $TOKEN" \
+  -d '{"name":"lcpt-register-8091","type":"eureka","serverAddr":"http://127.0.0.1:8091/eureka/","enabled":1}'
+
+# discover(RegistryFacade 聚合所有已启用 client)
+curl -s -H "satoken: $TOKEN" "http://localhost:8080/api/registry/discover-preview?serviceName=pg-internal"
+# 期望:[{"serviceName":"pg-internal","ip":"127.0.0.1","port":8080,"scheme":"http","metadata":{...}}]
+
+# backend 自己也注册到 lcpt-register
+curl -s -X POST -H "satoken: $TOKEN" http://localhost:8080/api/registry/reregister-self
+# 期望:{"code":200,"data":true}
+
+# 验证 backend 已上 lcpt-register
+curl -s http://localhost:8091/eureka/apps/POWERGATEWAY -H "Accept: application/json" | jq
+# 期望:1 实例 UP · ipAddr 是 backend 网卡 IP(172.18.0.1 或 127.0.0.1 · 由 sys_config registry.self.ip.override 决定)
 ```
 
 ## Step 4 · 手工 API 冒烟
