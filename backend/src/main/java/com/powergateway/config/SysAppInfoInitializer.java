@@ -22,8 +22,8 @@ public class SysAppInfoInitializer {
 
     private static final Logger log = LoggerFactory.getLogger(SysAppInfoInitializer.class);
 
-    /** 当前版本(每次发版更新此常量 · v0.3.1 起用) */
-    public static final String CURRENT_VERSION = "v0.3.1";
+    /** 当前版本(每次发版更新此常量 · v0.3.1 起用 · v0.3.10 CHG-052 顺延同步) */
+    public static final String CURRENT_VERSION = "v0.3.10";
     public static final String CURRENT_AUTHOR = "光斓";
     public static final String CURRENT_RELEASE_NOTE = "当前仅为测试版本";
 

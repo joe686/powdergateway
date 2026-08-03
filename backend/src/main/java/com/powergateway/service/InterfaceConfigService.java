@@ -80,10 +80,15 @@ public class InterfaceConfigService {
     private InterfaceOpTypeCache interfaceOpTypeCache;
 
     /**
-     * v0.3.9 CHG-049 · 入站 Socket Server 生命周期钩子(可选注入)。
-     * 测试环境无 SocketInboundServerManager Bean 时保持 null · 不阻塞 publish/disable/delete 主链路。
+     * v0.3.9 CHG-049 · 入站 Socket Server 生命周期钩子(可选注入 + @Lazy 打破循环)。
+     *
+     * <p><b>循环依赖</b>:InterfaceConfigService → SocketInboundServerManager → InboundSocketOrchestrator
+     * → InterfaceConfigService · Spring 2.6+ 默认禁止循环 · @Lazy 让本字段在真正使用时才 resolve,启动期不参与图构造。</p>
+     *
+     * <p>测试环境无 SocketInboundServerManager Bean 时保持 null · 不阻塞主链路。</p>
      */
     @Autowired(required = false)
+    @org.springframework.context.annotation.Lazy
     private com.powergateway.socket.inbound.SocketInboundServerManager socketInboundServerManager;
 
     // ─── 保存 ──────────────────────────────────────────────────────────────────
